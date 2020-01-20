@@ -7,7 +7,7 @@
 // quite expensive at points. With defines, we can remove the assertion generation entirely 
 // without having to rely on compiler optimization, which is not standard. 
 
-#ifdef _DEBUG
+#ifndef CBN_DISABLE_ASSERTS
 
 namespace cbn
 {

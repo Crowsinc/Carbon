@@ -71,6 +71,15 @@ namespace cbn
 	{
 		return m_Build;
 	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool Version::operator=(const Version& version)
+	{
+		m_Major = version.m_Major;
+		m_Minor = version.m_Minor;
+		m_Build = version.m_Build;
+	}
 
 	//-------------------------------------------------------------------------------------
 
@@ -84,6 +93,20 @@ namespace cbn
 	bool Version::operator<(const Version& version) const
 	{
 		return is_older_than(version);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool Version::operator>=(const Version& version) const
+	{
+		return is_older_than(version) || matches(version);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool Version::operator<=(const Version& version) const
+	{
+		return is_newer_than(version) || matches(version);
 	}
 
 	//-------------------------------------------------------------------------------------

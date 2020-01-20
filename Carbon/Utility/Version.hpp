@@ -31,9 +31,15 @@ namespace cbn
 		
 		unsigned get_build_number() const;
 
+		bool operator=(const Version& version);
+		
 		bool operator>(const Version& version) const;
 		
 		bool operator<(const Version& version) const;
+		
+		bool operator>=(const Version& version) const;
+		
+		bool operator<=(const Version& version) const;
 		
 		bool operator==(const Version& version) const;
 		
