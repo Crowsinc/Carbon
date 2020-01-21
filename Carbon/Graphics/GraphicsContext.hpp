@@ -34,8 +34,8 @@ namespace cbn
 		static bool s_GLFWInitialized;
 		static bool s_OpenGLFunctionsLoaded;
 
+		std::unique_ptr<Window> m_AssociatedWindow;
 		Version m_ContextVersion;
-		Window m_AssociatedWindow;
 		bool m_Initialized;
 	
 		static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param);

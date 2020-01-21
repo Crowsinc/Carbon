@@ -78,6 +78,7 @@
     <IntDir>$(SolutionDir)\Binaries\$(ProjectName)\Objects\</IntDir>
     <IncludePath>$(SolutionDir)\Carbon;$(SolutionDir)\Libraries\STB\include;$(SolutionDir)\Libraries\GLM\include;$(SolutionDir)\Libraries\GLFW\include;$(SolutionDir)\Libraries\GLAD\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\Libraries\GLFW;$(SolutionDir)\Binaries\Carbon;$(LibraryPath)</LibraryPath>
+    <SourcePath>C:\Users\Sebastian Di Marco\Projects\C++\Carbon\Libraries;C:\Users\Sebastian Di Marco\Projects\C++\Carbon\Carbon;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,6 +89,7 @@
     <IntDir>$(SolutionDir)\Binaries\$(ProjectName)\Objects\</IntDir>
     <IncludePath>$(SolutionDir)\Carbon;$(SolutionDir)\Libraries\STB\include;$(SolutionDir)\Libraries\GLM\include;$(SolutionDir)\Libraries\GLFW\include;$(SolutionDir)\Libraries\GLAD\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)\Libraries\GLFW;$(SolutionDir)\Binaries\Carbon;$(LibraryPath)</LibraryPath>
+    <SourcePath>C:\Users\Sebastian Di Marco\Projects\C++\Carbon\Libraries;C:\Users\Sebastian Di Marco\Projects\C++\Carbon\Carbon;$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,6 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Carbon.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,6 +150,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Carbon.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

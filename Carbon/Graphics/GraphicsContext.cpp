@@ -117,7 +117,7 @@ namespace cbn
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
 		// Attempt to create the OpenGL context, which is tied with a window in GLFW
-		GLFWwindow* window_handle = glfwCreateWindow(1280, 720, "Untitled Window", glfwGetPrimaryMonitor(), NULL);
+		GLFWwindow* window_handle = glfwCreateWindow(1280, 720, "Untitled Window", NULL, NULL);
 
 		// If the context was not created successfully, then return false
 		if(window_handle == NULL)
@@ -129,12 +129,8 @@ namespace cbn
 		// so make sure the context is current to this thread as it should
 		glfwMakeContextCurrent(window_handle);
 
-		// Initialize the render window by passing it the window handle for this context
-		// If the initialisation failed, then return false for an overall failed initialisation
-		if(!m_AssociatedWindow.try_initialize(window_handle))
-		{
-			return false;
-		}
+		// Create the window associated with this context
+		m_AssociatedWindow = std::unique_ptr<Window>(new Window(window_handle));
 
 		// If the OpenGL functions have not been loaded yet, then we need to load them now
 		if(!s_OpenGLFunctionsLoaded)
@@ -261,7 +257,7 @@ namespace cbn
 	{
 		CBN_Assert(is_initialized(), "Cannot bind current thread to context without first initializing the context");
 
-		glfwMakeContextCurrent(m_AssociatedWindow.get_handle());
+		glfwMakeContextCurrent(m_AssociatedWindow->get_handle());
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -286,7 +282,7 @@ namespace cbn
 	{
 		CBN_Assert(is_initialized(), "Cannot get render window without first initializing the context");
 		
-		return m_AssociatedWindow;
+		return *m_AssociatedWindow.get();
 	}
 
 	//-------------------------------------------------------------------------------------

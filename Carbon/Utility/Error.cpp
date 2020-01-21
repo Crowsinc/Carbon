@@ -35,6 +35,7 @@ namespace cbn
 	std::ostream& operator<<(std::ostream& stream, const Error& error)
 	{
 		stream << error.to_string();
+		return stream;
 	}
 
 	//-------------------------------------------------------------------------------------

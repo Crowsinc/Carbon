@@ -74,7 +74,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool Version::operator=(const Version& version)
+	void Version::operator=(const Version& version)
 	{
 		m_Major = version.m_Major;
 		m_Minor = version.m_Minor;

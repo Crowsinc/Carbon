@@ -7,7 +7,7 @@ namespace cbn
 	{
 	private:
 
-		const unsigned m_Major, m_Minor, m_Build;
+		unsigned m_Major, m_Minor, m_Build;
 
 	public:
 
@@ -31,7 +31,7 @@ namespace cbn
 		
 		unsigned get_build_number() const;
 
-		bool operator=(const Version& version);
+		void operator=(const Version& version);
 		
 		bool operator>(const Version& version) const;
 		

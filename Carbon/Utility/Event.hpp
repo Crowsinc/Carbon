@@ -5,12 +5,12 @@
 namespace cbn
 {
 
-	template<typename ...T>
+	template<typename ...Args>
 	class Event
 	{
 	public:
 		
-		using Callback = std::function<void(T...)>;
+		using Callback = std::function<void(Args...)>;
 
 	private:
 
@@ -19,9 +19,11 @@ namespace cbn
 
 	public:
 
-		void invoke(T... params) const;
+		template<typename ...P>
+		void invoke(P... params) const;
 	
-		void operator()(T... params) const;
+		template<typename ...P>
+		void operator()(P... params) const;
 
 		int add_callback(const Callback& callback);
 
