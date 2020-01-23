@@ -5,6 +5,7 @@
 
 namespace cbn
 {
+
 	//-------------------------------------------------------------------------------------
 
 	template<GLenum ObjectTypeID, GLenum Type>

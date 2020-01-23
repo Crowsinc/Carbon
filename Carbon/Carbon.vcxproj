@@ -166,8 +166,8 @@
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
-    <ClCompile Include="Diagnostics\Error.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
+    <ClCompile Include="Utility\Image.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
@@ -186,10 +186,11 @@
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
-    <ClInclude Include="Diagnostics\Error.hpp" />
     <ClInclude Include="Utility\Algortihms.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
+    <ClInclude Include="Utility\Image.hpp" />
+    <ClInclude Include="Utility\Type.h" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>

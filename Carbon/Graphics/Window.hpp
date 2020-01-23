@@ -2,15 +2,15 @@
 
 #include <glm/glm.hpp>
 
-#include "OpenGL.hpp"
 #include "../Utility/Event.hpp"
+#include "GraphicsContext.hpp"
+#include "OpenGL.hpp"
 
 namespace cbn
 {
 
 	class Window
 	{
-		friend class GraphicsContext;
 	public:
 
 		enum class DisplayMode
@@ -29,26 +29,21 @@ namespace cbn
 		Event<bool> VSyncChangeEvent;
 		Event<bool> FocusEvent;
 		
-		// TODO: improve input system
-		Event<int> KeyPressEvent;
+		static Ptr<Window> Create(Ptr<GraphicsContext>& graphics_context);
 
 	private:
 
-		GLFWwindow* m_WindowHandle;
-		std::string m_WindowTitle;
+		GLFWwindow* m_ContextHandle;
 		DisplayMode m_DisplayMode;
 		glm::vec2 m_Resolution;
+		std::string m_Title;
 		bool m_VSyncEnabled;
-
-		static void window_input_callback(GLFWwindow* window_handle, int key, int scancode, int action, int mods);
 
 		static void window_resize_callback(GLFWwindow* window_handle, int width, int height);
 
 		static void window_focus_callback(GLFWwindow* window_handle, int is_focused);
 
 		static void window_close_callback(GLFWwindow* window_handle);
-
-		Window(GLFWwindow* window_handle);
 
 		GLFWmonitor* determine_monitor();
 
@@ -59,6 +54,8 @@ namespace cbn
 		void make_resizable();
 
 		void make_windowed();
+
+		Window(GLFWwindow* context_handle);
 
 	public:
 

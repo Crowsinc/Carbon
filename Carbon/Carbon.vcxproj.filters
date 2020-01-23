@@ -60,10 +60,10 @@
     <ClCompile Include="Diagnostics\Assert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostics\Error.cpp">
+    <ClCompile Include="Diagnostics\Stopwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostics\Stopwatch.cpp">
+    <ClCompile Include="Utility\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,9 +116,6 @@
     <ClInclude Include="Diagnostics\Assert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Diagnostics\Error.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Diagnostics\Stopwatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -126,6 +123,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Maths\Maths.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Image.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Type.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

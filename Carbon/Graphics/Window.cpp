@@ -5,21 +5,34 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void Window::window_input_callback(GLFWwindow* window_handle, int key, int scancode, int action, int mods)
+	Ptr<Window> Window::Create(Ptr<GraphicsContext>& graphics_context)
 	{
-		// TODO: improve
-	
-		// Get the window from the handle's user pointer
-		Window* window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window_handle));
+		// While window creation normally has no reason to fail, we will perform
+		// checks to ensure that only a single window is created per graphics context
+		// in order to ensure that the user pointers and callbacks for the window will work properly
 
-		// If a key has been pressed, then invoke the key press event
-		if(action == GLFW_PRESS)
+		// We will determine whether a window exists for this context 
+		// based on whether the user pointer is set to null or not
+		if(glfwGetWindowUserPointer(graphics_context->m_Handle) != NULL)
 		{
-			window->KeyPressEvent.invoke(key);
+			// Since the user pointer isnt null, then a window already exists
+			// for this context so return nullptr to fail the creation of the window
+			return nullptr;
 		}
 
+		// If we are here, then we allowed to create a window for this context
+		Ptr<Window> window = Ptr<Window>(new Window(graphics_context->m_Handle));
+
+		// Set up the required GLFW callbacks, and user pointer for the window
+		glfwSetWindowUserPointer(window->m_ContextHandle, window.get());
+		glfwSetWindowCloseCallback(window->m_ContextHandle, &Window::window_close_callback);
+		glfwSetWindowFocusCallback(window->m_ContextHandle, &Window::window_focus_callback);
+		glfwSetWindowSizeCallback(window->m_ContextHandle, &Window::window_resize_callback);
+
+		// Return the successfully created window
+		return window;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void Window::window_resize_callback(GLFWwindow* window_handle, int width, int height)
@@ -65,7 +78,7 @@ namespace cbn
 
 		// Get all monitors and the window position
 		monitors = glfwGetMonitors(&monitor_count);
-		glfwGetWindowPos(m_WindowHandle, &window_x, &window_y);
+		glfwGetWindowPos(m_ContextHandle, &window_x, &window_y);
 
 		// Iterate through monitors until we find which one the window is within 
 		for(int i = 0; i < monitor_count; i++) {
@@ -97,15 +110,15 @@ namespace cbn
 	void Window::make_fullscreen()
 	{
 		// Update the window attributes to make the window have a frame and not be resizable
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_DECORATED, GLFW_TRUE);
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_RESIZABLE, GLFW_FALSE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_TRUE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_FALSE);
 
 		// Get the monitor that the window is within, we will fullscreen on this monitor
 		const auto monitor = determine_monitor();
 		auto video_mode = glfwGetVideoMode(monitor);
 
 		// Update the window to be fullscreen within the monitor
-		glfwSetWindowMonitor(m_WindowHandle, monitor, 0, 0, video_mode->width, video_mode->height, GLFW_DONT_CARE);
+		glfwSetWindowMonitor(m_ContextHandle, monitor, 0, 0, video_mode->width, video_mode->height, GLFW_DONT_CARE);
 
 		// Update the display mode member for the window and invoke the display mode change event
 		DisplayModeChangeEvent.invoke(DisplayMode::FULLSCREEN);
@@ -123,7 +136,7 @@ namespace cbn
 		make_fullscreen();
 
 		// Update the window attributes so that its not decorated
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_DECORATED, GLFW_FALSE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_FALSE);
 
 		// Update the display mode member for the window and invoke the display mode change event
 		DisplayModeChangeEvent.invoke(DisplayMode::BORDERLESS);
@@ -138,7 +151,7 @@ namespace cbn
 		make_windowed();
 
 		// Update the window attributes so that its resizable
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_RESIZABLE, GLFW_TRUE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_TRUE);
 	
 		// Update the display mode member for the window and invoke the display mode change event
 		DisplayModeChangeEvent.invoke(DisplayMode::RESIZABLE);
@@ -150,8 +163,8 @@ namespace cbn
 	void Window::make_windowed()
 	{
 		// Update the window attributes to make the window have a frame and not be resizable
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_DECORATED, GLFW_TRUE);
-		glfwSetWindowAttrib(m_WindowHandle, GLFW_RESIZABLE, GLFW_FALSE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_TRUE);
+		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_FALSE);
 
 		// Get the monitor that the window is within, this will be used
 		// to determine where the window should be positioned once its made windowed
@@ -163,7 +176,7 @@ namespace cbn
 		int position_y = static_cast<int>((video_mode->height / 2) - (m_Resolution.y / 2));
 
 		// Set the window to be windowed
-		glfwSetWindowMonitor(m_WindowHandle, nullptr, position_x, position_y, static_cast<int>(m_Resolution.x), static_cast<int>(m_Resolution.y), GLFW_DONT_CARE);
+		glfwSetWindowMonitor(m_ContextHandle, nullptr, position_x, position_y, static_cast<int>(m_Resolution.x), static_cast<int>(m_Resolution.y), GLFW_DONT_CARE);
 
 		// Update the display mode member for the window and invoke the display mode change event
 		DisplayModeChangeEvent.invoke(DisplayMode::WINDOWED);
@@ -172,36 +185,31 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Window::Window(GLFWwindow* window_handle)
-		: m_WindowHandle(window_handle),
-		  m_DisplayMode(DisplayMode::WINDOWED),
-		  m_WindowTitle("Untitled Window"), 
-		  m_Resolution(1280,720),
-		  m_VSyncEnabled(false)
+	Window::Window(GLFWwindow* context_handle)
+		: m_ContextHandle(context_handle)
 	{
-		// Update window to its default setup
+		// Update window to its default setup, this will also
+		// set the default values for the window members
 		set_display_mode(DisplayMode::WINDOWED);
 		set_title("Untitled Window");
 		set_resolution({1280, 720});
 		set_vsync(false);
-
-		// Set up the required GLFW callbacks 
-		glfwSetWindowUserPointer(m_WindowHandle, this);
-		glfwSetKeyCallback(m_WindowHandle, &Window::window_input_callback);
-		glfwSetWindowCloseCallback(m_WindowHandle, &Window::window_close_callback);
-		glfwSetWindowFocusCallback(m_WindowHandle, &Window::window_focus_callback);
-		glfwSetWindowSizeCallback(m_WindowHandle, &Window::window_resize_callback);
+		show();
 
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
 	Window::~Window()
 	{
-		if(m_WindowHandle != nullptr)
-		{
-			glfwDestroyWindow(m_WindowHandle);
-		}
+		// Since the window handle is actually managed by the GraphicsContext, when 
+		// the window goes out of scope we will simply hide the window. This way, another
+		// window can simply be created from the same context in the future. 
+		hide();
+
+		// Reset the user pointer to null as this is what we are using to check if a 
+		// window already exists for a context in the Create() function
+		glfwSetWindowUserPointer(m_ContextHandle, NULL);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -212,7 +220,7 @@ namespace cbn
 		if(is_visible()) return;
 
 		// Show the window and invoke the visibility change event
-		glfwShowWindow(m_WindowHandle);
+		glfwShowWindow(m_ContextHandle);
 		VisibilityChangeEvent.invoke(true);
 	}
 	
@@ -224,7 +232,7 @@ namespace cbn
 		if(!is_visible()) return;
 		
 		// Hide the window and invoke the visibility change event
-		glfwShowWindow(m_WindowHandle);
+		glfwShowWindow(m_ContextHandle);
 		VisibilityChangeEvent.invoke(false);
 	}
 	
@@ -237,7 +245,7 @@ namespace cbn
 
 		// Focus the window, note that we do not need to invoke
 		// the event since it is handled by the GLFW callback
-		glfwFocusWindow(m_WindowHandle);
+		glfwFocusWindow(m_ContextHandle);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -245,7 +253,7 @@ namespace cbn
 	void Window::update()
 	{
 		// Swap the buffers to show the latest frame buffer
-		glfwSwapBuffers(m_WindowHandle);
+		glfwSwapBuffers(m_ContextHandle);
 
 		// Poll all input events
 		glfwPollEvents();
@@ -255,14 +263,14 @@ namespace cbn
 
 	bool Window::is_visible() const
 	{
-		return glfwGetWindowAttrib(m_WindowHandle, GLFW_VISIBLE) == GLFW_TRUE;
+		return glfwGetWindowAttrib(m_ContextHandle, GLFW_VISIBLE) == GLFW_TRUE;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool Window::is_focused() const
 	{
-		return glfwGetWindowAttrib(m_WindowHandle, GLFW_FOCUSED) == GLFW_TRUE;
+		return glfwGetWindowAttrib(m_ContextHandle, GLFW_FOCUSED) == GLFW_TRUE;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -283,7 +291,7 @@ namespace cbn
 
 	std::string_view Window::get_title() const
 	{
-		return m_WindowTitle;
+		return m_Title;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -307,14 +315,14 @@ namespace cbn
 	void Window::set_title(const std::string& title)
 	{
 		// Only update if we are actually changing the state of the window
-		if(title != m_WindowTitle)
+		if(title != m_Title)
 		{
 			// Update the the swap interval based on whether we are enabling or disabling vsync
-			glfwSetWindowTitle(m_WindowHandle, title.c_str());
+			glfwSetWindowTitle(m_ContextHandle, title.c_str());
 
 			// Update the title member and invoke the title change event
 			TitleChangeEvent.invoke(title);
-			m_WindowTitle = title;
+			m_Title = title;
 		}
 	}
 	
@@ -326,7 +334,7 @@ namespace cbn
 		if(resolution != m_Resolution)
 		{
 			// Update the the swap interval based on whether we are enabling or disabling vsync
-			glfwSetWindowSize(m_WindowHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
+			glfwSetWindowSize(m_ContextHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
 
 			// Update the resolution member, note that we do not need to 
 			// invoke the event as it will be invoked by the GLFW resize callback

@@ -1,183 +1,185 @@
 #include "GraphicsContext.hpp"
 
+#include "../Diagnostics/Assert.hpp"
+
 namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
 	int GraphicsContext::s_ContextCount = 0;
-	bool GraphicsContext::s_GLFWInitialized = false;
-	bool GraphicsContext::s_OpenGLFunctionsLoaded = false;
+	bool GraphicsContext::s_OpenGLLoaded = false;
+
+	//-------------------------------------------------------------------------------------
+
+	Ptr<GraphicsContext> GraphicsContext::Create(const Version& context_version, bool debug_context)
+	{
+		
+		// Attempt to initialize GLFW, error out from the create function if GLFW
+		// could not be initialized. Note that if it has already been initialized,
+		// then the init function will return true immediately
+		if(glfwInit() == GLFW_FALSE)
+		{
+			// Initialisation failed, return nullptr
+			return nullptr;
+		}
+
+		// Set hints so that we create a core OpenGL context of the given context version 
+        // Note that if the version is not supported, then the initialisation will simply fail
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, context_version.get_major_version());
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, context_version.get_minor_version());
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		
+		
+		// If debug context is set then we will attempt to create a debug context for debug output
+		// This is standard as of OpenGL 4.3, however is still supported if the GL_ARB_debug_output
+		// extension is supported. We will have to query for its support after context creation
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_context ? GLFW_TRUE : GLFW_FALSE);
+
+		// Since context creation is connected with window creation in GLFW
+		// specify hints for creating an invisible non-resizable window 
+		glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
+		glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+		// Create a GLFW window and store the context/window handle within a GraphicsContext
+		// instance. If the handle is null, then an error has occurred so return nullptr
+		GLFWwindow* context_handle = glfwCreateWindow(1280, 720, "Untitled Window", NULL, NULL);
+		
+		// Check that the context was created successfully
+		if(context_handle == NULL)
+		{
+			return nullptr;
+		}
+
+		// Context creation does not make the context current to the thread, so make it current.
+		glfwMakeContextCurrent(context_handle);
+
+		// If the OpenGL functions have not been loaded yet, then we need to load them now
+		if(!s_OpenGLLoaded)
+		{
+			// Load the OpenGL functions, returning nullptr if they could not be loaded
+			if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+			{
+				// Note that since the load has failed and we are not going
+				// to use this context, we want to destroy the context we created
+				glfwDestroyWindow(context_handle);
+				return nullptr;
+			}
+
+			// Update the loaded flag so that the functions are not loaded again
+			s_OpenGLLoaded = true;
+		}
+
+		// Create the graphics context object which will control the context handle
+		Ptr<GraphicsContext> context = Ptr<GraphicsContext>(new GraphicsContext(context_handle, context_version, debug_context));
+
+		// If debug mode was picked, try to initialize the debug output
+		if(debug_context)
+		{
+			// If the context is meant to be a debug context, and its debug output 
+			// could not be initialized, then we will consider the context creation
+			// to have failed, so return nullptr. Note that when the context goes out
+			// of scope, the handle will be cleaned up
+			if(!try_initialize_debug_output(context))
+			{
+				return nullptr;
+			}
+		}
+
+		// If we have made it here, the context was created successfully so return it
+		return context;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool GraphicsContext::try_initialize_debug_output(const Ptr<GraphicsContext>& context)
+	{
+		// Check that the context is actually a debug context
+		GLint context_flag;
+		glGetIntegerv(GL_CONTEXT_FLAGS, &context_flag);
+		if(context_flag & GL_CONTEXT_FLAG_DEBUG_BIT)
+		{
+			// A debug context was successfully created, however debug ouput is only
+			// supported in post OpenGL 4.3. Earlier versions will need to make use
+			// of the GLAD_GL_ARB_debug_output extension if supported
+			if(context->m_Version >= Version(4, 3))
+			{
+				// We are using an OpenGL context post OpenGL 4.3 which supports
+				// debug output, so simply set up the callback as normal
+				glDebugMessageCallback(&GraphicsContext::debug_callback, context.get());
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+				glEnable(GL_DEBUG_OUTPUT);
+			
+				return true;
+			}
+			else if(GLAD_GL_ARB_debug_output)
+			{
+				// If we are here, a debug context could not be created so 
+				// instead we will try use the GL_ARB_debug_output extension
+				glDebugMessageCallbackARB(&GraphicsContext::debug_callback, context.get());
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+				glEnable(GL_DEBUG_OUTPUT);
+				
+				return true;
+			}
+		}
+
+		// If we get here, then we could not initialize debug output so return false
+		return false;
+	}
 
 	//-------------------------------------------------------------------------------------
 
 	void GraphicsContext::debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param)
 	{
 		// Invoke the error event in the context provided by the user param
-		reinterpret_cast<const GraphicsContext*>(user_param)->ErrorEvent.invoke(std::string(message),source,type,severity);
+		auto context = reinterpret_cast<const GraphicsContext*>(user_param);
+		context->ErrorEvent.invoke(std::string(message), source, type, severity);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	std::string GraphicsContext::generate_opengl_error_message(const GLenum gl_error_code) const
+	GraphicsContext::GraphicsContext(GLFWwindow* handle, const Version& version, const bool debug_context)
+		: m_Version(version),
+		m_Handle(handle),
+		m_DebugContext(debug_context)
 	{
-		// Convert given OpenGL error codes into their respective text description
-		switch(gl_error_code)
-		{
-			case GL_NO_ERROR:
-				return "No error";
-			
-			case GL_INVALID_ENUM:
-				return "An invalid value has been specified for an enumurated argument";
-			
-			case GL_INVALID_OPERATION:
-				return "An operation was specified which is not allowed in the current context state";
-			
-			case GL_INVALID_FRAMEBUFFER_OPERATION:
-				return "An operation was attempted on an incomplete framebuffer object";
-			
-			case GL_OUT_OF_MEMORY:
-				return "Unable to execute command due to insufficient memory";
-			
-			case GL_STACK_UNDERFLOW:
-				return "An operation tried to cause an internal stack to underflow";
-			
-			case GL_STACK_OVERFLOW:
-				return "An operation tried to cause an internal stack to overflow";
-		}
-
-		// If the error code is invalid, simply set the message to "unknown error"
-		return "Unknown error";
-	}
+		CBN_Assert(handle != nullptr, "Cannot instantiate GraphicsContext with invalid handle");
 	
-	//-------------------------------------------------------------------------------------
-
-	GraphicsContext::GraphicsContext() 
-		: m_Initialized(false),
-		  m_ContextVersion(0,0)
-	{
-		// Increase the context count by 1
+		// Increment the context count by 1
 		s_ContextCount++;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	GraphicsContext::~GraphicsContext() 
+	GraphicsContext::~GraphicsContext()
 	{
 		// Reduce the context count by 1
 		s_ContextCount--;
 
-		// If the context was initialized and its the last existing context 
-		// then we should also terminate GLFW on destruction of this context
-		if(s_GLFWInitialized && s_ContextCount == 0)
+		// Destroy the context
+		glfwDestroyWindow(m_Handle);
+
+		// If this was the last existing valid context, then terminate GLFW
+		if(s_ContextCount == 0)
 		{
-			s_GLFWInitialized = false;
 			glfwTerminate();
 		}
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	bool GraphicsContext::try_initialize(const Version& context_version, bool debug_mode)
-	{
-		// If the context has already been initialized, then error out
-		if(is_initialized()) return false;
-
-		// If GLFW itself has not been initialised yet, then initialise it now
-		if(!s_GLFWInitialized)
-		{
-			// If the GLFW initialisation failed, then return false
-			if(glfwInit() == GLFW_FALSE)
-			{
-				return false;
-			}
-
-			// If the initialisation succeeded, then set the initialised flag
-			s_GLFWInitialized = true;
-		}
-
-		// Set hints so that we create a core OpenGL context of the given context version 
-		// Note that if the version is not supported, then the initialisation will simply fail
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, context_version.get_major_version());
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, context_version.get_minor_version());
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-		// If debug mode has been requested then we need to make a debug context
-		// Note that this is only supported with OpenGL 4.3 and beyond, so initialisation
-		// will fail if debug mode is requested and the context version is too low
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_mode ? GLFW_TRUE : GLFW_FALSE);
-		if(debug_mode && context_version < Version(4, 3))
-		{
-			return false;
-		}
-
-		// Specify hints for creating an invisible non-resizable window 
-		glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
-		glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
-		// Attempt to create the OpenGL context, which is tied with a window in GLFW
-		GLFWwindow* window_handle = glfwCreateWindow(1280, 720, "Untitled Window", NULL, NULL);
-
-		// If the context was not created successfully, then return false
-		if(window_handle == NULL)
-		{
-			return false;
-		}
-
-		// If we are here, the context was created successfully 
-		// so make sure the context is current to this thread as it should
-		glfwMakeContextCurrent(window_handle);
-
-		// Create the window associated with this context
-		m_AssociatedWindow = std::unique_ptr<Window>(new Window(window_handle));
-
-		// If the OpenGL functions have not been loaded yet, then we need to load them now
-		if(!s_OpenGLFunctionsLoaded)
-		{
-			// If the OpenGL functions could not be loaded due to 
-			// some error, then return false for a failed initialisation
-			if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-			{
-				return false;
-			}
-
-			// Make sure to set that the functions have been loaded so 
-			// that any other context don't try to reload them
-			s_OpenGLFunctionsLoaded = true;
-		}
-
-		// If we made a debug context, then we should set a debug callback
-		if(debug_mode)
-		{
-			glDebugMessageCallback(&GraphicsContext::debug_callback, this);
-		}
-
-		// If we have made it here, then we successfuly initialised 
-		// the context so update the flag and context version
-		m_ContextVersion = context_version;
-		m_Initialized = true;
-
-		return true;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
 	bool GraphicsContext::is_extension_supported(const std::string_view& extension) const
 	{
-		CBN_Assert(is_initialized(), "Cannot check for extension support without first initializing the context");
-
-		// Get all the supported extensions and search for the given one
-		const auto supported_extensions = get_supported_extensions();
-		return std::find(supported_extensions.begin(), supported_extensions.end(), extension) != supported_extensions.end();
+		// Use the GLFW provided function for checking extension support
+		return glfwExtensionSupported(extension.data()) == GLFW_TRUE;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	void* GraphicsContext::load_function(const std::string_view& function_name) const
 	{
-		CBN_Assert(is_initialized(), "Cannot load any OpenGL context functions without first initializing the context");
-
 		return glfwGetProcAddress(function_name.data());
 	}
 
@@ -185,8 +187,6 @@ namespace cbn
 
 	std::vector<std::string> GraphicsContext::get_supported_extensions() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get the supported context extensions without first initializing the context");
-
 		std::vector<std::string> extensions;
 
 		// Check how many extensions are supported by the context and 
@@ -208,7 +208,6 @@ namespace cbn
 
 	const GraphicsContext::Capabilities GraphicsContext::get_hardware_capabilities() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get the OpenGL hardware capabilities without first initializing the context");
 
 		//TODO: fill in the capabilities struct and actually get them
 		return Capabilities{};
@@ -218,35 +217,14 @@ namespace cbn
 
 	const Version GraphicsContext::get_opengl_version() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get the OpenGL context version without first initializing the context");
 
-		return m_ContextVersion;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	std::stack<Error> GraphicsContext::get_errors() const
-	{
-		CBN_Assert(is_initialized(), "Cannot get retrieve errors without first initializing the context");
-
-		std::stack<Error> errors;
-		GLenum error_code;
-
-		// Grab OpenGL errors until there are no more errors left,
-		// resulting in an ordered stack of errors which has occurred. 
-		while((error_code = glGetError()) != GL_NO_ERROR)
-		{
-			errors.emplace(error_code, generate_opengl_error_message(error_code));
-		}
-
-		return errors;
+		return m_Version;
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	std::string GraphicsContext::get_device_name() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get device name without first initializing the context");
 
 		return std::string(reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 	}
@@ -255,34 +233,22 @@ namespace cbn
 
 	void GraphicsContext::bind_to_current_thread() const
 	{
-		CBN_Assert(is_initialized(), "Cannot bind current thread to context without first initializing the context");
 
-		glfwMakeContextCurrent(m_AssociatedWindow->m_WindowHandle);
+		glfwMakeContextCurrent(m_Handle);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	bool GraphicsContext::is_initialized() const
-	{
-		return m_Initialized;
-	}
-
-	//-------------------------------------------------------------------------------------
-
 	std::string GraphicsContext::get_driver_vendor() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get driver vendor without first initializing the context");
-
 		return std::string(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
-	Window& GraphicsContext::get_render_window()
+	bool GraphicsContext::is_debug_context() const
 	{
-		CBN_Assert(is_initialized(), "Cannot get render window without first initializing the context");
-		
-		return *m_AssociatedWindow.get();
+		return m_DebugContext;
 	}
 
 	//-------------------------------------------------------------------------------------

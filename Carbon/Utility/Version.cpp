@@ -99,14 +99,14 @@ namespace cbn
 
 	bool Version::operator>=(const Version& version) const
 	{
-		return is_older_than(version) || matches(version);
+		return is_newer_than(version) || matches(version);
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	bool Version::operator<=(const Version& version) const
 	{
-		return is_newer_than(version) || matches(version);
+		return is_older_than(version) || matches(version);
 	}
 
 	//-------------------------------------------------------------------------------------

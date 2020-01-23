@@ -1,43 +1,53 @@
 
 #include <Graphics/GraphicsContext.hpp>
 #include <Graphics/Window.hpp>
+#include <Utility/Type.h>
 
 #include <algorithm>
 #include <iostream>
 #include <thread>
 
 bool runflag = true;
+cbn::Ptr<cbn::GraphicsContext> context;
+cbn::Ptr<cbn::Window> window;
 
 int main()
 {
-	cbn::GraphicsContext context;
 
-	if(context.try_initialize(cbn::Version(4, 6), true))
+
+	if((context = cbn::GraphicsContext::Create(cbn::Version(3, 2), false)) != nullptr)
 	{
 		std::cout << "Context Created!" << std::endl;
 	}
 	else
 	{
 		std::cout << "Context Failed To Create!" << std::endl;
+		std::cin.get();
 	}
 
-	cbn::Window& window = context.get_render_window();
+	context->ErrorEvent.subscribe([](std::string msg, GLenum type, GLenum severity, GLenum something) {
+		std::cout << "Debug Output!" << std::endl;
+	});
 
-	window.CloseRequestEvent.subscribe([&]()
+	if((window = cbn::Window::Create(context)) != nullptr)
+	{
+		std::cout << "Window Created!" << std::endl;
+	}
+	else
+	{
+		std::cout << "Window Failed To Create!" << std::endl;
+	}
+
+	window->CloseRequestEvent.subscribe([&]()
 	{
 		runflag = false;
 	});
 
-	window.KeyPressEvent.subscribe([](int i)
-	{
-		std::cout << "key pressed!" << std::endl;
-	});
+	window->set_display_mode(cbn::Window::DisplayMode::RESIZABLE);
 
-	window.show();
+	window->set_title("Carbon Sample");
 
-	window.set_display_mode(cbn::Window::DisplayMode::RESIZABLE);
-
-	window.set_title("Carbon Sample");
+	glEnable(GL_TEXTURE_1D);
 
 	while(runflag)
 	{
@@ -45,7 +55,7 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 
 		// Update the window
-		window.update();
+		window->update();
 	}
 	
 	return 0;

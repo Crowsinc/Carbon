@@ -6,20 +6,19 @@
 #include <memory>
 
 #include "OpenGL.hpp"
-#include "Window.hpp"
 
-#include "../Diagnostics/Error.hpp"
 #include "../Utility/Version.hpp"
 #include "../Utility/Event.hpp"
+#include "../Utility/Type.h"
 
 namespace cbn
 {
 
 	class GraphicsContext
 	{
+		friend class Window;
 	public:
 
-		//TODO: update error class and update this to use that?
 		Event<std::string,GLenum, GLenum, GLenum> ErrorEvent;
 
 		// TODO: fill this out
@@ -28,27 +27,26 @@ namespace cbn
 
 		};
 
+		static Ptr<GraphicsContext> Create(const Version& context_version, bool debug_context = false);
+
 	private:
 
+		static bool s_OpenGLLoaded;
 		static int s_ContextCount;
-		static bool s_GLFWInitialized;
-		static bool s_OpenGLFunctionsLoaded;
-
-		std::unique_ptr<Window> m_AssociatedWindow;
-		Version m_ContextVersion;
-		bool m_Initialized;
+		const Version m_Version;
+		GLFWwindow* m_Handle;
+		bool m_DebugContext;
 	
+		
+		static bool try_initialize_debug_output(const Ptr<GraphicsContext>& context);
+
 		static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param);
 
-		std::string generate_opengl_error_message(const GLenum gl_error_code) const;
-
+		GraphicsContext(GLFWwindow* handle, const Version& version, const bool debug_context);
+	
 	public:
 
-		GraphicsContext();
-
 		~GraphicsContext();
-
-		bool try_initialize(const Version& context_version, bool debug_mode = false);
 
 		bool is_extension_supported(const std::string_view& extension) const;
 
@@ -62,17 +60,12 @@ namespace cbn
 
 		std::string get_driver_vendor() const;
 
-		//TODO: figure out better way to handle errors
-		std::stack<Error> get_errors() const;
-
 		std::string get_device_name() const;
 		
 		void bind_to_current_thread() const;
-
-		bool is_initialized() const;
-
-		Window& get_render_window();
 		
+		bool is_debug_context() const;
+
 	};
 
 }
