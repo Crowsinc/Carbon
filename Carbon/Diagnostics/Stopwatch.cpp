@@ -23,7 +23,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::stop(const cbn::units::TimeUnit & time_unit)
+	double Stopwatch::stop(const cbn::TimeUnit & time_unit)
 	{
 		CBN_Assert(m_Started, "Stopwatch cannot be stopped without first being started.");
 
@@ -35,7 +35,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::restart(const cbn::units::TimeUnit& time_unit)
+	double Stopwatch::restart(const cbn::TimeUnit& time_unit)
 	{
 		const auto elapsed = stop();
 		start();
@@ -45,14 +45,14 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::get_elapsed_time(const cbn::units::TimeUnit& time_unit) const
+	double Stopwatch::get_elapsed_time(const cbn::TimeUnit& time_unit) const
 	{
 		// If the stopwatch has been started but not stopped, then return the time between
 		// starting and now, otherwise return the time between the start and stopping events. 
 		const auto end_time = (m_Started) ? std::chrono::high_resolution_clock::now() : m_StopTime;
 		const auto difference_ns = static_cast<double>((end_time - m_StartTime).count());
 
-		return cbn::units::convert(difference_ns, cbn::units::Nanoseconds, time_unit);
+		return cbn::Unit::convert(difference_ns, cbn::Nanoseconds, time_unit);
 	}
 
 	//-------------------------------------------------------------------------------------

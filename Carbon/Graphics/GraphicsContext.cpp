@@ -257,7 +257,7 @@ namespace cbn
 	{
 		CBN_Assert(is_initialized(), "Cannot bind current thread to context without first initializing the context");
 
-		glfwMakeContextCurrent(m_AssociatedWindow->get_handle());
+		glfwMakeContextCurrent(m_AssociatedWindow->m_WindowHandle);
 	}
 	
 	//-------------------------------------------------------------------------------------

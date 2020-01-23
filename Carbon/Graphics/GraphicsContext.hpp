@@ -8,9 +8,9 @@
 #include "OpenGL.hpp"
 #include "Window.hpp"
 
+#include "../Diagnostics/Error.hpp"
 #include "../Utility/Version.hpp"
 #include "../Utility/Event.hpp"
-#include "../Utility/Error.hpp"
 
 namespace cbn
 {
@@ -19,7 +19,7 @@ namespace cbn
 	{
 	public:
 
-		//TODO: update error class and update this to use that
+		//TODO: update error class and update this to use that?
 		Event<std::string,GLenum, GLenum, GLenum> ErrorEvent;
 
 		// TODO: fill this out
@@ -62,6 +62,7 @@ namespace cbn
 
 		std::string get_driver_vendor() const;
 
+		//TODO: figure out better way to handle errors
 		std::stack<Error> get_errors() const;
 
 		std::string get_device_name() const;

@@ -2,9 +2,6 @@
 
 #include <glm/gtx/projection.hpp>
 
-#include "MathsExt.hpp"
-#include "LinearAlgebra.hpp"
-
 namespace cbn
 {
 

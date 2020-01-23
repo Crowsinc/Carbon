@@ -1,9 +1,30 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "Maths.hpp"
+
+#include <type_traits>
 
 namespace cbn
 {
+
+
+	//-------------------------------------------------------------------------------------
+
+	template<typename T>
+	inline T to_degrees(const T radians)
+	{
+		static_assert(std::is_arithmetic<T>::value, "Cannot convert non-arithmetic type to degrees");
+		return (radians * 180) / PI;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	template<typename T>
+	inline T to_radians(const T degrees)
+	{
+		static_assert(std::is_arithmetic<T>::value, "Cannot convert non-arithmetic type to radians");
+		return (degrees * PI) / 180;
+	}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -111,7 +132,7 @@ namespace cbn
 			1.0f
 		};
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	glm::vec2 fast_2d_transform(const glm::vec2& point, const glm::mat4& transform)
@@ -194,7 +215,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-    //TODO: double check proper multiplications (using glm multiplication function)
+	//TODO: double check proper multiplications (using glm multiplication function)
 	glm::mat4 mvp_fast_multiply_2d(const glm::mat4& transform_matrix, const glm::mat4 view_matrix, const glm::mat4& projection_matrix)
 	{
 		return mvp_fast_multiply_2d(vp_fast_multiply_2d(view_matrix, projection_matrix), transform_matrix);
@@ -202,4 +223,3 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 }
-

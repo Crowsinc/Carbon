@@ -198,7 +198,10 @@ namespace cbn
 
 	Window::~Window()
 	{
-		glfwDestroyWindow(m_WindowHandle);
+		if(m_WindowHandle != nullptr)
+		{
+			glfwDestroyWindow(m_WindowHandle);
+		}
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -267,13 +270,6 @@ namespace cbn
 	bool Window::is_vsync_enabled() const
 	{
 		return m_VSyncEnabled;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	GLFWwindow* Window::get_handle() const
-	{
-		return m_WindowHandle;
 	}
 	
 	//-------------------------------------------------------------------------------------

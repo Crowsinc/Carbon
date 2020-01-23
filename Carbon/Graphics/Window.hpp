@@ -78,8 +78,6 @@ namespace cbn
 		
 		bool is_vsync_enabled() const;
 		
-		GLFWwindow* get_handle() const;
-		
 		glm::vec2 get_resolution() const;
 
 		std::string_view get_title() const;

@@ -14,7 +14,7 @@ namespace cbn
 
 	private:
 
-		int m_NextHandleID;
+		int m_NextSubscriptionID;
 		std::vector<std::pair<int,Callback>> m_Callbacks;
 
 	public:
@@ -25,13 +25,10 @@ namespace cbn
 		template<typename ...P>
 		void operator()(P... params) const;
 
-		int add_callback(const Callback& callback);
+		int subscribe(const Callback& callback);
 
-		int operator+=(const Callback& callback);
+		void unsubscribe(const int subscription_id);
 
-		void remove_callback(const int callback_handle);
-
-		void operator-=(const int callback_handle);
 	};
 
 	

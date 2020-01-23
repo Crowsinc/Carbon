@@ -2,6 +2,7 @@
 #include <Graphics/GraphicsContext.hpp>
 #include <Graphics/Window.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <thread>
 
@@ -22,17 +23,19 @@ int main()
 
 	cbn::Window& window = context.get_render_window();
 
-	window.CloseRequestEvent.add_callback([&]()
+	window.CloseRequestEvent.subscribe([&]()
 	{
 		runflag = false;
 	});
 
-	window.KeyPressEvent.add_callback([](int i)
+	window.KeyPressEvent.subscribe([](int i)
 	{
 		std::cout << "key pressed!" << std::endl;
 	});
 
 	window.show();
+
+	window.set_display_mode(cbn::Window::DisplayMode::RESIZABLE);
 
 	window.set_title("Carbon Sample");
 
@@ -45,6 +48,5 @@ int main()
 		window.update();
 	}
 	
-	std::cin.get();
 	return 0;
 }

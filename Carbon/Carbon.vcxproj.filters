@@ -48,12 +48,6 @@
     <ClCompile Include="Graphics\ShaderProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\Assert.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Utility\Stopwatch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\Units.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,7 +57,13 @@
     <ClCompile Include="Utility\Version.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\Error.cpp">
+    <ClCompile Include="Diagnostics\Assert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\Error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\Stopwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,19 +98,7 @@
     <ClInclude Include="Graphics\ShaderProgram.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maths\LinearAlgebra.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Maths\MathsExt.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Event.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\Stopwatch.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\Assert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility\Units.hpp">
@@ -125,14 +113,26 @@
     <ClInclude Include="Utility\Version.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\Error.hpp">
+    <ClInclude Include="Diagnostics\Assert.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\Error.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\Stopwatch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Algortihms.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Maths.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Maths\LinearAlgebra.tpp" />
-    <None Include="Maths\MathsExt.tpp" />
     <None Include="Utility\Event.tpp" />
     <None Include="Graphics\OpenGL.tpp" />
+    <None Include="Utility\Algorithms.tpp" />
+    <None Include="Maths\Maths.tpp" />
   </ItemGroup>
 </Project>

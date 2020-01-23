@@ -165,9 +165,9 @@
     <ClCompile Include="Graphics\Texture.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
-    <ClCompile Include="Utility\Assert.cpp" />
-    <ClCompile Include="Utility\Error.cpp" />
-    <ClCompile Include="Utility\Stopwatch.cpp" />
+    <ClCompile Include="Diagnostics\Assert.cpp" />
+    <ClCompile Include="Diagnostics\Error.cpp" />
+    <ClCompile Include="Diagnostics\Stopwatch.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
@@ -183,20 +183,20 @@
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Texture.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
-    <ClInclude Include="Maths\LinearAlgebra.hpp" />
-    <ClInclude Include="Maths\MathsExt.hpp" />
+    <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
-    <ClInclude Include="Utility\Assert.hpp" />
-    <ClInclude Include="Utility\Error.hpp" />
+    <ClInclude Include="Diagnostics\Assert.hpp" />
+    <ClInclude Include="Diagnostics\Error.hpp" />
+    <ClInclude Include="Utility\Algortihms.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
-    <ClInclude Include="Utility\Stopwatch.hpp" />
+    <ClInclude Include="Diagnostics\Stopwatch.hpp" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Graphics\OpenGL.tpp" />
-    <None Include="Maths\LinearAlgebra.tpp" />
-    <None Include="Maths\MathsExt.tpp" />
+    <None Include="Maths\Maths.tpp" />
+    <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,39 +1,47 @@
 #include "Units.hpp"
 
-namespace cbn::units
+namespace cbn
 {
+
 	//-------------------------------------------------------------------------------------
 
-	TimeUnit::TimeUnit(const double ratio, const std::string& prefix)
+	double Unit::convert(const double value, const Unit& from, const Unit& to)
+	{
+		return value * from.get_base_unit_ratio() / to.get_base_unit_ratio();
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	Unit::Unit(const double ratio, const std::string& prefix)
 		: m_Ratio(ratio),
 		 m_Prefix(prefix) {}
 	
 	//-------------------------------------------------------------------------------------
 
-	const std::string& TimeUnit::get_prefix() const
+	double Unit::convert_to(const double value, const Unit& to_unit) const
+	{
+		return convert(value, *this, to_unit);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	const std::string& Unit::get_prefix() const
 	{
 		return m_Prefix;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	double TimeUnit::get_seconds_ratio() const
+	double Unit::get_base_unit_ratio() const
 	{
 		return m_Ratio;
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	std::ostream& operator<<(std::ostream& stream, const TimeUnit& time_unit)
+	std::ostream& operator<<(std::ostream& stream, const Unit& unit)
 	{
-		return stream << time_unit.get_prefix();
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	double convert(const double value, const TimeUnit& from, const TimeUnit& to)
-	{
-		return value * from.get_seconds_ratio() / to.get_seconds_ratio();
+		return stream << unit.get_prefix();
 	}
 
 	//-------------------------------------------------------------------------------------
