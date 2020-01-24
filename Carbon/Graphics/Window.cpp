@@ -13,7 +13,7 @@ namespace cbn
 
 		// We will determine whether a window exists for this context 
 		// based on whether the user pointer is set to null or not
-		if(glfwGetWindowUserPointer(graphics_context->m_Handle) != NULL)
+		if(glfwGetWindowUserPointer(graphics_context->m_GLFWHandle) != NULL)
 		{
 			// Since the user pointer isnt null, then a window already exists
 			// for this context so return nullptr to fail the creation of the window
@@ -21,7 +21,7 @@ namespace cbn
 		}
 
 		// If we are here, then we allowed to create a window for this context
-		Ptr<Window> window = Ptr<Window>(new Window(graphics_context->m_Handle));
+		Ptr<Window> window = Ptr<Window>(new Window(graphics_context->m_GLFWHandle));
 
 		// Set up the required GLFW callbacks, and user pointer for the window
 		glfwSetWindowUserPointer(window->m_ContextHandle, window.get());

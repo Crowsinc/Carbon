@@ -33,10 +33,10 @@ namespace cbn
 
 		static bool s_OpenGLLoaded;
 		static int s_ContextCount;
+
+		GLFWwindow* m_GLFWHandle;
 		const Version m_Version;
-		GLFWwindow* m_Handle;
 		bool m_DebugContext;
-	
 		
 		static bool try_initialize_debug_output(const Ptr<GraphicsContext>& context);
 

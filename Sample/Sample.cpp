@@ -13,7 +13,10 @@ cbn::Ptr<cbn::Window> window;
 
 int main()
 {
+	// Shader::FromFile("fwafwa", type)
+	// Shader::FromString("dwafwa", type);
 
+	// ShaderProgram::Create(shader1, shader2, shader3)
 
 	if((context = cbn::GraphicsContext::Create(cbn::Version(3, 2), false)) != nullptr)
 	{

@@ -141,8 +141,8 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	GraphicsContext::GraphicsContext(GLFWwindow* handle, const Version& version, const bool debug_context)
-		: m_Version(version),
-		m_Handle(handle),
+		: m_GLFWHandle(handle),
+		m_Version(version),
 		m_DebugContext(debug_context)
 	{
 		CBN_Assert(handle != nullptr, "Cannot instantiate GraphicsContext with invalid handle");
@@ -159,7 +159,7 @@ namespace cbn
 		s_ContextCount--;
 
 		// Destroy the context
-		glfwDestroyWindow(m_Handle);
+		glfwDestroyWindow(m_GLFWHandle);
 
 		// If this was the last existing valid context, then terminate GLFW
 		if(s_ContextCount == 0)
@@ -234,7 +234,7 @@ namespace cbn
 	void GraphicsContext::bind_to_current_thread() const
 	{
 
-		glfwMakeContextCurrent(m_Handle);
+		glfwMakeContextCurrent(m_GLFWHandle);
 	}
 	
 	//-------------------------------------------------------------------------------------
