@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Carbon", "Carbon\Carbon.vcxproj", "{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample", "Sample\Sample.vcxproj", "{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB} = {E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,16 +22,16 @@ Global
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Debug|x64.Build.0 = Debug|x64
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Debug|x86.ActiveCfg = Debug|Win32
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Debug|x86.Build.0 = Debug|Win32
-		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x64.ActiveCfg = Release|x64
-		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x64.Build.0 = Release|x64
+		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x64.ActiveCfg = Debug|x64
+		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x64.Build.0 = Debug|x64
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x86.ActiveCfg = Release|Win32
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}.Release|x86.Build.0 = Release|Win32
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Debug|x64.ActiveCfg = Debug|x64
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Debug|x64.Build.0 = Debug|x64
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Debug|x86.ActiveCfg = Debug|Win32
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Debug|x86.Build.0 = Debug|Win32
-		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x64.ActiveCfg = Release|x64
-		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x64.Build.0 = Release|x64
+		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x64.ActiveCfg = Debug|x64
+		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x64.Build.0 = Debug|x64
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x86.ActiveCfg = Release|Win32
 		{B669D7B8-42CB-4D89-A9DF-F81C205E50A5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection

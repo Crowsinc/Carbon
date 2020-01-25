@@ -81,7 +81,7 @@ namespace cbn
 			// could not be initialized, then we will consider the context creation
 			// to have failed, so return nullptr. Note that when the context goes out
 			// of scope, the handle will be cleaned up
-			if(!try_initialize_debug_output(context))
+			if(!try_set_debug_output(context))
 			{
 				return nullptr;
 			}
@@ -93,7 +93,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	bool GraphicsContext::try_initialize_debug_output(const Ptr<GraphicsContext>& context)
+	bool GraphicsContext::try_set_debug_output(const Ptr<GraphicsContext>& context)
 	{
 		// Check that the context is actually a debug context
 		GLint context_flag;

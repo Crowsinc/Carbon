@@ -38,7 +38,7 @@ namespace cbn
 		const Version m_Version;
 		bool m_DebugContext;
 		
-		static bool try_initialize_debug_output(const Ptr<GraphicsContext>& context);
+		static bool try_set_debug_output(const Ptr<GraphicsContext>& context);
 
 		static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param);
 

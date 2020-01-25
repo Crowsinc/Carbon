@@ -157,7 +157,6 @@
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Graphics\GraphicsContext.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
-    <ClCompile Include="Graphics\QuadRenderer.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
     <ClCompile Include="Graphics\ShaderProgram.cpp" />
     <ClCompile Include="Graphics\Sprite.cpp" />
@@ -196,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Graphics\OpenGL.tpp" />
+    <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Maths\Maths.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Maths.hpp"
 
 #include <type_traits>
@@ -36,7 +34,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::mat4 create_transform_2d(const glm::vec2& translation, const glm::vec2& scale, const float rotation_radians)
+	inline glm::mat4 create_transform_2d(const glm::vec2& translation, const glm::vec2& scale, const float rotation_radians)
 	{
 		const float cos_value = cosf(rotation_radians);
 		const float sin_value = sinf(rotation_radians);
@@ -70,7 +68,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::mat4 create_orthographic_2d(const float left, const float right, const float bottom, const float top)
+	inline glm::mat4 create_orthographic_2d(const float left, const float right, const float bottom, const float top)
 	{
 		// Create a 2D orthographic matrix as a 4x4 matrix that
 		// has no information about the zfar and znear planes.
@@ -101,7 +99,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::mat4 create_view_2d(const glm::vec2& translation, const float rotation_radians)
+	inline glm::mat4 create_view_2d(const glm::vec2& translation, const float rotation_radians)
 	{
 		const float cos_value = cosf(rotation_radians);
 		const float sin_value = sinf(rotation_radians);
@@ -135,7 +133,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 fast_2d_transform(const glm::vec2& point, const glm::mat4& transform)
+	inline glm::vec2 fast_2d_transform(const glm::vec2& point, const glm::mat4& transform)
 	{
 		// Transform point with the directly required values in the transform matrix
 		// rather than performing all operations on each component of the matrix.
@@ -150,7 +148,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	//TODO: double check proper multiplications (using glm multiplication function)
-	glm::mat4 vp_fast_multiply_2d(const glm::mat4& view_matrix, const glm::mat4 projection_matrix)
+	inline glm::mat4 vp_fast_multiply_2d(const glm::mat4& view_matrix, const glm::mat4 projection_matrix)
 	{
 		// Since the view and projection matrices have specific structures, we can optimize the
 		// matrix multiplication by skipping operations which we know will result in a value that matches
@@ -183,7 +181,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	//TODO: double check proper multiplications (using glm multiplication function)
-	glm::mat4 mvp_fast_multiply_2d(const glm::mat4& vp_matrix, const glm::mat4 transform_matrix)
+	inline glm::mat4 mvp_fast_multiply_2d(const glm::mat4& vp_matrix, const glm::mat4 transform_matrix)
 	{
 		// Since the vp and transform matrices have specific structures, we can optimize the
 		// matrix multiplication by skipping operations which we know will result in a value that matches
@@ -216,10 +214,11 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	//TODO: double check proper multiplications (using glm multiplication function)
-	glm::mat4 mvp_fast_multiply_2d(const glm::mat4& transform_matrix, const glm::mat4 view_matrix, const glm::mat4& projection_matrix)
+	inline glm::mat4 mvp_fast_multiply_2d(const glm::mat4& transform_matrix, const glm::mat4 view_matrix, const glm::mat4& projection_matrix)
 	{
 		return mvp_fast_multiply_2d(vp_fast_multiply_2d(view_matrix, projection_matrix), transform_matrix);
 	}
+	
 	//-------------------------------------------------------------------------------------
 
 }

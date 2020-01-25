@@ -13,7 +13,7 @@ namespace cbn
 	{
 	public:
 
-		Ptr<ShaderProgram> Create(const Ptr<Shader>& vertex_shader, const Ptr<Shader>& geometry_shader, const Ptr<Shader>& fragment_shader, std::string& error_log);
+		static Ptr<ShaderProgram> Create(const Ptr<Shader>& vertex_shader, const Ptr<Shader>& geometry_shader, const Ptr<Shader>& fragment_shader, std::string& error_log);
 
 	private:
 

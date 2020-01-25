@@ -137,5 +137,6 @@
     <None Include="Graphics\OpenGL.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Maths\Maths.tpp" />
+    <None Include="Graphics\QuadRenderer.tpp" />
   </ItemGroup>
 </Project>

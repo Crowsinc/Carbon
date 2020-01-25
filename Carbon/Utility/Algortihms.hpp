@@ -11,6 +11,16 @@ namespace cbn
 
 	// Vector Algorithms
 
+//	template<typename T>
+//	void swap_erase(T* start, T* end, const size_t index);
+//
+//	template<typename T>
+//	bool remove_all(T* start, T* end, const T value);
+//
+//	template<typename T>
+//	bool contains(T* start, T* end, const T value);
+
+
 	template<typename T>
 	void swap_erase(std::vector<T>& container, const size_t index);
 
@@ -37,7 +47,6 @@ namespace cbn
 	std::string_view right_trim(const std::string_view& str);
 
 	std::string_view trim(const std::string_view& str);
-
 
 }
 

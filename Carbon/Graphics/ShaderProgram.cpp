@@ -17,6 +17,15 @@ namespace cbn
 		// Make sure that at least vertex shader and fragment shader have been supplied 
 		if(vertex_shader == nullptr || fragment_shader == nullptr)
 		{
+			error_log = "Shader missing";
+			return nullptr;
+		}
+
+		// Make sure each shader has the correct pipeline stage
+		if(vertex_shader->get_pipeline_stage() != Shader::Stage::VERTEX || fragment_shader->get_pipeline_stage() != Shader::Stage::FRAGMENT ||
+			(geometry_shader != nullptr && geometry_shader->get_pipeline_stage() != Shader::Stage::GEOMETRY))
+		{
+			error_log = "Incorrect shader pipeline stage";
 			return nullptr;
 		}
 
