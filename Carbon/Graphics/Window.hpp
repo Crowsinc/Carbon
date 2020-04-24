@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string>
 #include <glm/glm.hpp>
 
-#include "../Utility/Event.hpp"
-#include "GraphicsContext.hpp"
 #include "OpenGL.hpp"
+#include "../Utility/Event.hpp"
+#include "../Utility/Version.hpp"
+#include "../Utility/Resource.hpp"
 
 namespace cbn
 {
@@ -12,54 +14,69 @@ namespace cbn
 	class Window
 	{
 	public:
-
+		
 		enum class DisplayMode
 		{
 			BORDERLESS,
 			FULLSCREEN,
 			RESIZABLE,
-			WINDOWED,
+			WINDOWED
 		};
 
+		Event<std::string, GLenum, GLenum> ErrorEvent;
 		Event<DisplayMode> DisplayModeChangeEvent;
 		Event<glm::vec2> ResolutionChangeEvent;
 		Event<std::string> TitleChangeEvent;
 		Event<bool> VisibilityChangeEvent;
-		Event<void> CloseRequestEvent; 
+		Event<void> CloseRequestEvent;
+		Event<bool> FocusChangeEvent;
 		Event<bool> VSyncChangeEvent;
-		Event<bool> FocusEvent;
+
+		struct Properties
+		{
+			bool vsync;
+			std::string title;
+			glm::vec2 resolution;
+			DisplayMode display_mode;
 		
-		static Ptr<Window> Create(Ptr<GraphicsContext>& graphics_context);
+			bool opengl_debug;
+			Version opengl_version;
+		};
+
+		static Res<Window> Create(Properties window_properties);
 
 	private:
 
-		GLFWwindow* m_ContextHandle;
+		static bool s_OpenGLLoaded;
 		DisplayMode m_DisplayMode;
+		GLFWwindow* m_GLFWHandle;
+		Version m_OpenGLVersion;
 		glm::vec2 m_Resolution;
 		std::string m_Title;
-		bool m_VSyncEnabled;
+		bool m_OpenGLDebug;
+		bool m_VSync;
 
-		static void window_resize_callback(GLFWwindow* window_handle, int width, int height);
+		static void gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param);
 
-		static void window_focus_callback(GLFWwindow* window_handle, int is_focused);
+		static void glfw_resize_callback(GLFWwindow* glfw_handle, int width, int height);
 
-		static void window_close_callback(GLFWwindow* window_handle);
+		static void glfw_focus_callback(GLFWwindow* glfw_handle, int is_focused);
 
-		GLFWmonitor* determine_monitor();
+		static void glfw_close_callback(GLFWwindow* glfw_handle);
 
-		void make_fullscreen();
+		static void glfw_set_display_mode(GLFWwindow* glfw_handle, DisplayMode display_mode);
 
-		void make_borderless();
+		static GLFWmonitor* glfw_find_window_monitor(GLFWwindow* glfw_handle);
 
-		void make_resizable();
+		Window(GLFWwindow* glfw_handle, Properties properties);
 
-		void make_windowed();
-
-		Window(GLFWwindow* context_handle);
-
+		static void Delete(Window& window);
+		
 	public:
 
-		~Window();
+		Window(const Window& window) = delete;
+
+		Window(Window&& window);
 
 		void show();
 
@@ -72,24 +89,29 @@ namespace cbn
 		bool is_visible() const;
 
 		bool is_focused() const;
-		
+
 		bool is_vsync_enabled() const;
-		
+
+		bool is_debug_enabled() const;
+
 		glm::vec2 get_resolution() const;
 
 		std::string_view get_title() const;
-		
+
+		DisplayMode get_display_mode() const;
+
+		const Version get_opengl_version() const;
+
 		void set_vsync(const bool enable_vsync);
-		
+
 		void set_title(const std::string& title);
-		
+
 		void set_resolution(const glm::vec2& resolution);
-		
+
 		void set_display_mode(const DisplayMode display_mode);
+		
+		void operator=(Window&& window);
 
-		//TODO: void set_monitor(const GLFWmonitor& monitor); get_monitor etc.
-
-		//TODO: void set_icon(Image& image); get_icon etc. // complete when we make an image util class
 	};
 
 }

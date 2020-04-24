@@ -48,7 +48,7 @@ namespace cbn
 		std::vector<GLsync> m_BufferSectionLocks;
 		VertexArrayObject m_VertexArrayObject;
 		QuadLayout* m_SectionWritePointer;
-		glm::mat3 m_ViewProjectionMatrix;
+		glm::mat4 m_ViewProjectionMatrix;
 		QuadLayout* m_BufferBasePointer;
 		VertexBuffer m_StreamBuffer;
 		GLsizei m_CurrentBatchSize;

@@ -12,10 +12,10 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Ptr<ShaderProgram> ShaderProgram::Create(const Ptr<Shader>& vertex_shader, const Ptr<Shader>& geometry_shader, const Ptr<Shader>& fragment_shader, std::string& error_log)
+	Res<ShaderProgram> ShaderProgram::Create(const Res<Shader>& vertex_shader, const Res<Shader>& geometry_shader, const Res<Shader>& fragment_shader, std::string& error_log)
 	{
 		// Make sure that at least vertex shader and fragment shader have been supplied 
-		if(vertex_shader == nullptr || fragment_shader == nullptr)
+		if(!vertex_shader.exists() || !fragment_shader.exists())
 		{
 			error_log = "Shader missing";
 			return nullptr;
@@ -23,21 +23,21 @@ namespace cbn
 
 		// Make sure each shader has the correct pipeline stage
 		if(vertex_shader->get_pipeline_stage() != Shader::Stage::VERTEX || fragment_shader->get_pipeline_stage() != Shader::Stage::FRAGMENT ||
-			(geometry_shader != nullptr && geometry_shader->get_pipeline_stage() != Shader::Stage::GEOMETRY))
+			(geometry_shader.exists() && geometry_shader->get_pipeline_stage() != Shader::Stage::GEOMETRY))
 		{
 			error_log = "Incorrect shader pipeline stage";
 			return nullptr;
 		}
 
 		// Create a shader program to generate its OpenGL object
-		Ptr<ShaderProgram> program = Ptr<ShaderProgram>(new ShaderProgram());
+		Res<ShaderProgram> program = Res<ShaderProgram>::Wrap(ShaderProgram{},&ShaderProgram::destroy);
 
 		// Attach all the shaders to the shader program
 		glAttachShader(program->m_ProgramID, vertex_shader->m_ShaderID);
 		glAttachShader(program->m_ProgramID, fragment_shader->m_ShaderID);
 
 		// The geometry shader is optional so check if it is given
-		if(geometry_shader != nullptr)
+		if(geometry_shader.exists())
 		{
 			glAttachShader(program->m_ProgramID, geometry_shader->m_ShaderID);
 		}
@@ -83,7 +83,7 @@ namespace cbn
 		glDetachShader(program->m_ProgramID, fragment_shader->m_ShaderID);
 
 		// The geometry shader is optional so check if it is given
-		if(geometry_shader != nullptr)
+		if(geometry_shader.exists())
 		{
 			program->find_shader_uniform_locations(geometry_shader);
 			glDetachShader(program->m_ProgramID, geometry_shader->m_ShaderID);
@@ -95,10 +95,10 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::find_shader_uniform_locations(const Ptr<Shader>& shader)
+	void ShaderProgram::find_shader_uniform_locations(const Shader& shader)
 	{
 		// Go through all the uniform names in the shader and get their locations
-		auto uniform_names = shader->get_uniform_names();
+		auto uniform_names = shader.get_uniform_names();
 		for(std::string& uniform_name : uniform_names)
 		{
 			// Only try to the uniform location if the uniform name doesn't already exist
@@ -118,19 +118,19 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
+	void ShaderProgram::destroy(ShaderProgram& program)
+	{
+		// Make sure we delete the program to avoid memory leaks
+		glDeleteProgram(program.m_ProgramID);
+	}
+
+	//-------------------------------------------------------------------------------------
+
 	ShaderProgram::ShaderProgram()
 		: m_ProgramID(NULL)
 	{
 		// Create the shader program 
 		m_ProgramID = glCreateProgram();
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	ShaderProgram::~ShaderProgram()
-	{
-		// Make sure we delete the program to avoid memory leaks
-		glDeleteProgram(m_ProgramID);
 	}
 	
 	//-------------------------------------------------------------------------------------

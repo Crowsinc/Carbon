@@ -9,14 +9,15 @@ namespace cbn
 	{
 	private:
 
-
-		bool m_ViewCacheOutdated, m_ProjectionCacheOutdated;
-		glm::mat3 m_ViewCache, m_ProjectionCache;
+		constexpr static float s_MinimumZoomValue = 0.0001f;
+		
+		mutable bool m_ViewCacheOutdated, m_ProjectionCacheOutdated;
+		mutable glm::mat4 m_ViewCache, m_ProjectionCache;
+		
 		glm::vec2 m_Resolution, m_CenterOffset;
-		bool m_InterpolationComplete;
-		const float m_MaximumZoom;
-		float m_LastZoom, m_Zoom;
-		Transform m_Transform;
+		float m_Rotation, m_Zoom;
+		glm::vec2 m_Translation;
+
 
 	public:
 
@@ -52,8 +53,6 @@ namespace cbn
 
 		void set_resolution(const glm::vec2& resolution);
 
-		void update_interpolation();
-
 		float get_zoom() const;
 
 		float get_rotation_degrees() const;
@@ -62,25 +61,11 @@ namespace cbn
 
 		const glm::vec2& get_translation() const;
 
-		float get_zoom(float interp_factor) const;
-
-		glm::vec2 get_translation(float interp_factor) const;
-
-		float get_rotation_degrees(float interp_factor) const;
-
-		float get_rotation_radians(float interp_factor) const;
-
 		const glm::vec2& get_resolution() const;
 
-		bool is_interpolation_complete() const;
+		glm::mat4 to_projection_matrix();
 
-		glm::mat3 to_projection_matrix(); // Note, not a real projection matrix
-
-		glm::mat3 to_projection_matrix(float interp_factor); // Note, not a real projection matrix
-
-		glm::mat3 to_view_matrix();
-
-		glm::mat4 to_view_matrix(float interp_factor);
+		glm::mat4 to_view_matrix();
 
 	};
 

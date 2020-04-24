@@ -2,83 +2,111 @@
 
 namespace cbn
 {
-	
+
 	//-------------------------------------------------------------------------------------
 
-	Ptr<Window> Window::Create(Ptr<GraphicsContext>& graphics_context)
+	bool Window::s_OpenGLLoaded = false;
+
+	//-------------------------------------------------------------------------------------
+
+	void Window::gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param)
 	{
-		// While window creation normally has no reason to fail, we will perform
-		// checks to ensure that only a single window is created per graphics context
-		// in order to ensure that the user pointers and callbacks for the window will work properly
-
-		// We will determine whether a window exists for this context 
-		// based on whether the user pointer is set to null or not
-		if(glfwGetWindowUserPointer(graphics_context->m_GLFWHandle) != NULL)
-		{
-			// Since the user pointer isnt null, then a window already exists
-			// for this context so return nullptr to fail the creation of the window
-			return nullptr;
-		}
-
-		// If we are here, then we allowed to create a window for this context
-		Ptr<Window> window = Ptr<Window>(new Window(graphics_context->m_GLFWHandle));
-
-		// Set up the required GLFW callbacks, and user pointer for the window
-		glfwSetWindowUserPointer(window->m_ContextHandle, window.get());
-		glfwSetWindowCloseCallback(window->m_ContextHandle, &Window::window_close_callback);
-		glfwSetWindowFocusCallback(window->m_ContextHandle, &Window::window_focus_callback);
-		glfwSetWindowSizeCallback(window->m_ContextHandle, &Window::window_resize_callback);
-
-		// Return the successfully created window
-		return window;
+		// The user parameter is a GLFW window handle, which is itself associated 
+		// with the window object that contains the error event that needs to be called
+		const Window* window = static_cast<Window*>(glfwGetWindowUserPointer((GLFWwindow*)user_param));
+		window->ErrorEvent.invoke(std::string(message), source, severity);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void Window::window_resize_callback(GLFWwindow* window_handle, int width, int height)
+	void Window::glfw_resize_callback(GLFWwindow* glfw_handle, int width, int height)
 	{
-		// Get the window from the handle's user pointer
-		Window* window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window_handle));
-
-		// Invoke the resolution change event
-		window->ResolutionChangeEvent.invoke(glm::vec2(width, height));
+		Window* window = static_cast<Window*>(glfwGetWindowUserPointer(glfw_handle));
+		
+		// If the display mode is changed or is RESIZABLE, the window can be resized 
+		// without using the set_resolution function hence we need to update the resolution
+		// attribute of the window. We also want to invoke the property change event. 
+		window->m_Resolution = glm::vec2(width, height);
+		window->ResolutionChangeEvent.invoke(window->m_Resolution);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void Window::window_focus_callback(GLFWwindow* window_handle, int is_focused)
+	void Window::glfw_focus_callback(GLFWwindow* glfw_handle, int is_focused)
 	{
-		// Get the window from the handle's user pointer
-		Window* window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window_handle));
-
-		// Invoke the focus change event
-		window->FocusEvent.invoke(is_focused);
+		const Window* window = static_cast<const Window*>(glfwGetWindowUserPointer(glfw_handle));
+		window->FocusChangeEvent.invoke(is_focused);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void Window::window_close_callback(GLFWwindow* window_handle)
+	void Window::glfw_close_callback(GLFWwindow * glfw_handle)
 	{
-		// Get the window from the handle's user pointer
-		Window* window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window_handle));
-
-		// Invoke the close requested event
+		const Window* window = static_cast<Window*>(glfwGetWindowUserPointer(glfw_handle));
 		window->CloseRequestEvent.invoke();
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	GLFWmonitor* Window::determine_monitor()
+	void Window::glfw_set_display_mode(GLFWwindow* glfw_handle, DisplayMode display_mode)
+	{
+		// Set window default window attributes which are common to most display modes
+		glfwSetWindowAttrib(glfw_handle, GLFW_RESIZABLE, GLFW_FALSE);
+		glfwSetWindowAttrib(glfw_handle, GLFW_DECORATED, GLFW_TRUE);
+
+		// Get the monitor that the window is within in order to make sure that 
+		// the window stays on this monitor when the display mode is changed
+		GLFWmonitor* monitor = glfw_find_window_monitor(glfw_handle);
+		const GLFWvidmode* video_mode = glfwGetVideoMode(monitor);
+
+		switch(display_mode)
+		{
+			case DisplayMode::BORDERLESS:
+				// Remove the border of the window, then follow normal fullscreen creation
+				glfwSetWindowAttrib(glfw_handle, GLFW_DECORATED, GLFW_FALSE);
+			case DisplayMode::FULLSCREEN:
+			{
+				// Update the window to be fullscreen within the monitor
+				glfwSetWindowMonitor(glfw_handle, monitor, 0, 0, video_mode->width, video_mode->height, GLFW_DONT_CARE);
+				break;
+			}
+		
+			case DisplayMode::RESIZABLE:
+				// Make the window resizable then follow normal windowed window creation
+				glfwSetWindowAttrib(glfw_handle, GLFW_RESIZABLE, GLFW_TRUE);
+			case DisplayMode::WINDOWED:
+			{
+				int width, height;
+				glfwGetWindowSize(glfw_handle, &width, &height);
+
+				// Find the required window position in order to keep the window centred 
+				// on the monitor when it is windowed. The window position specified is for 
+				// the top left corner so take half the resolution off the window resolution
+				int position_x = static_cast<int>((video_mode->width  / 2) - (width  / 2));
+				int position_y = static_cast<int>((video_mode->height / 2) - (height / 2));
+
+				// Set the window to be windowed
+				glfwSetWindowMonitor(glfw_handle, nullptr, position_x, position_y, width, height, GLFW_DONT_CARE);
+				break;
+			}
+			default:
+				CBN_Assert(false, "Unknown display mode");
+		}
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	GLFWmonitor* Window::glfw_find_window_monitor(GLFWwindow * glfw_handle)
 	{
 		// To determine which monitor the window is currently in, we will
-		// compare the position of the window to the coords of the monitors
+        // compare the position of the window to the coords of the monitors
 
 		GLFWmonitor** monitors;
 		int window_x, window_y, monitor_count;
 
 		// Get all monitors and the window position
 		monitors = glfwGetMonitors(&monitor_count);
-		glfwGetWindowPos(m_ContextHandle, &window_x, &window_y);
+		glfwGetWindowPos(glfw_handle, &window_x, &window_y);
 
 		// Iterate through monitors until we find which one the window is within 
 		for(int i = 0; i < monitor_count; i++) {
@@ -107,276 +135,297 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void Window::make_fullscreen()
+	Res<Window> Window::Create(Properties window_properties)
 	{
-		// Update the window attributes to make the window have a frame and not be resizable
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_TRUE);
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_FALSE);
 
-		// Get the monitor that the window is within, we will fullscreen on this monitor
-		const auto monitor = determine_monitor();
-		auto video_mode = glfwGetVideoMode(monitor);
+		// Initialize GLFW for the first time. If GLFW is already initialized then it 
+		// will immediately return true. If false is returned, initialization failed.
+		if(glfwInit() == GLFW_FALSE)
+		{
+			return nullptr;
+		}
 
-		// Update the window to be fullscreen within the monitor
-		glfwSetWindowMonitor(m_ContextHandle, monitor, 0, 0, video_mode->width, video_mode->height, GLFW_DONT_CARE);
+		// If an OpenGL version is specified then we want to create a context using that version
+		if(window_properties.opengl_version != Version{0,0,0})
+		{
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, window_properties.opengl_version.get_major_version());
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, window_properties.opengl_version.get_minor_version());
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		}
 
-		// Update the display mode member for the window and invoke the display mode change event
-		DisplayModeChangeEvent.invoke(DisplayMode::FULLSCREEN);
-		m_DisplayMode = DisplayMode::FULLSCREEN;
+		// If debug context is set then we will attempt to create a debug context for debug output
+		// This is standard as of OpenGL 4.3, however is still supported if the GL_ARB_debug_output
+		// extension is supported. We will have to query for its support after context creation
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, window_properties.opengl_debug ? GLFW_TRUE : GLFW_FALSE);
 
+		// We don't want the window to be visible until context creation has fully succeeded
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+		// Use default values to create the window, if initialization succeeds then these
+		// settings will be updated so the actual values specified don't matter that much.
+		GLFWwindow* glfw_handle = NULL;
+		if((glfw_handle = glfwCreateWindow(1280, 720, "Untitled Window", NULL, NULL)) == NULL)
+		{
+			return nullptr;
+		}
+
+		glfwMakeContextCurrent(glfw_handle);
+
+		// Load the required OpenGL functions from the driver if they haven't been loaded yet
+		if(!s_OpenGLLoaded)
+		{
+			if(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == NULL)
+			{
+				// If the OpenGL functions could not be loaded, then window 
+				// creation has failed so the window needs to be destroyed
+				glfwDestroyWindow(glfw_handle);
+				return nullptr;
+			}
+			s_OpenGLLoaded = true;
+		}
+
+		// Set up the callback for the OpenGL debug context. 
+		// This will fail if a debug context was not created 
+		if(window_properties.opengl_debug)
+		{
+			// Debug ouput is only supported post OpenGL 4.3. Earlier versions will 
+			// need to make use of the GLAD_GL_ARB_debug_output extension if supported
+			if(window_properties.opengl_version >= Version(4, 3))
+			{
+				glDebugMessageCallback(&Window::gl_error_callback, glfw_handle);
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+				glEnable(GL_DEBUG_OUTPUT);
+			}
+			else if(GLAD_GL_ARB_debug_output)
+			{
+				glDebugMessageCallbackARB(&Window::gl_error_callback, glfw_handle);
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+				glEnable(GL_DEBUG_OUTPUT);
+			}
+			else return nullptr;
+		}
+
+		// The OpenGL version specified in properties may not match the actual version of the context
+		// which gets created. Especially if no OpenGL version was specified in the first place. 
+		window_properties.opengl_version = {static_cast<unsigned>(GLVersion.major), static_cast<unsigned>(GLVersion.minor)};
+
+		// If we have made it here, then the window was successfully created
+		return cbn::Res<Window>::Wrap({glfw_handle, window_properties}, &Window::Delete);
 	}
-
-	//-------------------------------------------------------------------------------------
-
-	void Window::make_borderless()
-	{
-		//TODO: note that this make not actually be making a borderless fullscreen window?
-
-		// Update the display mode to be fullscreen, 
-		make_fullscreen();
-
-		// Update the window attributes so that its not decorated
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_FALSE);
-
-		// Update the display mode member for the window and invoke the display mode change event
-		DisplayModeChangeEvent.invoke(DisplayMode::BORDERLESS);
-		m_DisplayMode = DisplayMode::BORDERLESS;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void Window::make_resizable()
-	{
-		// Update the display mode to be windowed, 
-		make_windowed();
-
-		// Update the window attributes so that its resizable
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_TRUE);
 	
-		// Update the display mode member for the window and invoke the display mode change event
-		DisplayModeChangeEvent.invoke(DisplayMode::RESIZABLE);
-		m_DisplayMode = DisplayMode::RESIZABLE;
-	}
-
 	//-------------------------------------------------------------------------------------
 
-	void Window::make_windowed()
+	void Window::Delete(Window& window)
 	{
-		// Update the window attributes to make the window have a frame and not be resizable
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_DECORATED, GLFW_TRUE);
-		glfwSetWindowAttrib(m_ContextHandle, GLFW_RESIZABLE, GLFW_FALSE);
-
-		// Get the monitor that the window is within, this will be used
-		// to determine where the window should be positioned once its made windowed
-		const auto monitor = determine_monitor();
-		auto video_mode = glfwGetVideoMode(monitor);
-
-		// Find the correct positions to center the window
-		int position_x = static_cast<int>((video_mode->width / 2) - (m_Resolution.x / 2));
-		int position_y = static_cast<int>((video_mode->height / 2) - (m_Resolution.y / 2));
-
-		// Set the window to be windowed
-		glfwSetWindowMonitor(m_ContextHandle, nullptr, position_x, position_y, static_cast<int>(m_Resolution.x), static_cast<int>(m_Resolution.y), GLFW_DONT_CARE);
-
-		// Update the display mode member for the window and invoke the display mode change event
-		DisplayModeChangeEvent.invoke(DisplayMode::WINDOWED);
-		m_DisplayMode = DisplayMode::WINDOWED;
+		glfwDestroyWindow(window.m_GLFWHandle);
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
-	Window::Window(GLFWwindow* context_handle)
-		: m_ContextHandle(context_handle)
+	Window::Window(GLFWwindow* glfw_handle, Properties properties)
+		: m_OpenGLVersion(properties.opengl_version),
+		  m_OpenGLDebug(properties.opengl_debug),
+		  m_GLFWHandle(glfw_handle)
 	{
-		// Update window to its default setup, this will also
-		// set the default values for the window members
-		set_display_mode(DisplayMode::WINDOWED);
-		set_title("Untitled Window");
-		set_resolution({1280, 720});
-		set_vsync(false);
+		CBN_Assert(glfw_handle != NULL, "Handle cannot be nullptr");
+
+		set_vsync(properties.vsync);
+		set_title(properties.title);
+		set_resolution(properties.resolution);
+		set_display_mode(properties.display_mode);
+	
+		glfwSetWindowUserPointer(glfw_handle, this);
+		glfwSetWindowSizeCallback(glfw_handle, &Window::glfw_resize_callback);
+		glfwSetWindowCloseCallback(glfw_handle, &Window::glfw_close_callback);
+		glfwSetWindowFocusCallback(glfw_handle, &Window::glfw_focus_callback);
+	
 		show();
-
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	Window::~Window()
+	Window::Window(Window&& window)
+		: m_DisplayMode(window.m_DisplayMode),
+		  m_GLFWHandle(window.m_GLFWHandle),
+		  m_OpenGLVersion(window.m_OpenGLVersion),
+		  m_Resolution(window.m_Resolution),
+		  m_Title(window.m_Title),
+		  m_OpenGLDebug(window.m_OpenGLDebug),
+		  m_VSync(window.m_VSync)
 	{
-		// Since the window handle is actually managed by the GraphicsContext, when 
-		// the window goes out of scope we will simply hide the window. This way, another
-		// window can simply be created from the same context in the future. 
-		hide();
-
-		// Reset the user pointer to null as this is what we are using to check if a 
-		// window already exists for a context in the Create() function
-		glfwSetWindowUserPointer(m_ContextHandle, NULL);
+		// Since this new window object will now control the GLFW handle, we need to update the user pointer
+		glfwSetWindowUserPointer(m_GLFWHandle, this);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	void Window::show()
 	{
-		// Only show the window if its hidden
 		if(is_visible()) return;
-
-		// Show the window and invoke the visibility change event
-		glfwShowWindow(m_ContextHandle);
+		
+		glfwShowWindow(m_GLFWHandle);
 		VisibilityChangeEvent.invoke(true);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void Window::hide()
 	{
-		// Only hide the window if its visible
 		if(!is_visible()) return;
-		
-		// Hide the window and invoke the visibility change event
-		glfwShowWindow(m_ContextHandle);
+
+		glfwShowWindow(m_GLFWHandle);
 		VisibilityChangeEvent.invoke(false);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void Window::focus()
 	{
-		// Only focus the window if its not focused already
 		if(is_focused()) return;
 
 		// Focus the window, note that we do not need to invoke
 		// the event since it is handled by the GLFW callback
-		glfwFocusWindow(m_ContextHandle);
+		glfwFocusWindow(m_GLFWHandle);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void Window::update()
 	{
 		// Swap the buffers to show the latest frame buffer
-		glfwSwapBuffers(m_ContextHandle);
+		glfwSwapBuffers(m_GLFWHandle);
 
 		// Poll all input events
 		glfwPollEvents();
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool Window::is_visible() const
 	{
-		return glfwGetWindowAttrib(m_ContextHandle, GLFW_VISIBLE) == GLFW_TRUE;
+		return glfwGetWindowAttrib(m_GLFWHandle, GLFW_VISIBLE) == GLFW_TRUE;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool Window::is_focused() const
 	{
-		return glfwGetWindowAttrib(m_ContextHandle, GLFW_FOCUSED) == GLFW_TRUE;
+		return glfwGetWindowAttrib(m_GLFWHandle, GLFW_FOCUSED) == GLFW_TRUE;
 	}
-	
-	//-------------------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------------------
+	
 	bool Window::is_vsync_enabled() const
 	{
-		return m_VSyncEnabled;
+		return m_VSync;
 	}
-	
-	//-------------------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------------------
+	
+	bool Window::is_debug_enabled() const
+	{
+		return m_OpenGLDebug;
+	}
+
+	//-------------------------------------------------------------------------------------
+	
 	glm::vec2 Window::get_resolution() const
 	{
 		return m_Resolution;
 	}
-	
-	//-------------------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------------------
+	
 	std::string_view Window::get_title() const
 	{
 		return m_Title;
 	}
-	
-	//-------------------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------------------
+	
+	Window::DisplayMode Window::get_display_mode() const
+	{
+		return m_DisplayMode;
+	}
+
+	//-------------------------------------------------------------------------------------
+	
+	const Version Window::get_opengl_version() const
+	{
+		return m_OpenGLVersion;
+	}
+
+	//-------------------------------------------------------------------------------------
+	
 	void Window::set_vsync(const bool enable_vsync)
 	{
-		// Only update if we are actually changing the state of the window
-		if(enable_vsync != m_VSyncEnabled)
+		if(enable_vsync != m_VSync)
 		{
-			// Update the the swap interval based on whether we are enabling or disabling vsync
+			// A swap interval of 1 means that OpenGL will
+			// wait 1 refresh before swapping buffers.
 			glfwSwapInterval(enable_vsync ? 1 : 0);
 
-			// Update the vsync flag and invoke the vsync change event
+			m_VSync = enable_vsync;
 			VSyncChangeEvent.invoke(enable_vsync);
-			m_VSyncEnabled = enable_vsync;
 		}
 	}
-	
-	//-------------------------------------------------------------------------------------
 
-	void Window::set_title(const std::string& title)
+	//-------------------------------------------------------------------------------------
+	
+	void Window::set_title(const std::string & title)
 	{
-		// Only update if we are actually changing the state of the window
 		if(title != m_Title)
 		{
-			// Update the the swap interval based on whether we are enabling or disabling vsync
-			glfwSetWindowTitle(m_ContextHandle, title.c_str());
+			glfwSetWindowTitle(m_GLFWHandle, title.c_str());
 
-			// Update the title member and invoke the title change event
-			TitleChangeEvent.invoke(title);
 			m_Title = title;
+			TitleChangeEvent.invoke(title);
 		}
 	}
-	
-	//-------------------------------------------------------------------------------------
 
-	void Window::set_resolution(const glm::vec2& resolution)
+	//-------------------------------------------------------------------------------------
+	
+	void Window::set_resolution(const glm::vec2 & resolution)
 	{
-		// Only update if we are actually changing the state of the window
 		if(resolution != m_Resolution)
 		{
-			// Update the the swap interval based on whether we are enabling or disabling vsync
-			glfwSetWindowSize(m_ContextHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
+			glfwSetWindowSize(m_GLFWHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
 
-			// Update the resolution member, note that we do not need to 
-			// invoke the event as it will be invoked by the GLFW resize callback
+			// Update the resolution member but do not invoke the resolution
+			// change event since it will be automatically invoked by the resize callback
 			m_Resolution = resolution;
 		}
 	}
-	
-	//-------------------------------------------------------------------------------------
 
+	//-------------------------------------------------------------------------------------
+	
 	void Window::set_display_mode(const DisplayMode display_mode)
 	{
-		// Only update if we are actually changing the state of the window
 		if(display_mode != m_DisplayMode)
 		{
-			// Switch the display mode of the window
-			// Note that the event is invoked in the make_xx methods
-			switch(display_mode)
-			{
-				case DisplayMode::WINDOWED:
-				{
-					make_windowed();
-					break;
-				}
-				case DisplayMode::RESIZABLE:
-				{
-					make_resizable();
-					break;
-				}
-				case DisplayMode::BORDERLESS:
-				{
-					make_borderless();
-					break;
-				}
-				case DisplayMode::FULLSCREEN:
-				{
-					make_fullscreen();
-					break;
-				}
-			}
+			glfw_set_display_mode(m_GLFWHandle, display_mode);
+			
+			m_DisplayMode = display_mode;
+			DisplayModeChangeEvent.invoke(display_mode);
 		}
 	}
 	
+	//-------------------------------------------------------------------------------------
+
+	void Window::operator=(Window&& window)
+	{
+		m_OpenGLVersion = window.m_OpenGLVersion;
+		m_OpenGLDebug = window.m_OpenGLDebug;
+		m_DisplayMode = window.m_DisplayMode;
+		m_GLFWHandle = window.m_GLFWHandle;
+		m_Resolution = window.m_Resolution;
+		m_Title = window.m_Title;
+		m_VSync = window.m_VSync;
+	
+		// Since this new window object will now control the GLFW handle, we need to update the user pointer
+		glfwSetWindowUserPointer(m_GLFWHandle, this);
+	}
+
 	//-------------------------------------------------------------------------------------
 
 }

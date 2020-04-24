@@ -9,13 +9,11 @@ namespace cbn
 	{
 	private:
 
-		glm::vec2 m_LastTranslation, m_Translation;
-		float m_LastRotation, m_Rotation;
-		glm::vec2 m_LastScale, m_Scale;
-		bool m_InterpolationComplete;
-		
 		mutable glm::mat4 m_TransformCache;
 		mutable bool m_CacheOutdated;
+		
+		glm::vec2 m_Translation, m_Scale;
+		float m_Rotation;
 
 	public:
 
@@ -63,20 +61,6 @@ namespace cbn
 
 		glm::mat4 to_transform_matrix() const;
 		
-		void update_interpolation();
-
-		bool is_interpolation_complete() const;
-
-		glm::vec2 get_scale(float interp_factor) const;
-
-		glm::vec2 get_translation(float interp_factor) const;
-
-		float get_rotation_degrees(float interp_factor) const;
-
-		float get_rotation_radians(float interp_factor) const;
-
-		glm::mat4 to_transform_matrix(float interp_factor) const;
-
 	};
 
 }

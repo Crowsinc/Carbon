@@ -9,10 +9,10 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Ptr<Shader> Shader::Create(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
+	Res<Shader> Shader::Create(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
 	{
 		// Create a shader of the given pipeline stage
-		Ptr<Shader> shader = Ptr<Shader>(new Shader(pipeline_stage));
+		Res<Shader> shader = Res<Shader>::Wrap(Shader{pipeline_stage}, &Shader::destroy);
 
 		// Attempt to compile the given source into the shader, 
 		const GLchar* c_shader_source = shader_source.data();
@@ -46,6 +46,14 @@ namespace cbn
 
 		// The shader was successfully created so return it
 		return shader;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void Shader::destroy(Shader& shader)
+	{
+		// Delete the shader object to avoid memory leaks
+		glDeleteShader(shader.m_ShaderID);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -86,14 +94,6 @@ namespace cbn
 	{
 		// Create the shader OpenGL object in the correct pipeline stage
 		m_ShaderID = glCreateShader(static_cast<GLuint>(pipeline_stage));
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	Shader::~Shader()
-	{
-		// Delete the shader object to avoid memory leaks
-		glDeleteShader(m_ShaderID);
 	}
 
 	//-------------------------------------------------------------------------------------

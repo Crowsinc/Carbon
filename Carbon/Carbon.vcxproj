@@ -155,7 +155,6 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Graphics\Camera.cpp" />
-    <ClCompile Include="Graphics\GraphicsContext.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
     <ClCompile Include="Graphics\ShaderProgram.cpp" />
@@ -166,13 +165,12 @@
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
-    <ClCompile Include="Utility\Image.cpp" />
+    <ClCompile Include="IO\Image.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Camera.hpp" />
-    <ClInclude Include="Graphics\GraphicsContext.hpp" />
     <ClInclude Include="Graphics\OpenGL.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
     <ClInclude Include="Graphics\QuadRenderer.hpp" />
@@ -186,10 +184,11 @@
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Utility\Algortihms.hpp" />
+    <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
-    <ClInclude Include="Utility\Image.hpp" />
-    <ClInclude Include="Utility\Type.h" />
+    <ClInclude Include="IO\Image.hpp" />
+    <ClInclude Include="Utility\Resource.hpp" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
@@ -199,6 +198,7 @@
     <None Include="Maths\Maths.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />
+    <None Include="Utility\Resource.tpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,7 @@
 #include "Camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/projection.hpp>
 #include <algorithm>
 
 #include "../Diagnostics/Assert.hpp"
@@ -18,11 +19,9 @@ namespace cbn
 		m_ProjectionCache(1.0),
 		m_Resolution(0,0),
 		m_CenterOffset(0, 0),
-		m_InterpolationComplete(true),
-		m_MaximumZoom(0.0001f),
-		m_LastZoom(std::max(zoom, m_MaximumZoom)),
-		m_Zoom(std::max(zoom, m_MaximumZoom)),
-		m_Transform(x,y,0,0,rotation_degrees)
+		m_Zoom(std::max(zoom, s_MinimumZoomValue)),
+		m_Rotation(to_radians(rotation_degrees)),
+		m_Translation(x,y)
 	{
 		// Set the initial resolution through its method so that the correct center offset is also set
 		set_resolution(width, height);
@@ -38,11 +37,9 @@ namespace cbn
 		m_ProjectionCache(1.0),
 		m_Resolution(0,0),
 		m_CenterOffset(0,0),
-		m_InterpolationComplete(true),
-		m_MaximumZoom(0.0001f),
-		m_LastZoom(std::max(zoom, m_MaximumZoom)),
-		m_Zoom(std::max(zoom, m_MaximumZoom)),
-		m_Transform(translation, {0,0}, rotation_degrees)
+		m_Zoom(std::max(zoom, s_MinimumZoomValue)),
+		m_Rotation(to_radians(rotation_degrees)),
+		m_Translation(translation)
 	{
 		// Set the initial resolution through its method so that the correct center offset is also set
 		set_resolution(resolution);
@@ -55,8 +52,9 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_by(x, y);
+		// Update the translation
+		m_Translation.x += x;
+		m_Translation.y += y;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -66,8 +64,8 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_by(translation);
+		// Update the translation
+		m_Translation += translation;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -77,8 +75,9 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_to(x,y);
+		// Update the translation
+		m_Translation.x = x;
+		m_Translation.y = y;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -88,8 +87,8 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_to(position);
+		// Update the translation
+		m_Translation = position;
 	}
 
 
@@ -99,8 +98,9 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_towards(x,y,amount);
+		// Project a vector from the current position to the given position
+		// then scale it by the amount we want to move, and translate by it
+		translate_by(glm::proj(m_Translation, glm::vec2(x, y)) * amount);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -110,8 +110,10 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_towards(heading_degrees, amount);
+		// Get the heading in radians, then use trigonometry to figure out 
+		// how much we need to move in each direction
+		const float heading_radians = to_radians(heading_degrees);
+		translate_by(amount * sinf(heading_radians), amount * cosf(heading_radians));
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -121,8 +123,9 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.translate_towards(position, amount);
+		// Project a vector from the current position to the given position
+	    // then scale it by the amount we want to move, and translate by it
+		translate_by(glm::normalize(glm::proj(m_Translation, position)) * amount);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -132,8 +135,8 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.rotate_by(degrees);
+		// Update the rotation, making sure to convert to radians
+		m_Rotation += to_radians(degrees);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -143,64 +146,48 @@ namespace cbn
 		// Flag that the cached view matrix needs to be be updated
 		m_ViewCacheOutdated = true;
 
-		// Perform operation through the transform
-		m_Transform.rotate_to(degrees);
+		// Update the rotation, making sure to convert to radians
+		m_Rotation = to_radians(degrees);
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	void Camera::zoom_in_by(float zoom)
 	{
-		// Flag that the cached view matrix needs to be be updated and start interpolating
+		// Flag that the cached view matrices need to be be updated 
 		m_ProjectionCacheOutdated = true;
-		m_InterpolationComplete = false;
 		m_ViewCacheOutdated = true;
 
 		// Update the zoom, noting that the sign of the zoom amount is switched so that a positive zoom value
 		// will cause the camera to zoom in while a negative zoom amount will cause the camera to zoom out. 
 		// This is explained further in the get_projection_matrix method.
-		m_Zoom -= zoom;
-
-		// Clamp the zoom so that it doesn't go below the maximum zoom level
-		m_Zoom = std::max(m_MaximumZoom, m_Zoom);
+		m_Zoom = std::max(s_MinimumZoomValue, m_Zoom - zoom);
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	void Camera::zoom_out_by(float zoom)
 	{
-		// Flag that the cached view matrix needs to be be updated and start interpolating
+		// Flag that the cached view matrices need to be be updated 
 		m_ProjectionCacheOutdated = true;
-		m_InterpolationComplete = false;
 		m_ViewCacheOutdated = true;
 
 		// Update the zoom, keeping in mind that a bigger zoom value 
 		// will result in a lower zoom level (zoom out).
-		m_Zoom += zoom;
-
-		// Clamp the zoom so that it doesn't go below the maximum zoom level
-		m_Zoom = std::max(m_MaximumZoom, m_Zoom);
+		m_Zoom = std::max(s_MinimumZoomValue, m_Zoom + zoom);
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	void Camera::zoom_to(float zoom)
 	{
-		// Make sure that the given zoom is greater than 0
-		CBN_Assert(zoom >= m_MaximumZoom, "Zoom level must be greater than zero");
-
-		// Flag that the cached projection matrix needs to be be updated
+		// Flag that the cached view matrices need to be be updated 
 		m_ProjectionCacheOutdated = true;
+		m_ViewCacheOutdated = true;
 
-		// Update the zoom value
-		m_Zoom = zoom;
-
-		// Clamp the zoom so that it doesn't go below the maximum zoom level
-		m_Zoom = std::min(m_MaximumZoom, m_Zoom);
-
-		// Set the last zoom to the new zoom, this is
-		// because we don't want any interpolation on a jump
-		m_LastZoom = m_Zoom;
+		// Update the zoom, keeping in mind that a bigger zoom value 
+	    // will result in a lower zoom level (zoom out).
+		m_Zoom = std::max(s_MinimumZoomValue, zoom);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -231,18 +218,6 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void Camera::update_interpolation()
-	{
-		// Simply update last variables to the current ones
-		m_Transform.update_interpolation();
-		m_LastZoom = m_Zoom;
-
-		// Update the interpolation flag
-		m_InterpolationComplete = true;
-	}
-
-	//-------------------------------------------------------------------------------------
-
 	float Camera::get_zoom() const
 	{
 		return m_Zoom;
@@ -251,54 +226,21 @@ namespace cbn
 
 	const glm::vec2& Camera::get_translation() const
 	{
-		return m_Transform.get_translation();
+		return m_Translation;
 	}
 	//-------------------------------------------------------------------------------------
 
 	float Camera::get_rotation_degrees() const
 	{
-		return m_Transform.get_rotation_degrees();
+		return to_degrees(m_Rotation);
 	}
 	//-------------------------------------------------------------------------------------
 
 	float Camera::get_rotation_radians() const
 	{
-		return m_Transform.get_rotation_radians();
+		return m_Rotation;
 	}
-	//-------------------------------------------------------------------------------------
-
-	float Camera::get_zoom(float interp_factor) const
-	{
-		// If the interpolation is complete, return the normal zoom
-		if(is_interpolation_complete())
-		{
-			return get_zoom();
-		}
-
-		// Perform linear interpolation between the last and current zoom, then return the result
-		return lerp(m_LastZoom, m_Zoom, interp_factor);
-	}
-	//-------------------------------------------------------------------------------------
-
-	glm::vec2 Camera::get_translation(float interp_factor) const
-	{
-		// Note that this will automatically return the normal rotation if interpolation is complete
-		return m_Transform.get_translation(interp_factor);
-	}
-	//-------------------------------------------------------------------------------------
-
-	float Camera::get_rotation_degrees(float interp_factor) const
-	{
-		// Note that this will automatically return the normal rotation if interpolation is complete
-		return m_Transform.get_rotation_degrees(interp_factor);
-	}
-	//-------------------------------------------------------------------------------------
-
-	float Camera::get_rotation_radians(float interp_factor) const
-	{
-		// Note that this will automatically return the normal rotation if interpolation is complete
-		return m_Transform.get_rotation_radians(interp_factor);
-	}
+	
 	//-------------------------------------------------------------------------------------
 
 	const glm::vec2& Camera::get_resolution() const
@@ -308,14 +250,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool Camera::is_interpolation_complete() const
-	{
-		return m_InterpolationComplete && m_Transform.is_interpolation_complete();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	glm::mat3 Camera::to_projection_matrix()
+	glm::mat4 Camera::to_projection_matrix()
 	{
 		// If the cached projection matrix is outdated, then we need to update it
 		// otherwise we can just return the current cached projection matrix
@@ -338,62 +273,19 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::mat3 Camera::to_projection_matrix(float interp_factor)
-	{
-		// If the interpolation has already been completed, simply use the normal projection matrix
-		if(is_interpolation_complete())
-		{
-			return to_projection_matrix();
-		}
-
-		// Get the zoom interpolated zoom value
-		const float zoom = get_zoom(interp_factor);
-
-		// Simply create an orthographic matrix using glm, we do not
-		// need to optimize anything for 2D here. This projection will 
-		// make (0,0) in the top left, and (res_x, rex_y) in the bottom right
-		// Where res_x and res_y are the camera resolution components multiplied
-		// by the amount of zoom. A higher value of zoom will shrink the resolution
-		// making the camera feel closer while a lower value of zoom will increase the
-		// resolution making it feel further away. 
-		return create_orthographic_2d(-m_CenterOffset.x * zoom, m_CenterOffset.x * zoom, -m_CenterOffset.y * zoom, m_CenterOffset.y * zoom);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	glm::mat3 Camera::to_view_matrix()
+	glm::mat4 Camera::to_view_matrix()
 	{
 		// If the cached view matrix is outdated, then we need to update it
 		// otherwise we can just return the current cached view matrix
 		if(m_ViewCacheOutdated)
 		{
 			// Update the view matrix, making sure to take into account the center offset
-			m_ViewCache = create_view_2d(m_Transform.get_translation() + m_CenterOffset, m_Transform.get_rotation_radians());
+			m_ViewCache = create_view_2d(m_Translation + m_CenterOffset, m_Rotation);
 			
 			// Clear the outdated flag on the view cache
 			m_ViewCacheOutdated = false;
 		}
 		return m_ViewCache;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	glm::mat4 Camera::to_view_matrix(float interp_factor)
-	{
-		// If the interpolation has already been completed, simply use the normal view matrix
-		if(is_interpolation_complete())
-		{
-			return to_view_matrix();
-		}
-
-		// Retrieve the interpolated values from the transform, making sure to add
-		// the center offset to the translation for the matrix calculations
-		glm::vec2 translation = m_Transform.get_translation(interp_factor) + m_CenterOffset;
-		const float rotation = m_Transform.get_rotation_radians(interp_factor);
-		const float zoom = get_zoom(interp_factor);
-
-		// Create a new view matrix with the interpolated values. 
-		return create_view_2d(translation, rotation);
 	}
 
 	//-------------------------------------------------------------------------------------

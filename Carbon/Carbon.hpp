@@ -1,4 +1,3 @@
-#pragma once
 
 #include <memory>
 #include <optional>
@@ -7,13 +6,24 @@
 namespace cbn
 {
 
+	// Typedefs
 	template<typename T>
 	using SPtr = std::shared_ptr<T>;
 
 	template<typename T>
-	using Ptr = std::unique_ptr<T>;
+	using UPtr = std::unique_ptr<T>;
 
 	template<typename T>
 	using Opt = std::optional<T>;
 
+
+
+
+	// Initializers 
+    // TODO: bool InitializeGraphics(const Version& api_version, bool debug_context = false);
+
+
+
 }
+
+

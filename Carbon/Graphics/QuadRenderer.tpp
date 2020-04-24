@@ -45,7 +45,7 @@ namespace cbn
 	int QuadRenderer<VertexData>::find_byte_size(const LayoutAttribute& attribute)
 	{
 		// Get the byte size of the type
-		int type_byte_size;
+		int type_byte_size = 0;
 		switch(attribute.type)
 		{
 			case GL_BYTE:
@@ -327,7 +327,7 @@ namespace cbn
 		CBN_Assert(m_CurrentBatchSize < m_MaximumBatchSize, "Cannot exceed maximum batch size");
 
 		// Use the view projection and transform matrices to get the full mvp matrix
-		const glm::mat3 mvp_matrix = mvp_fast_multiply_2d(m_ViewProjectionMatrix, transform);
+		const glm::mat4 mvp_matrix = mvp_fast_multiply_2d(m_ViewProjectionMatrix, transform);
 		const glm::vec2 base_half_size = base_size * 0.5f;
 
 		// Use the matrix and the base size to determine all the vertex positions for the quad

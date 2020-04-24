@@ -11,7 +11,7 @@ namespace cbn
 
 	public:
 
-		Version(unsigned major, unsigned minor = 0, unsigned build = 0);
+		Version(unsigned major = 0, unsigned minor = 0, unsigned build = 0);
 
 		bool is_newer_than(const Version& version) const;
 		

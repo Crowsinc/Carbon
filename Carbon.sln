@@ -10,6 +10,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample", "Sample\Sample.vcx
 		{E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB} = {E8AD36BC-8FE0-40AE-A13D-BDC6880BF1FB}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9EFCAAA3-4E9D-4714-B084-CB4F1A2EF904}"
+	ProjectSection(SolutionItems) = preProject
+		Conventions.md = Conventions.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

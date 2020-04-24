@@ -4,16 +4,17 @@
 #include <unordered_map>
 
 #include "Shader.hpp"
-#include "../Utility/Type.h"
+#include "../Utility/Resource.hpp"
 
 namespace cbn
 {
 
 	class ShaderProgram
 	{
+		RAIIResource(ShaderProgram);
 	public:
 
-		static Ptr<ShaderProgram> Create(const Ptr<Shader>& vertex_shader, const Ptr<Shader>& geometry_shader, const Ptr<Shader>& fragment_shader, std::string& error_log);
+		static Res<ShaderProgram> Create(const Res<Shader>& vertex_shader, const Res<Shader>& geometry_shader, const Res<Shader>& fragment_shader, std::string& error_log);
 
 	private:
 
@@ -22,13 +23,11 @@ namespace cbn
 		GLuint m_ProgramID;
 		std::unordered_map<std::string, GLint> m_UniformLocations;
 
-		void find_shader_uniform_locations(const Ptr<Shader>& shader);
+		void find_shader_uniform_locations(const Shader& shader);
 
-		ShaderProgram();
+		explicit ShaderProgram();
 
 	public:
-
-		~ShaderProgram();
 
 		void bind();
 
