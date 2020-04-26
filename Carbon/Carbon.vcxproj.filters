@@ -60,6 +60,9 @@
     <ClCompile Include="Graphics\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Maths\Maths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\QuadRenderer.hpp">
@@ -107,9 +110,6 @@
     <ClInclude Include="Diagnostics\Stopwatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\Algortihms.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Maths\Maths.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -125,12 +125,14 @@
     <ClInclude Include="Graphics\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\Algorithms.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
     <None Include="Graphics\OpenGL.tpp" />
     <None Include="Utility\Algorithms.tpp" />
-    <None Include="Maths\Maths.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Utility\Resource.tpp" />
   </ItemGroup>

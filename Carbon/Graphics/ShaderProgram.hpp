@@ -11,7 +11,6 @@ namespace cbn
 
 	class ShaderProgram
 	{
-		RAIIResource(ShaderProgram);
 	public:
 
 		static Res<ShaderProgram> Create(const Res<Shader>& vertex_shader, const Res<Shader>& geometry_shader, const Res<Shader>& fragment_shader, std::string& error_log);
@@ -24,6 +23,8 @@ namespace cbn
 		std::unordered_map<std::string, GLint> m_UniformLocations;
 
 		void find_shader_uniform_locations(const Shader& shader);
+
+		static void destroy(ShaderProgram& shader_program);
 
 		explicit ShaderProgram();
 

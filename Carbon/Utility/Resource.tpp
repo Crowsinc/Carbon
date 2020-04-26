@@ -8,10 +8,10 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename T>
-	inline Resource<T> Resource<T>::Wrap(T&& resource, const Deleter& deleter)
+	inline Resource<T> Resource<T>::Wrap(T& resource, const Deleter& deleter)
 	{
 		// Create a null resource, and then initialize it
-		Res<T> resource_wrapper = nullptr;
+		Res<T> resource_wrapper;
 		resource_wrapper.m_Deleter = deleter;
 		resource_wrapper.m_Resource = std::move(resource);
 		return resource_wrapper;
@@ -22,7 +22,7 @@ namespace cbn
 	template<typename T>
 	constexpr Resource<T>::Resource()
 		: m_Deleter(nullptr) {}
-
+	
 	//-------------------------------------------------------------------------------------
 
 	template<typename T>
@@ -46,10 +46,11 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename T>
-	Resource<T>::Resource(Resource<T>&& resource) noexcept
-		: m_Resource(std::move(resource)),
-		m_Deleter(resource.m_Deleter)
+	Resource<T>::Resource(Resource<T>&& resource) 
+		: m_Deleter(resource.m_Deleter)
 	{
+		m_Resource = std::move(resource.m_Resource.value());
+
 		// Reset the other resources' optional resource. This will run
 		// the destructor for the resource T, but it will stop the deleter
 		// for T from running. Therefore all deletion with T, should be 

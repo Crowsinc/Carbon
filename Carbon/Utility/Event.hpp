@@ -4,7 +4,6 @@
 
 namespace cbn
 {
-	//TODO: think of a better way of doing this without having to unsubscribe with an id 
 
 	template<typename ...Args>
 	class Event

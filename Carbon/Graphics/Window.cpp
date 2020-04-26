@@ -210,7 +210,8 @@ namespace cbn
 		window_properties.opengl_version = {static_cast<unsigned>(GLVersion.major), static_cast<unsigned>(GLVersion.minor)};
 
 		// If we have made it here, then the window was successfully created
-		return cbn::Res<Window>::Wrap({glfw_handle, window_properties}, &Window::Delete);
+		Window window_resource(glfw_handle, window_properties);
+		return cbn::Res<Window>::Wrap(window_resource, &Window::Delete);
 	}
 	
 	//-------------------------------------------------------------------------------------

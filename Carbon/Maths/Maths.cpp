@@ -1,40 +1,44 @@
 #include "Maths.hpp"
 
-#include <type_traits>
+#include <cmath>
 
 namespace cbn
 {
 
-
 	//-------------------------------------------------------------------------------------
 
-	template<typename T>
-	inline T to_degrees(const T radians)
+	float to_degrees(const float radians)
 	{
-		static_assert(std::is_arithmetic<T>::value, "Cannot convert non-arithmetic type to degrees");
-		return (radians * 180) / PI;
+		return (radians * 180.0f) / PI;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	template<typename T>
-	inline T to_radians(const T degrees)
+
+	float to_radians(const float degrees)
 	{
-		static_assert(std::is_arithmetic<T>::value, "Cannot convert non-arithmetic type to radians");
-		return (degrees * PI) / 180;
+		return (degrees * PI) / 180.0f;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	template<typename T>
-	T lerp(const T start, const T end, const float t)
+
+	float lerp(const float start, const float end, const float t)
 	{
 		return start + (end - start) * t;
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	inline glm::mat4 create_transform_2d(const glm::vec2& translation, const glm::vec2& scale, const float rotation_radians)
+	glm::vec2 lerp(const glm::vec2& start, const glm::vec2& end, const float t)
+	{
+		// Wrie this in terms of the float lerp to re-use code
+		return glm::vec2{lerp(start.x,end.x,t), lerp(start.y, end.y,t)};
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	glm::mat4 build_transform_matrix(const glm::vec2& translation, const glm::vec2& scale, const float rotation_radians)
 	{
 		const float cos_value = cosf(rotation_radians);
 		const float sin_value = sinf(rotation_radians);
@@ -68,7 +72,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	inline glm::mat4 create_orthographic_2d(const float left, const float right, const float bottom, const float top)
+	glm::mat4 build_orthographic_matrix(const float left, const float right, const float bottom, const float top)
 	{
 		// Create a 2D orthographic matrix as a 4x4 matrix that
 		// has no information about the zfar and znear planes.
@@ -99,7 +103,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	inline glm::mat4 create_view_2d(const glm::vec2& translation, const float rotation_radians)
+	glm::mat4 build_view_matrix(const glm::vec2& translation, const float rotation_radians)
 	{
 		const float cos_value = cosf(rotation_radians);
 		const float sin_value = sinf(rotation_radians);
@@ -133,7 +137,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	inline glm::vec2 fast_2d_transform(const glm::vec2& point, const glm::mat4& transform)
+	glm::vec2 transform(const glm::vec2& point, const glm::mat4& transform)
 	{
 		// Transform point with the directly required values in the transform matrix
 		// rather than performing all operations on each component of the matrix.
@@ -147,8 +151,58 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
+	glm::vec2 rotate(const glm::vec2& point, const float rotation_radians)
+	{
+		const float cos_value = cosf(rotation_radians);
+		const float sin_value = sinf(rotation_radians);
+
+		return {cos_value * point.x - sin_value * point.y, sin_value * point.x + cos_value * point.y};
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	std::tuple<glm::vec2, glm::vec2> find_rectangle_aabb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4)
+	{
+		// Since the vertices describe a rectangle, we can immediately determine which 
+		// vertices will be the furthest left, right, up and down, based on direction
+		// of the rectangle and the relative locations of each vertex. This function will 
+		// return a tuple containing the top left and bottom right coords of the aabb
+
+		// Treat the midpoint between the vertices v1 and v2, which should be adjacent,
+		// as direction that the rectangle is facing, and determine the direction angle
+		const glm::vec2 direction_coord = (v2 + v1) / 2.0f;
+		const float direction = atan2f(direction_coord.x, direction_coord.y);
+
+		// If the rectangle's direction is between 0 and 90 degrees, then v1 is the upmost
+		// vertex, v3 is the leftmost, v4 is the bottommost and v2 is the rightmost
+		if(direction >= 0 && direction < PI_2)
+		{
+			return std::make_tuple(glm::vec2{v3.x, v1.y}, glm::vec2{v2.x, v4.y});
+		}
+		// If the rectangle's direction is between 90 and 180 degrees, then v2 is the upmost
+		// vertex, v1 is the leftmost, v3 is the bottommost and v4 is the rightmost. 
+		else if(direction >= PI_2 && direction < PI)
+		{
+			return std::make_tuple(glm::vec2{v1.x, v2.y}, glm::vec2{v4.x, v3.y});
+		}
+		// If the rectangle's direction is between 0 and -90 degrees, then v3 is the upmost
+		// vertex, v4 is the leftmost, v2 is the bottommost and v1 is the rightmost. 
+		else if(direction >= -PI_2 && direction < 0)
+		{
+			return std::make_tuple(glm::vec2{v4.x, v3.y}, glm::vec2{v1.x, v2.y});
+		}
+		// If the rectangle's direction is between -90 and -180 degrees, then v4 is the upmost
+		// vertex, v2 is the leftmost, v1 is the bottommost and v3 is the rightmost. 
+		else
+		{
+			return std::make_tuple(glm::vec2{v2.x, v4.y}, glm::vec2{v3.x, v1.y});
+		}
+	}
+
+	//-------------------------------------------------------------------------------------
+
 	//TODO: double check proper multiplications (using glm multiplication function)
-	inline glm::mat4 vp_fast_multiply_2d(const glm::mat4& view_matrix, const glm::mat4 projection_matrix)
+	glm::mat4 build_vp_matrix(const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
 	{
 		// Since the view and projection matrices have specific structures, we can optimize the
 		// matrix multiplication by skipping operations which we know will result in a value that matches
@@ -181,7 +235,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	//TODO: double check proper multiplications (using glm multiplication function)
-	inline glm::mat4 mvp_fast_multiply_2d(const glm::mat4& vp_matrix, const glm::mat4 transform_matrix)
+	glm::mat4 build_mvp_matrix(const glm::mat4& vp_matrix, const glm::mat4& transform_matrix)
 	{
 		// Since the vp and transform matrices have specific structures, we can optimize the
 		// matrix multiplication by skipping operations which we know will result in a value that matches
@@ -214,11 +268,11 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	//TODO: double check proper multiplications (using glm multiplication function)
-	inline glm::mat4 mvp_fast_multiply_2d(const glm::mat4& transform_matrix, const glm::mat4 view_matrix, const glm::mat4& projection_matrix)
+	glm::mat4 build_mvp_matrix(const glm::mat4& transform_matrix, const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
 	{
-		return mvp_fast_multiply_2d(vp_fast_multiply_2d(view_matrix, projection_matrix), transform_matrix);
+		return build_mvp_matrix(build_vp_matrix(view_matrix, projection_matrix), transform_matrix);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 }

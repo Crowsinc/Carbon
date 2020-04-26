@@ -30,7 +30,8 @@ namespace cbn
 		}
 
 		// Create a shader program to generate its OpenGL object
-		Res<ShaderProgram> program = Res<ShaderProgram>::Wrap(ShaderProgram{},&ShaderProgram::destroy);
+		ShaderProgram program_resource{};
+		Res<ShaderProgram> program = Res<ShaderProgram>::Wrap(program_resource,&ShaderProgram::destroy);
 
 		// Attach all the shaders to the shader program
 		glAttachShader(program->m_ProgramID, vertex_shader->m_ShaderID);
@@ -118,10 +119,9 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::destroy(ShaderProgram& program)
+	void ShaderProgram::destroy(ShaderProgram& shader_program)
 	{
-		// Make sure we delete the program to avoid memory leaks
-		glDeleteProgram(program.m_ProgramID);
+		glDeleteProgram(shader_program.m_ProgramID);
 	}
 
 	//-------------------------------------------------------------------------------------

@@ -228,7 +228,7 @@ namespace cbn
 		if(m_CacheOutdated)
 		{
 			// Update the cached transform matrix
-			m_TransformCache = create_transform_2d(m_Translation, m_Scale, m_Rotation);
+			m_TransformCache = build_transform_matrix(m_Translation, m_Scale, m_Rotation);
 
 			// Clear the outdated flag on the cache
 			m_CacheOutdated = false;

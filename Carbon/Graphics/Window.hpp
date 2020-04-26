@@ -8,6 +8,8 @@
 #include "../Utility/Version.hpp"
 #include "../Utility/Resource.hpp"
 
+#include <iostream>
+
 namespace cbn
 {
 

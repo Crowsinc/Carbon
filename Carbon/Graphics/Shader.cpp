@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "../Utility/Algortihms.hpp"
+#include "../Utility/Algorithms.hpp"
 
 namespace cbn
 {
@@ -12,7 +12,8 @@ namespace cbn
 	Res<Shader> Shader::Create(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
 	{
 		// Create a shader of the given pipeline stage
-		Res<Shader> shader = Res<Shader>::Wrap(Shader{pipeline_stage}, &Shader::destroy);
+		Shader shader_resource{pipeline_stage};
+		Res<Shader> shader = Res<Shader>::Wrap(shader_resource, &Shader::destroy);
 
 		// Attempt to compile the given source into the shader, 
 		const GLchar* c_shader_source = shader_source.data();

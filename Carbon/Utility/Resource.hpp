@@ -4,9 +4,6 @@
 
 namespace cbn
 {
-	
-	//TODO: automate the resource method. That is, force resources to implement it properly
-#define RAIIResource(x) friend class Resource<x>; static void destroy(x&)
 
 	template<typename T>
 	class Resource
@@ -15,7 +12,7 @@ namespace cbn
 
 		using Deleter = void(*)(T&);
 	
-		static Resource<T> Wrap(T&& resource, const Deleter& deleter);
+		static Resource<T> Wrap(T& resource, const Deleter& deleter);
 
 	private:
 
@@ -49,6 +46,8 @@ namespace cbn
 		T* operator->();
 
 		void operator=(Resource<T>&& resource);
+
+		void operator=(Resource<T>& resource) = delete;
 
 	};
 

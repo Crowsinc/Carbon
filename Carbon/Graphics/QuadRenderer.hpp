@@ -80,17 +80,17 @@ namespace cbn
 
 		//TODO: use Transform class?
 
-		void submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& quad_data);
+		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data);
 
-		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& quad_data);
+		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data);
 
-		void submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& left_half_data, const VertexData& right_half_data);
+		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data);
 
-		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& left_half_data, const VertexData& right_half_data);
+		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data);
 
-		void submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
+		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
 
-		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
+		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
 
 		void end();
 

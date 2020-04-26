@@ -8,35 +8,17 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	bool QuadRenderer<VertexData>::should_cull_quad(const glm::vec2& ul_vertex_position, const glm::vec2& ll_vertex_position, const glm::vec2& lr_vertex_position, const glm::vec2& ur_vertex_position) 
+	bool QuadRenderer<VertexData>::should_cull_quad(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4) 
 	{
-		//TODO: optimise
+		// Find the axis alligned bounding box for these vertices which form a rectangle. 
+		const auto&[top_left,bottom_right] = find_rectangle_aabb(v1, v4, v2, v3);
 
-		// Cull the quad if the rightmost point is past the left of the camera
-		if(std::max(std::max(ul_vertex_position.x, ur_vertex_position.x), std::max(ll_vertex_position.x, lr_vertex_position.x)) < -1.0f)
-		{
-			return true;
-		}
-
-		// Cull the quad if the leftmost point is past the right of the camera
-		if(std::min(std::min(ul_vertex_position.x, ur_vertex_position.x), std::min(ll_vertex_position.x, lr_vertex_position.x)) > 1.0f)
-		{
-			return true;
-		}
-
-		// Cull the quad if the topmost point is past the bottom of the camera
-		if(std::max(std::max(ul_vertex_position.y, ll_vertex_position.y), std::max(ur_vertex_position.y, lr_vertex_position.y)) < -1.0f)
-		{
-			return true;
-		}
-
-		// Cull the quad if the bottommost point is past the top of the camera
-		if(std::min(std::min(ul_vertex_position.y, ll_vertex_position.y), std::min(ur_vertex_position.y, lr_vertex_position.y)) > 1.0f)
-		{
-			return true;
-		}
-
-		return false;
+		// The quad should be culled if.... 
+		//	- the leftmost point is past the right of the camera (bounding_box.x >  1.0f)
+		//	- the rightmost point is past the left of the camera (bounding_box.x < -1.0f)
+		//	- the topmost point is past the bottom of the camera (bounding_box.y < -1.0f)
+		//	- the bottommost point is past the top of the camera (bounding_box.y >  1.0f)
+		return top_left.x > 1.0f || bottom_right.x < -1.0f || top_left.y < -1.0f || bottom_right.y > 1.0f;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -272,7 +254,7 @@ namespace cbn
 		m_CurrentBatchSize = 0;
 
 		// Precalculate the view-projection matrix for this batching run
-		m_ViewProjectionMatrix = vp_fast_multiply_2d(view_matrix, projection_matrix);
+		m_ViewProjectionMatrix = build_vp_matrix(view_matrix, projection_matrix);
 
 		// Increase the buffer section index 
 		m_SectionIndex = (m_SectionIndex + 1) % m_BufferSections;
@@ -289,52 +271,52 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& quad_data)
+	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data)
 	{
-		submit(base_size, transform, quad_data, quad_data, quad_data, quad_data);
+		submit(base_size, transform_matrix, quad_data, quad_data, quad_data, quad_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& quad_data)
+	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data)
 	{
-		return try_submit(base_size, transform, quad_data, quad_data, quad_data, quad_data);
+		return try_submit(base_size, transform_matrix, quad_data, quad_data, quad_data, quad_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& left_half_data, const VertexData& right_half_data)
+	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data)
 	{
-		submit(base_size, transform, left_half_data, left_half_data, right_half_data, right_half_data);
+		submit(base_size, transform_matrix, left_half_data, left_half_data, right_half_data, right_half_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& left_half_data, const VertexData& right_half_data)
+	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data)
 	{
-		return try_submit(base_size, transform, left_half_data, left_half_data, right_half_data, right_half_data);
+		return try_submit(base_size, transform_matrix, left_half_data, left_half_data, right_half_data, right_half_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
+	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
 	{
 		// Make sure we don't exceed the maximum batch size
 		CBN_Assert(m_CurrentBatchSize < m_MaximumBatchSize, "Cannot exceed maximum batch size");
 
 		// Use the view projection and transform matrices to get the full mvp matrix
-		const glm::mat4 mvp_matrix = mvp_fast_multiply_2d(m_ViewProjectionMatrix, transform);
+		const glm::mat4 mvp_matrix = build_mvp_matrix(m_ViewProjectionMatrix, transform_matrix);
 		const glm::vec2 base_half_size = base_size * 0.5f;
 
 		// Use the matrix and the base size to determine all the vertex positions for the quad
-		const glm::vec2 ul_vertex_position = fast_2d_transform({-base_half_size.x, base_half_size.y}, mvp_matrix);
-		const glm::vec2 ll_vertex_position = fast_2d_transform(-base_half_size, mvp_matrix);
-		const glm::vec2 lr_vertex_position = fast_2d_transform({base_half_size.x, -base_half_size.y}, mvp_matrix);
-		const glm::vec2 ur_vertex_position = fast_2d_transform(base_half_size, mvp_matrix);
+		const glm::vec2 ul_vertex_position = transform({-base_half_size.x, base_half_size.y}, mvp_matrix);
+		const glm::vec2 ll_vertex_position = transform(-base_half_size, mvp_matrix);
+		const glm::vec2 lr_vertex_position = transform({base_half_size.x, -base_half_size.y}, mvp_matrix);
+		const glm::vec2 ur_vertex_position = transform(base_half_size, mvp_matrix);
 
 		// If the quad is outside of the camera's view, return from the function and dont try to render it
 		if(should_cull_quad(ul_vertex_position, ll_vertex_position, lr_vertex_position, ur_vertex_position))
@@ -376,11 +358,12 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
+	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
 	{
 		if(m_CurrentBatchSize < m_MaximumBatchSize)
 		{
-			submit(base_size, transform, ul_vertex_data, ll_vertex_data, lr_vertex_data, ur_vertex_data);
+			submit(base_size, transform_matrix, ul_vertex_data, ll_vertex_data, lr_vertex_data, ur_vertex_data);
+			return true;
 		}
 		return false;
 	}

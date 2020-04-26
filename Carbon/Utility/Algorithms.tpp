@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Algortihms.hpp"
+#include "Algorithms.hpp"
 
 #include <cctype>
 

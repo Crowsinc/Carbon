@@ -263,7 +263,7 @@ namespace cbn
 			// by the amount of zoom. A higher value of zoom will shrink the resolution
 			// making the camera feel closer while a lower value of zoom will increase the
 			// resolution making it feel further away. 
-			m_ProjectionCache = create_orthographic_2d(-m_CenterOffset.x * m_Zoom, m_CenterOffset.x * m_Zoom, -m_CenterOffset.y * m_Zoom, m_CenterOffset.y * m_Zoom);
+			m_ProjectionCache = build_orthographic_matrix(-m_CenterOffset.x * m_Zoom, m_CenterOffset.x * m_Zoom, -m_CenterOffset.y * m_Zoom, m_CenterOffset.y * m_Zoom);
 
 			// Clear the outdated flag on the projection cache
 			m_ProjectionCacheOutdated = false;
@@ -280,7 +280,7 @@ namespace cbn
 		if(m_ViewCacheOutdated)
 		{
 			// Update the view matrix, making sure to take into account the center offset
-			m_ViewCache = create_view_2d(m_Translation + m_CenterOffset, m_Rotation);
+			m_ViewCache = build_view_matrix(m_Translation + m_CenterOffset, m_Rotation);
 			
 			// Clear the outdated flag on the view cache
 			m_ViewCacheOutdated = false;

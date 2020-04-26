@@ -1,6 +1,11 @@
 
+#define CBN_DISABLE_ASSERTS
+
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
+#include <Diagnostics/Stopwatch.hpp>
+
+#include <Maths/Maths.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -43,20 +48,19 @@ int main()
 	cbn::Window::Properties props{};
 	
 	// Window properties
-	props.vsync = true;
+	props.vsync = false; //TODO: vsync doesnt work?
 	props.title = "Carbon Sample";
 	props.resolution = {1280,720};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
 	
 	// Window graphics API properties
 	props.opengl_version = {0,0,0};
+
 #ifdef _DEBUG
 	props.opengl_debug = true;
 #else
 	props.opengl_debug = false;
 #endif
-
-
 
 	window = cbn::Window::Create(props);
 	if(window)
@@ -71,7 +75,7 @@ int main()
 
 	window->ErrorEvent.subscribe([](std::string msg, GLenum source, GLenum severity)
 	{
-		std::cout << "Debug Output!" << std::endl;
+		std::cout << msg << std::endl;
 	});
 
 	window->CloseRequestEvent.subscribe([&]()
@@ -109,11 +113,11 @@ int main()
 	cbn::QuadRenderer<VertexData> renderer({cbn::QuadRenderer<VertexData>::LayoutAttribute{false, GL_FLOAT, 4}});
 
 	std::vector<cbn::Transform> transforms;
-	for(int x = 0; x < 1280; x += 10)
+	for(int x = 0; x < props.resolution.x; x += 8)
 	{
-		for(int y = 0; y < 720; y += 10)
+		for(int y = 0; y < props.resolution.y; y += 8)
 		{
-			transforms.emplace_back(glm::vec2{x+ 10,y + 10});
+			transforms.emplace_back(glm::vec2{x+ 2,y + 2});
 		}
 	}
 
@@ -127,6 +131,11 @@ int main()
 
 	cbn::Camera cam(1280, 720);
 
+	cbn::Stopwatch watch;
+	watch.start();
+
+	int frames = 0;
+
 	while(runflag)
 	{
 		renderer.begin(cam);
@@ -135,7 +144,7 @@ int main()
 		for(auto& trans : transforms)
 		{
 			trans.rotate_by(2);
-			renderer.submit(base_size, trans.to_transform_matrix(), data[i%3]);
+			renderer.submit(base_size, trans.to_transform_matrix(), data[i % 3]);
 			i++;
 		}
 
@@ -144,7 +153,15 @@ int main()
 
 		// Update the window
 		window->update();
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+
+		frames++;
+		if(watch.get_elapsed_time(cbn::Seconds) > 1)
+		{
+			std::cout << frames << std::endl;
+			frames = 0;
+			watch.restart();
+		}
+
 	}
 	
 	return 0;

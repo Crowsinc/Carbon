@@ -162,6 +162,7 @@
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Texture.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
+    <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
@@ -183,7 +184,7 @@
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
-    <ClInclude Include="Utility\Algortihms.hpp" />
+    <ClInclude Include="Utility\Algorithms.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
@@ -195,7 +196,6 @@
   <ItemGroup>
     <None Include="Graphics\OpenGL.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
-    <None Include="Maths\Maths.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />
     <None Include="Utility\Resource.tpp" />

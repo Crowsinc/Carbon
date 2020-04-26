@@ -12,7 +12,6 @@ namespace cbn
 
 	class Shader
 	{
-		RAIIResource(Shader);
 		friend class ShaderProgram;
 	public:
 
@@ -32,6 +31,8 @@ namespace cbn
 		std::vector<std::string> m_UniformNames;
 
 		void find_uniform_names(const std::string_view& shader_source);
+
+		static void destroy(Shader& shader);
 
 		explicit Shader(const Stage pipeline_stage);
 
