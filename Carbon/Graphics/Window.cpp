@@ -245,7 +245,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Window::Window(Window&& window)
+	Window::Window(Window&& window) noexcept
 		: m_DisplayMode(window.m_DisplayMode),
 		  m_GLFWHandle(window.m_GLFWHandle),
 		  m_OpenGLVersion(window.m_OpenGLVersion),
@@ -360,60 +360,48 @@ namespace cbn
 	
 	void Window::set_vsync(const bool enable_vsync)
 	{
-		if(enable_vsync != m_VSync)
-		{
-			// A swap interval of 1 means that OpenGL will
-			// wait 1 refresh before swapping buffers.
-			glfwSwapInterval(enable_vsync ? 1 : 0);
+		// A swap interval of 1 means that OpenGL will
+		// wait 1 refresh before swapping buffers.
+		glfwSwapInterval(enable_vsync ? 1 : 0);
 
-			m_VSync = enable_vsync;
-			VSyncChangeEvent.invoke(enable_vsync);
-		}
+		m_VSync = enable_vsync;
+		VSyncChangeEvent.invoke(enable_vsync);
 	}
 
 	//-------------------------------------------------------------------------------------
 	
 	void Window::set_title(const std::string & title)
 	{
-		if(title != m_Title)
-		{
-			glfwSetWindowTitle(m_GLFWHandle, title.c_str());
+		glfwSetWindowTitle(m_GLFWHandle, title.c_str());
 
-			m_Title = title;
-			TitleChangeEvent.invoke(title);
-		}
+		m_Title = title;
+		TitleChangeEvent.invoke(title);
 	}
 
 	//-------------------------------------------------------------------------------------
 	
 	void Window::set_resolution(const glm::vec2 & resolution)
 	{
-		if(resolution != m_Resolution)
-		{
-			glfwSetWindowSize(m_GLFWHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
+		glfwSetWindowSize(m_GLFWHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
 
-			// Update the resolution member but do not invoke the resolution
-			// change event since it will be automatically invoked by the resize callback
-			m_Resolution = resolution;
-		}
+		// Update the resolution member but do not invoke the resolution
+		// change event since it will be automatically invoked by the resize callback
+		m_Resolution = resolution;
 	}
 
 	//-------------------------------------------------------------------------------------
 	
 	void Window::set_display_mode(const DisplayMode display_mode)
 	{
-		if(display_mode != m_DisplayMode)
-		{
-			glfw_set_display_mode(m_GLFWHandle, display_mode);
+		glfw_set_display_mode(m_GLFWHandle, display_mode);
 			
-			m_DisplayMode = display_mode;
-			DisplayModeChangeEvent.invoke(display_mode);
-		}
+		m_DisplayMode = display_mode;
+		DisplayModeChangeEvent.invoke(display_mode);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void Window::operator=(Window&& window)
+	void Window::operator=(Window&& window) noexcept
 	{
 		m_OpenGLVersion = window.m_OpenGLVersion;
 		m_OpenGLDebug = window.m_OpenGLDebug;

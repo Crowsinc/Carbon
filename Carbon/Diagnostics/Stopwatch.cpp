@@ -52,7 +52,7 @@ namespace cbn
 		const auto end_time = (m_Started) ? std::chrono::high_resolution_clock::now() : m_StopTime;
 		const auto difference_ns = static_cast<double>((end_time - m_StartTime).count());
 
-		return cbn::Unit::convert(difference_ns, cbn::Nanoseconds, time_unit);
+		return cbn::Nanoseconds.convert_to(difference_ns, time_unit);
 	}
 
 	//-------------------------------------------------------------------------------------

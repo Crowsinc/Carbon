@@ -48,13 +48,13 @@ int main()
 	cbn::Window::Properties props{};
 	
 	// Window properties
-	props.vsync = false; //TODO: vsync doesnt work?
+	props.vsync = false; 
 	props.title = "Carbon Sample";
 	props.resolution = {1280,720};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
 	
 	// Window graphics API properties
-	props.opengl_version = {0,0,0};
+	props.opengl_version = {4,6,0};
 
 #ifdef _DEBUG
 	props.opengl_debug = true;
@@ -83,8 +83,6 @@ int main()
 		runflag = false;
 	});
 
-	window->set_display_mode(cbn::Window::DisplayMode::RESIZABLE);
-
 	window->set_title("Carbon Sample");
 
 	// Should create an error
@@ -110,7 +108,12 @@ int main()
 		std::cout << error_log << std::endl;
 	}
 
-	cbn::QuadRenderer<VertexData> renderer({cbn::QuadRenderer<VertexData>::LayoutAttribute{false, GL_FLOAT, 4}});
+	VertexData tmp = {};
+
+	cbn::VertexDataDescriptor descriptor;
+	descriptor.add_attribute(tmp.colour, false);
+
+	cbn::QuadRenderer<VertexData> renderer(descriptor);
 
 	std::vector<cbn::Transform> transforms;
 	for(int x = 0; x < props.resolution.x; x += 8)

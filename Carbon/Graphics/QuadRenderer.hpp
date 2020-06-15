@@ -3,9 +3,11 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "OpenGL.hpp"
 #include "Camera.hpp"
 #include "ShaderProgram.hpp"
+#include "OpenGL/OpenGL.hpp"
+#include "OpenGL/GLObjects.hpp"
+#include "OpenGL/VertexDataDescriptor.hpp"
 
 namespace cbn
 {
@@ -15,16 +17,19 @@ namespace cbn
 	{
 	public:
 
-		struct LayoutAttribute
+
+		struct QuadData
 		{
-			GLboolean normalize;
-			GLenum type;
-			GLint count;
+			VertexData ul_vertex;
+			VertexData ll_vertex;
+			VertexData lr_vertex;
+			VertexData ur_vertex;
 		};
 
 	private:
 
 #pragma pack(push, 1)
+		
 		struct VertexLayout
 		{
 			glm::vec2 position;
@@ -38,6 +43,7 @@ namespace cbn
 			VertexLayout lr_vertex;
 			VertexLayout ur_vertex;
 		};
+
 #pragma pack(pop)
 
 		const GLsizeiptr m_BufferSectionByteSize;
@@ -45,26 +51,26 @@ namespace cbn
 		const uint64_t m_MaximumBatchSize;
 		const uint64_t m_BufferSections;
 
-		std::vector<GLsync> m_BufferSectionLocks;
 		VertexArrayObject m_VertexArrayObject;
-		QuadLayout* m_SectionWritePointer;
-		glm::mat4 m_ViewProjectionMatrix;
-		QuadLayout* m_BufferBasePointer;
 		VertexBuffer m_StreamBuffer;
-		GLsizei m_CurrentBatchSize;
 		IndexBuffer m_IndexBuffer;
+
+		std::vector<GLsync> m_BufferSectionLocks;
+		QuadLayout* m_SectionWritePointer;
+		QuadLayout* m_BufferBasePointer;
 		uint64_t m_SectionIndex;
+		
+		glm::mat4 m_ViewProjectionMatrix;
+		GLsizei m_CurrentBatchSize;
 		bool m_BatchStarted;
 
-		static bool should_cull_quad(const glm::vec2& ul_vertex_position, const glm::vec2& ll_vertex_position, const glm::vec2& lr_vertex_position, const glm::vec2& ur_vertex_position);
+		static bool should_cull_quad(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4);
 
-		static int find_byte_size(const LayoutAttribute& attribute);
+		void create_vertex_array_object(const VertexDataDescriptor& descriptor);
 
 		void create_stream_buffer();
 
 		void create_index_buffer();
-
-		void create_vertex_array_object(const std::vector<LayoutAttribute>& vertex_attributes);
 
 		void lock_section(const uint32_t section_index);
 
@@ -72,26 +78,20 @@ namespace cbn
 
 	public:
 
-		QuadRenderer(const std::vector<LayoutAttribute>& vertex_attributes);
+		QuadRenderer(const VertexDataDescriptor& descriptor, const unsigned batch_size = 16383, const unsigned buffers = 3);
 
 		void begin(Camera& camera);
 
 		void begin(const glm::mat4& view_matrix, const glm::mat4& projection_matrix);
 
-		//TODO: use Transform class?
-
 		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data);
 
 		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data);
 
-		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data);
+		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const QuadData& quad_data);
 
-		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data);
-
-		void submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
-
-		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data);
-
+		bool try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const QuadData& quad_data);
+	
 		void end();
 
 		void render(ShaderProgram& shader_program);

@@ -4,7 +4,7 @@
 #include <string>
 #include <filesystem>
 
-#include "OpenGL.hpp"
+#include "OpenGL/OpenGL.hpp"
 #include "../Utility/Resource.hpp"
 
 namespace cbn

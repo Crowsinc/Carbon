@@ -3,7 +3,7 @@
 #include <string>
 #include <glm/glm.hpp>
 
-#include "OpenGL.hpp"
+#include "OpenGL/OpenGL.hpp"
 #include "../Utility/Event.hpp"
 #include "../Utility/Version.hpp"
 #include "../Utility/Resource.hpp"
@@ -78,7 +78,7 @@ namespace cbn
 
 		Window(const Window& window) = delete;
 
-		Window(Window&& window);
+		Window(Window&& window) noexcept;
 
 		void show();
 
@@ -112,7 +112,7 @@ namespace cbn
 
 		void set_display_mode(const DisplayMode display_mode);
 		
-		void operator=(Window&& window);
+		void operator=(Window&& window) noexcept;
 
 	};
 

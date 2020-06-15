@@ -63,6 +63,9 @@
     <ClCompile Include="Maths\Maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\OpenGL\VertexDataDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\QuadRenderer.hpp">
@@ -98,9 +101,6 @@
     <ClInclude Include="Maths\Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\OpenGL.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Version.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -128,12 +128,28 @@
     <ClInclude Include="Utility\Algorithms.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\GLTypedObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\GLUntypedObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\GLObjects.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\OpenGL.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
-    <None Include="Graphics\OpenGL.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Utility\Resource.tpp" />
+    <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
+    <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
   </ItemGroup>
 </Project>

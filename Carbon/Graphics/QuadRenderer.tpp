@@ -20,65 +20,12 @@ namespace cbn
 		//	- the bottommost point is past the top of the camera (bounding_box.y >  1.0f)
 		return top_left.x > 1.0f || bottom_right.x < -1.0f || top_left.y < -1.0f || bottom_right.y > 1.0f;
 	}
-	
-	//-------------------------------------------------------------------------------------
-
-	template<typename VertexData>
-	int QuadRenderer<VertexData>::find_byte_size(const LayoutAttribute& attribute)
-	{
-		// Get the byte size of the type
-		int type_byte_size = 0;
-		switch(attribute.type)
-		{
-			case GL_BYTE:
-			case GL_UNSIGNED_BYTE:
-			{
-				type_byte_size = sizeof(uint8_t);
-				break;
-			}
-			case GL_SHORT:
-			case GL_UNSIGNED_SHORT:
-			{
-				type_byte_size = sizeof(uint16_t);
-				break;
-			}
-			case GL_INT:
-			case GL_UNSIGNED_INT:
-			case GL_INT_2_10_10_10_REV:
-			case GL_UNSIGNED_INT_2_10_10_10_REV:
-			case GL_UNSIGNED_INT_10F_11F_11F_REV:
-			{
-				type_byte_size = sizeof(uint32_t);
-				break;
-			}
-			case GL_FIXED:
-			case GL_FLOAT:
-			{
-				type_byte_size = sizeof(float);
-				break;
-			}
-			case GL_HALF_FLOAT:
-			{
-				type_byte_size = sizeof(float) / 2;
-				break;
-			}
-			case GL_DOUBLE:
-			{
-				type_byte_size = sizeof(double);
-				break;
-			}
-		}
-
-		// The total byte size will be the type byte size multiplied by the amount of that type
-		return attribute.count * type_byte_size;
-	}
 
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
 	inline void QuadRenderer<VertexData>::create_stream_buffer()
 	{
-		// Bind the stream buffer 
 		m_StreamBuffer.bind();
 
 		// Allocate immutable storage for the buffer with the write and persisten bits
@@ -111,7 +58,6 @@ namespace cbn
 	template<typename VertexData>
 	inline void QuadRenderer<VertexData>::create_index_buffer()
 	{
-		// Bind the index buffer
 		m_IndexBuffer.bind();
 
 		// Start generating all the indices for the stream buffer, each quad will require 6 indices
@@ -120,11 +66,9 @@ namespace cbn
 		// index_count = buffer sections * quads per section * 6 indices per quad
 		const uint32_t index_count = m_BufferSections * m_MaximumBatchSize * 6;
 
-		// Create a vector to store the indices and pre-allocate it for the required indices
+		// Create a vector to store the indices for the stream buffer
 		std::vector<uint32_t> buffer_indices;
 		buffer_indices.reserve(index_count);
-
-		// Generate all the requires indices for the stream buffer
 		for(uint32_t index = 0, base_vertex = 0; index < index_count; index += 6, base_vertex += 4)
 		{
 			buffer_indices.push_back(base_vertex + 0);
@@ -142,7 +86,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::create_vertex_array_object(const std::vector<LayoutAttribute>& vertex_attributes)
+	inline void QuadRenderer<VertexData>::create_vertex_array_object(const VertexDataDescriptor& descriptor)
 	{
 		// Start by binding the vertex array object
 		// Any buffers created after the binding will 
@@ -155,16 +99,26 @@ namespace cbn
 		// Create the stream buffer
 		create_stream_buffer();
 
+		
+		std::vector<VertexDataDescriptor::AttributeDescriptor> descriptors = descriptor.get_attribute_descriptors();
+		
 		// Setup the attribute pointers for the vertex layout, starting with
 		// the position, then followed by the user defined vertex attributes
 		glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VertexLayout), reinterpret_cast<GLvoid*>(0));
-		for(int offset = 8, i = 0; i < vertex_attributes.size(); i++) // TODO: make sure no more than 15 attributes exist in total
+		for(int offset = 8, i = 0; i < descriptors.size(); i++)
 		{
-			const auto attribute = vertex_attributes[i];
-			glVertexAttribPointer(i + 1, attribute.count, attribute.type, attribute.normalize, sizeof(VertexLayout), reinterpret_cast<GLvoid*>(offset));
+			const int attribute_slot = i + 1;
+			const auto attribute = descriptors[i];
+			
+			// The vertex array object only supports 16 attributes total,
+			// hence we can only support the first 15 user defined attributes. 
+			if(attribute_slot >= 15)
+				break;
+			
+			glVertexAttribPointer(attribute_slot, attribute.count, attribute.type, attribute.normalize, sizeof(VertexLayout), reinterpret_cast<GLvoid*>(offset));
 
-			// Increase the offset by the last attribute
-			offset += find_byte_size(attribute);
+			// Increase the offset by the size of the last attribute
+			offset += attribute.byte_size;
 		}
 		
 		// Enable the vertex attributes
@@ -218,11 +172,11 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline QuadRenderer<VertexData>::QuadRenderer(const std::vector<LayoutAttribute>& vertex_attributes)
-		: m_TotalBufferByteSize(16383 * sizeof(QuadLayout) * 3),
-		m_BufferSectionByteSize(16383 * sizeof(QuadLayout)),
-		m_MaximumBatchSize(16383),
-		m_BufferSections(3),
+	inline QuadRenderer<VertexData>::QuadRenderer(const VertexDataDescriptor& descriptor, const unsigned batch_size, const unsigned buffers)
+		: m_TotalBufferByteSize(batch_size * sizeof(QuadLayout) * 3),
+		m_BufferSectionByteSize(batch_size * sizeof(QuadLayout)),
+		m_MaximumBatchSize(batch_size),
+		m_BufferSections(buffers),
 		m_SectionWritePointer(nullptr),
 		m_BufferBasePointer(nullptr),
 		m_CurrentBatchSize(0),
@@ -230,7 +184,7 @@ namespace cbn
 		m_SectionIndex(0)
 	{
 		// Setup the vertex array object for the quad renderer
-		create_vertex_array_object(vertex_attributes);
+		create_vertex_array_object(descriptor);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -273,7 +227,7 @@ namespace cbn
 	template<typename VertexData>
 	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data)
 	{
-		submit(base_size, transform_matrix, quad_data, quad_data, quad_data, quad_data);
+		submit(base_size, transform_matrix, {quad_data, quad_data, quad_data, quad_data});
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -281,36 +235,20 @@ namespace cbn
 	template<typename VertexData>
 	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& quad_data)
 	{
-		return try_submit(base_size, transform_matrix, quad_data, quad_data, quad_data, quad_data);
+		return try_submit(base_size, transform_matrix, {quad_data, quad_data, quad_data, quad_data});
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data)
-	{
-		submit(base_size, transform_matrix, left_half_data, left_half_data, right_half_data, right_half_data);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	template<typename VertexData>
-	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& left_half_data, const VertexData& right_half_data)
-	{
-		return try_submit(base_size, transform_matrix, left_half_data, left_half_data, right_half_data, right_half_data);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
+	inline void QuadRenderer<VertexData>::submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const QuadData& quad_data)
 	{
 		// Make sure we don't exceed the maximum batch size
 		CBN_Assert(m_CurrentBatchSize < m_MaximumBatchSize, "Cannot exceed maximum batch size");
 
 		// Use the view projection and transform matrices to get the full mvp matrix
 		const glm::mat4 mvp_matrix = build_mvp_matrix(m_ViewProjectionMatrix, transform_matrix);
-		const glm::vec2 base_half_size = base_size * 0.5f;
+		const glm::vec2 base_half_size = base_size / 2.0f;
 
 		// Use the matrix and the base size to determine all the vertex positions for the quad
 		const glm::vec2 ul_vertex_position = transform({-base_half_size.x, base_half_size.y}, mvp_matrix);
@@ -340,29 +278,29 @@ namespace cbn
 
 		// Set upper left vertex data
 		m_SectionWritePointer->ul_vertex.position = ul_vertex_position;
-		m_SectionWritePointer->ul_vertex.vertex_data = ul_vertex_data;
+		m_SectionWritePointer->ul_vertex.vertex_data = quad_data.ul_vertex;
 
 		// Set lower left vertex data
 		m_SectionWritePointer->ll_vertex.position = ll_vertex_position;
-		m_SectionWritePointer->ll_vertex.vertex_data = ll_vertex_data;
+		m_SectionWritePointer->ll_vertex.vertex_data = quad_data.ll_vertex;
 
 		// Set lower right vertex data
 		m_SectionWritePointer->lr_vertex.position = lr_vertex_position;
-		m_SectionWritePointer->lr_vertex.vertex_data = lr_vertex_data;
+		m_SectionWritePointer->lr_vertex.vertex_data = quad_data.lr_vertex;
 
 		// Set upper right vertex data
 		m_SectionWritePointer->ur_vertex.position = ur_vertex_position;
-		m_SectionWritePointer->ur_vertex.vertex_data = ur_vertex_data;
+		m_SectionWritePointer->ur_vertex.vertex_data = quad_data.ur_vertex;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const VertexData& ul_vertex_data, const VertexData& ll_vertex_data, const VertexData& lr_vertex_data, const VertexData& ur_vertex_data)
+	inline bool QuadRenderer<VertexData>::try_submit(const glm::vec2& base_size, const glm::mat4& transform_matrix, const QuadData& quad_data)
 	{
 		if(m_CurrentBatchSize < m_MaximumBatchSize)
 		{
-			submit(base_size, transform_matrix, ul_vertex_data, ll_vertex_data, lr_vertex_data, ur_vertex_data);
+			submit(base_size, transform_matrix, quad_data);
 			return true;
 		}
 		return false;

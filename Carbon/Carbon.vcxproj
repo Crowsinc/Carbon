@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Graphics\Camera.cpp" />
+    <ClCompile Include="Graphics\OpenGL\VertexDataDescriptor.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
     <ClCompile Include="Graphics\ShaderProgram.cpp" />
@@ -172,7 +173,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Camera.hpp" />
-    <ClInclude Include="Graphics\OpenGL.hpp" />
+    <ClInclude Include="Graphics\OpenGL\GLObjects.hpp" />
+    <ClInclude Include="Graphics\OpenGL\GLTypedObject.hpp" />
+    <ClInclude Include="Graphics\OpenGL\GLUntypedObject.hpp" />
+    <ClInclude Include="Graphics\OpenGL\OpenGL.hpp" />
+    <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
     <ClInclude Include="Graphics\QuadRenderer.hpp" />
     <ClInclude Include="Graphics\Shader.hpp" />
@@ -194,7 +199,8 @@
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\OpenGL.tpp" />
+    <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
+    <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />

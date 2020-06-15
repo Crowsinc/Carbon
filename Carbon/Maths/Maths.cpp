@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <intrin.h>
+
 namespace cbn
 {
 
@@ -170,8 +172,7 @@ namespace cbn
 
 		// Treat the midpoint between the vertices v1 and v2, which should be adjacent,
 		// as direction that the rectangle is facing, and determine the direction angle
-		const glm::vec2 direction_coord = (v2 + v1) / 2.0f;
-		const float direction = atan2f(direction_coord.x, direction_coord.y);
+		const float direction = atan2f((v1.x + v2.x) / 2.0f, (v1.y + v2.y) / 2.0f);
 
 		// If the rectangle's direction is between 0 and 90 degrees, then v1 is the upmost
 		// vertex, v3 is the leftmost, v4 is the bottommost and v2 is the rightmost
@@ -201,7 +202,6 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	//TODO: double check proper multiplications (using glm multiplication function)
 	glm::mat4 build_vp_matrix(const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
 	{
 		// Since the view and projection matrices have specific structures, we can optimize the
@@ -234,7 +234,6 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	//TODO: double check proper multiplications (using glm multiplication function)
 	glm::mat4 build_mvp_matrix(const glm::mat4& vp_matrix, const glm::mat4& transform_matrix)
 	{
 		// Since the vp and transform matrices have specific structures, we can optimize the
@@ -267,7 +266,6 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	//TODO: double check proper multiplications (using glm multiplication function)
 	glm::mat4 build_mvp_matrix(const glm::mat4& transform_matrix, const glm::mat4& view_matrix, const glm::mat4& projection_matrix)
 	{
 		return build_mvp_matrix(build_vp_matrix(view_matrix, projection_matrix), transform_matrix);
