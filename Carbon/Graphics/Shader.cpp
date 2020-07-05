@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "../Utility/Algorithms.hpp"
+#include "../Utility/String.hpp"
 
 namespace cbn
 {
@@ -67,17 +67,20 @@ namespace cbn
 
 		// Go through each line of the source one by one
 		std::istringstream source_stream(shader_source.data());
-		for(std::string line; std::getline(source_stream, line);)
+		for(std::string stdline; std::getline(source_stream, stdline);)
 		{
+			String line(std::move(stdline));
+
 			// Check if the line starts with the uniform keyword (whitespace is ignored)
-			if(starts_with(line, "uniform ", true))
+			if(line.starts_with("uniform ", true))
 			{
 				// Since this line starts with the uniform keyword, split it based on spaces
 				// to get the words in the line. The uniform name should be the 3rd word as shown
 				// Format:  uniform <type> <name>;
 				// The name will also probably include a ';' so we need to remove any of those 
 				// from the line before we perform the split. 
-				auto split_line = split(remove_all(line, ";"), " ");
+				line.remove_all(";");
+				auto split_line = line.split(" ");
 				if(split_line.size() >= 3)
 				{
 					// If the split line contains 3 words, then add the 3rd to the uniform list

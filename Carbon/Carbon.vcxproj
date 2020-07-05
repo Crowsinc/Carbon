@@ -168,6 +168,7 @@
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
     <ClCompile Include="IO\Image.cpp" />
+    <ClCompile Include="Utility\String.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
@@ -195,6 +196,7 @@
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
     <ClInclude Include="IO\Image.hpp" />
     <ClInclude Include="Utility\Resource.hpp" />
+    <ClInclude Include="Utility\String.hpp" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>

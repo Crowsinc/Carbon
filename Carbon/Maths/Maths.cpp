@@ -1,8 +1,5 @@
 #include "Maths.hpp"
 
-#include <cmath>
-
-#include <intrin.h>
 
 namespace cbn
 {

@@ -3,6 +3,8 @@
 #include <optional>
 #include <stdint.h>
 
+//TODO: add useful headers
+
 namespace cbn
 {
 
@@ -15,12 +17,6 @@ namespace cbn
 
 	template<typename T>
 	using Opt = std::optional<T>;
-
-
-
-
-	// Initializers 
-    // TODO: bool InitializeGraphics(const Version& api_version, bool debug_context = false);
 
 
 
