@@ -209,6 +209,10 @@ namespace cbn
 		// which gets created. Especially if no OpenGL version was specified in the first place. 
 		window_properties.opengl_version = {static_cast<unsigned>(GLVersion.major), static_cast<unsigned>(GLVersion.minor)};
 
+		// Enable colour blending, there no reason you wouldnt want this on
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		// If we have made it here, then the window was successfully created
 		Window window_resource(glfw_handle, window_properties);
 		return Res<Window>::Wrap(window_resource, &Window::Delete);

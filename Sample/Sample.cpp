@@ -15,32 +15,41 @@
 #include <Graphics/QuadRenderer.hpp>
 #include <Graphics/Resources/ShaderProgram.hpp>
 
+#include <Graphics/Resources/Texture.hpp>
+
 bool runflag = true;
 cbn::Res<cbn::Window> window;
 
 const char* vertex_source = "#version 400 core\n"
 "layout(location = 0) in vec4 VertexData;\n"
-"layout(location = 1) in vec4 Colour;\n"
-"out vec4 color;\n"
+"layout(location = 1) in vec2 uvs;\n"
+"out vec2 _uvs;\n"
 "void main(void)\n"
 "{\n"
 "	gl_Position = vec4(VertexData.xy, 0.0, 1.0);\n"
-"	color = Colour;\n"
+"	_uvs = uvs;\n"
 "}\n"
 ";";
 
 const char* fragment_source = "#version 400 core\n"
-"in vec4 color;\n"
+"in vec2 _uvs;\n"
 "out vec4 fragColour;\n"
+"uniform sampler2D text;"
 "void main(void)\n"
 "{\n"
-"	fragColour = color;\n"
+"	fragColour = texture(text, _uvs);\n"
+"   //fragColour = vec4(1, 1, 1, 1);\n"
 "}\n"
 ";";
 
+//struct VertexData
+//{
+//	glm::vec4 colour;
+//};
+
 struct VertexData
 {
-	glm::vec4 colour;
+	glm::vec2 uv;
 };
 
 int main()
@@ -61,7 +70,7 @@ int main()
 
 #else
 	props.opengl_debug = false;
-	props.vsync = false;
+	props.vsync = true;
 #endif
 
 	window = cbn::Window::Create(props);
@@ -110,29 +119,45 @@ int main()
 		std::cout << error_log << std::endl;
 	}
 
-	VertexData tmp = {};
-
-	cbn::VertexDataDescriptor descriptor;
-	descriptor.add_attribute(tmp.colour, false);
-
-	cbn::QuadRenderer<VertexData> renderer(descriptor);
 
 	std::vector<cbn::Transform> transforms;
-	for(int x = 0; x < props.resolution.x; x += 8)
+	for(int x = 0; x < props.resolution.x; x += 32)
 	{
-		for(int y = 0; y < props.resolution.y; y += 8)
+		for(int y = 0; y < props.resolution.y; y += 32)
 		{
 			transforms.emplace_back(glm::vec2{x+ 2,y + 2});
 		}
 	}
+	
+	VertexData tmp = {};
+	
+	cbn::VertexDataDescriptor descriptor;
+	descriptor.add_attribute(tmp.uv, false);
+	
+	cbn::QuadRenderer<VertexData> renderer(descriptor);
+
+	glm::vec2 base_size(32);
+
+//	std::vector<cbn::Transform> transforms;
+//	transforms.emplace_back(glm::vec2{100, 100});
+//	transforms.emplace_back(glm::vec2{164, 164});
 
 
-	glm::vec2 base_size(8);
+	VertexData ul = {{0, 1}};
+	VertexData ur = {{1, 1}};
+	VertexData ll = {{0, 0}};
+	VertexData lr = {{1, 0}};
 
-	VertexData data[3];
-	data[0] = {glm::vec4(0.5f, 0.8f, 1, 1)};
-	data[1] = {glm::vec4(0.8f, 0.2f, 0.4f, 1)};
-	data[2] = {glm::vec4(0.2f, 0.3f, 0.4f, 1)};
+	cbn::Texture::Properties tprops{};
+	tprops.swizzle_mask = cbn::Texture::SwizzleMask::RGBA;
+
+	cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
+	if(!texture.exists())
+	{
+		std::cout << "Texture load failed" << std::endl;
+		std::cin.get();
+		return 0;
+	}
 
 	cbn::Camera cam(1280, 720);
 
@@ -141,15 +166,19 @@ int main()
 
 	int frames = 0;
 
+	texture->bind();
+
 	while(runflag)
 	{
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		renderer.begin(cam);
 	 
 		int i = 0;
 		for(auto& trans : transforms)
 		{
 			trans.rotate_by(2);
-			renderer.submit(base_size, trans.to_transform_matrix(), data[i % 3]);
+			renderer.submit(base_size, trans.to_transform_matrix(), {ul, ll, lr, ur});
 			i++;
 		}
 

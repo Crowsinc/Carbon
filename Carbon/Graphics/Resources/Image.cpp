@@ -56,11 +56,13 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
     
-    Res<Image> Image::Open(const std::filesystem::path& path)
+    Res<Image> Image::Open(const std::filesystem::path& path, const bool flip_vertically)
     {
         // Fail if the path does not lead to an existing file
         if(!std::filesystem::exists(path) && !std::filesystem::is_regular_file(path))
             return nullptr;
+
+        stbi_set_flip_vertically_on_load(flip_vertically);
 
         // Load image using stb_image
         int width, height, components;
@@ -114,8 +116,6 @@ namespace cbn
     Image::Image(const unsigned width, const unsigned height, Pixel* data, bool take_ownership)
         : m_Resolution(width, height)
     {
-        CBN_Assert(sizeof(data) / sizeof(Pixel) == static_cast<unsigned>(width * height), "Given pixel data does not match the size of the image");
-        
         // If we are taking ownership of the data, simply wrap it in a unique pointer and use it
         // Otherwise, create a backing array and copy the data over. 
         if(take_ownership)
@@ -140,7 +140,7 @@ namespace cbn
     //-------------------------------------------------------------------------------------
 
     Image::Image(Image&& image) noexcept
-        : m_Resolution(image.size()),
+        : m_Resolution(image.m_Resolution),
           m_Data(image.m_Data.release()) {}
 
     //-------------------------------------------------------------------------------------
@@ -235,6 +235,13 @@ namespace cbn
     int Image::components() const
     {
         return m_Components;
+    }
+    
+    //-------------------------------------------------------------------------------------
+
+    const Image::Pixel* Image::data() const
+    {
+        return m_Data.get();
     }
     
     //-------------------------------------------------------------------------------------

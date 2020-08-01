@@ -13,6 +13,8 @@ namespace cbn
 	{
 	public:
 
+#pragma pack(push, 1)
+
 		union Pixel
 		{
 			unsigned data;
@@ -28,13 +30,15 @@ namespace cbn
 			void operator=(const Pixel& other);
 		};
 
-		Res<Image> Create(const unsigned width, const unsigned height, std::vector<Pixel>& data);
+#pragma pack(pop)
 
-		Res<Image> Create(const unsigned width, const unsigned height, std::vector<Pixel>&& data);
+		static Res<Image> Create(const unsigned width, const unsigned height, std::vector<Pixel>& data);
 
-		Res<Image> Create(const unsigned width, const unsigned height);
+		static Res<Image> Create(const unsigned width, const unsigned height, std::vector<Pixel>&& data);
 
-		Res<Image> Open(const std::filesystem::path& path);
+		static Res<Image> Create(const unsigned width, const unsigned height);
+
+		static Res<Image> Open(const std::filesystem::path& path, const bool flip_vertically);
 
 	private:
 
@@ -81,6 +85,8 @@ namespace cbn
 
 		int components() const;
 		
+		const Pixel* data() const;
+
 		Pixel& operator()(const unsigned x, const unsigned y);
 
 		void operator=(Image&& image) noexcept;
