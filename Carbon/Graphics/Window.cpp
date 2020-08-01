@@ -211,7 +211,7 @@ namespace cbn
 
 		// If we have made it here, then the window was successfully created
 		Window window_resource(glfw_handle, window_properties);
-		return cbn::Res<Window>::Wrap(window_resource, &Window::Delete);
+		return Res<Window>::Wrap(window_resource, &Window::Delete);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -330,7 +330,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	
-	glm::vec2 Window::get_resolution() const
+	glm::uvec2 Window::get_resolution() const
 	{
 		return m_Resolution;
 	}

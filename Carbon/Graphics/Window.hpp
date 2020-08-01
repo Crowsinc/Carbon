@@ -27,7 +27,7 @@ namespace cbn
 
 		Event<std::string, GLenum, GLenum> ErrorEvent;
 		Event<DisplayMode> DisplayModeChangeEvent;
-		Event<glm::vec2> ResolutionChangeEvent;
+		Event<glm::uvec2> ResolutionChangeEvent;
 		Event<std::string> TitleChangeEvent;
 		Event<bool> VisibilityChangeEvent;
 		Event<void> CloseRequestEvent;
@@ -38,7 +38,7 @@ namespace cbn
 		{
 			bool vsync;
 			std::string title;
-			glm::vec2 resolution;
+			glm::uvec2 resolution;
 			DisplayMode display_mode;
 		
 			bool opengl_debug;
@@ -53,7 +53,7 @@ namespace cbn
 		DisplayMode m_DisplayMode;
 		GLFWwindow* m_GLFWHandle;
 		Version m_OpenGLVersion;
-		glm::vec2 m_Resolution;
+		glm::uvec2 m_Resolution;
 		std::string m_Title;
 		bool m_OpenGLDebug;
 		bool m_VSync;
@@ -96,7 +96,7 @@ namespace cbn
 
 		bool is_debug_enabled() const;
 
-		glm::vec2 get_resolution() const;
+		glm::uvec2 get_resolution() const;
 
 		std::string_view get_title() const;
 

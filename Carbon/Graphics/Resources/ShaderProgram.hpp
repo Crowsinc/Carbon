@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 #include "Shader.hpp"
-#include "../Utility/Resource.hpp"
+#include "../../Utility/Resource.hpp"
 
 namespace cbn
 {

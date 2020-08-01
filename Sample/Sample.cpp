@@ -11,9 +11,9 @@
 #include <iostream>
 #include <thread>
 
-#include <Graphics/Shader.hpp>
+#include <Graphics/Resources/Shader.hpp>
 #include <Graphics/QuadRenderer.hpp>
-#include <Graphics/ShaderProgram.hpp>
+#include <Graphics/Resources/ShaderProgram.hpp>
 
 bool runflag = true;
 cbn::Res<cbn::Window> window;
@@ -48,7 +48,6 @@ int main()
 	cbn::Window::Properties props{};
 	
 	// Window properties
-	props.vsync = false; 
 	props.title = "Carbon Sample";
 	props.resolution = {1280,720};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
@@ -58,8 +57,11 @@ int main()
 
 #ifdef _DEBUG
 	props.opengl_debug = true;
+	props.vsync = true;
+
 #else
 	props.opengl_debug = false;
+	props.vsync = false;
 #endif
 
 	window = cbn::Window::Create(props);
@@ -90,13 +92,13 @@ int main()
 
 	std::string error_log;
 
-	const auto vertex_sh = cbn::Shader::Create(vertex_source, cbn::Shader::Stage::VERTEX, error_log);
+	const auto vertex_sh = cbn::Shader::Compile(vertex_source, cbn::Shader::Stage::VERTEX, error_log);
 	if(!vertex_sh.exists())
 	{
 		std::cout << error_log << std::endl;
 	}
 
-	const auto frag_sh = cbn::Shader::Create(fragment_source, cbn::Shader::Stage::FRAGMENT, error_log);
+	const auto frag_sh = cbn::Shader::Compile(fragment_source, cbn::Shader::Stage::FRAGMENT, error_log);
 	if(!frag_sh.exists())
 	{
 		std::cout << error_log << std::endl;

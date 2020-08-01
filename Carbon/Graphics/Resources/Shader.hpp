@@ -4,8 +4,8 @@
 #include <string>
 #include <filesystem>
 
-#include "OpenGL/OpenGL.hpp"
-#include "../Utility/Resource.hpp"
+#include "../OpenGL/OpenGL.hpp"
+#include "../../Utility/Resource.hpp"
 
 namespace cbn
 {
@@ -22,7 +22,7 @@ namespace cbn
 			GEOMETRY = GL_GEOMETRY_SHADER,
 		};
 
-		static Res<Shader> Create(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
+		static Res<Shader> Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
 
 	private:
 

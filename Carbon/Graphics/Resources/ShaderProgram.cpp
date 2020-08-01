@@ -2,7 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../Diagnostics/Assert.hpp"
+#include "../../Diagnostics/Assert.hpp"
 
 namespace cbn
 {

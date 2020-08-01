@@ -2,14 +2,14 @@
 
 #include <sstream>
 
-#include "../Utility/String.hpp"
+#include "../../Utility/String.hpp"
 
 namespace cbn
 {
 
 	//-------------------------------------------------------------------------------------
 
-	Res<Shader> Shader::Create(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
+	Res<Shader> Shader::Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
 	{
 		// Create a shader of the given pipeline stage
 		Shader shader_resource{pipeline_stage};

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "Camera.hpp"
-#include "ShaderProgram.hpp"
+#include "Resources/ShaderProgram.hpp"
 #include "OpenGL/OpenGL.hpp"
 #include "OpenGL/GLObjects.hpp"
 #include "OpenGL/VertexDataDescriptor.hpp"
