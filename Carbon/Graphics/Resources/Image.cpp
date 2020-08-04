@@ -17,7 +17,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    Res<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>& data)
+    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>& data)
     {
         // If the given data does not exactly match the resolution 
         // or the resolution makes no sense, fail image creation
@@ -25,13 +25,12 @@ namespace cbn
             return nullptr;
 
         // If we are here, everything went fine so create the image
-        Image image(width, height, data.data(), false);
-        return Res<Image>::Wrap(image, nullptr);
+        return Resource::WrapShared(new Image(width, height, data.data(), false));
     }
    
     //-------------------------------------------------------------------------------------
 
-    Res<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>&& data)
+    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>&& data)
     {
         // If the given data does not exactly match the resolution 
         // or the resolution makes no sense, fail image creation
@@ -42,21 +41,19 @@ namespace cbn
         // Since we are moving the data, shrink the vector 
         // then take ownership of the internal pointer
         data.shrink_to_fit();
-        Image image(width, height, data.data(), true);
-        return Res<Image>::Wrap(image, nullptr);
+        return Resource::WrapShared(new Image(width, height, data.data(), true));
     }
     
     //-------------------------------------------------------------------------------------
 
-    Res<Image> Image::Create(const unsigned width, const unsigned height)
+    SRes<Image> Image::Create(const unsigned width, const unsigned height)
     {
-        Image image(width, height);
-        return Res<Image>::Wrap(image, nullptr);
+        return Resource::WrapShared(new Image(width, height));
     }
     
     //-------------------------------------------------------------------------------------
     
-    Res<Image> Image::Open(const std::filesystem::path& path, const bool flip_vertically)
+    SRes<Image> Image::Open(const std::filesystem::path& path, const bool flip_vertically)
     {
         // Fail if the path does not lead to an existing file
         if(!std::filesystem::exists(path) && !std::filesystem::is_regular_file(path))
@@ -71,8 +68,11 @@ namespace cbn
             return nullptr;
 
         // When we create the image, take ownership of the data
-        Image image(width, height, reinterpret_cast<Pixel*>(image_data), true);
-        return Res<Image>::Wrap(image, nullptr);
+        // Note that stb_image expects you to call stbi_free on the
+        // image_data, but we will instead deallocate it normally since
+        // thats all it does in this version of stb_image and it will provide
+        // a performance boost since we dont need to copy the data. 
+        return Resource::WrapShared(new Image(width, height, reinterpret_cast<Pixel*>(image_data), true));
     }
 
     //-------------------------------------------------------------------------------------
@@ -88,20 +88,42 @@ namespace cbn
         {
             for(unsigned x = x_offset; x < end_x; x++)
             {
-                auto index = coord_to_index(x, y);
-
-                *(m_Data.get() + index) = pixels[index];
+                set_pixel(x, y, pixels[coord_to_index(x - x_offset, y - y_offset, width)]);
             }
         }
     }
+
+    //-------------------------------------------------------------------------------------
+
+    void Image::insert_pixels_rotated(const unsigned x_offset, const unsigned y_offset, const Pixel* pixels, const unsigned width, const unsigned height)
+    {
+        // Clip the pixels if they extend out of the image
+        // Note that we are rotating the pixels, so we compare the 
+        // height of the pixels with the width of this image vice-versa. 
+        unsigned end_x = std::min(x_offset + height, this->width());
+        unsigned end_y = std::min(y_offset + width, this->height());
+
+        // Copy over all pixels to the image
+        for(unsigned y = y_offset; y < end_y; y++)
+        {
+            for(unsigned x = x_offset; x < end_x; x++)
+            {
+                // The image is being inserted with a rotation, so the x and y
+                // are swapped between the coordinated of this image and the pixels
+                // being inserted. 
+                set_pixel(x, y, pixels[coord_to_index(y - y_offset, x - x_offset, width)]);
+            }
+        }
+    }
+    
     //-------------------------------------------------------------------------------------
 
     void Image::allocate(const unsigned width, const unsigned height, bool set_to_zero)
     {
         if(set_to_zero)
-            m_Data = std::unique_ptr<Pixel>(new Pixel[width * height]{0});
+            m_Data = std::unique_ptr<Pixel>(new Pixel[static_cast<uint64_t>(width) * height]{0});
         else
-            m_Data = std::unique_ptr<Pixel>(new Pixel[width * height]);
+            m_Data = std::unique_ptr<Pixel>(new Pixel[static_cast<uint64_t>(width) * height]);
     }
  
     //-------------------------------------------------------------------------------------
@@ -110,7 +132,13 @@ namespace cbn
     {
         return y * width() + x;
     }
-    
+    //-------------------------------------------------------------------------------------
+
+    unsigned Image::coord_to_index(const unsigned x, const unsigned y, const unsigned width) const
+    {
+        return y * width + x;
+    }
+
     //-------------------------------------------------------------------------------------
 
     Image::Image(const unsigned width, const unsigned height, Pixel* data, bool take_ownership)
@@ -137,12 +165,6 @@ namespace cbn
         allocate(width, height, true);
     }
     
-    //-------------------------------------------------------------------------------------
-
-    Image::Image(Image&& image) noexcept
-        : m_Resolution(image.m_Resolution),
-          m_Data(image.m_Data.release()) {}
-
     //-------------------------------------------------------------------------------------
     
     void Image::fill(const Pixel& color)
@@ -171,9 +193,12 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void Image::insert(const unsigned x, const unsigned y, const Image& image)
+    void Image::insert(const unsigned x, const unsigned y, const Image& image, const bool rotate_90_degrees)
     {
-        insert_pixels(x, y, image.m_Data.get(), image.width(), image.height());
+        if(rotate_90_degrees)
+            insert_pixels_rotated(x, y, image.m_Data.get(), image.width(), image.height());
+        else
+            insert_pixels(x, y, image.m_Data.get(), image.width(), image.height());
     }
     
     //-------------------------------------------------------------------------------------
@@ -199,7 +224,7 @@ namespace cbn
     bool Image::save(const std::filesystem::path& path) const
     {
         // Use stb_image_write to save the image to a png file
-        return stbi_write_png(path.string().c_str(), 0, 0, m_Components, m_Data.get(), sizeof(Pixel) * width());
+        return stbi_write_png(path.string().c_str(), width(), height(), m_Components, m_Data.get(), sizeof(Pixel) * width());
     }
     
     //-------------------------------------------------------------------------------------
@@ -255,12 +280,4 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
  
-    void Image::operator=(Image&& image) noexcept
-    {
-        m_Resolution = image.m_Resolution;
-        m_Data = std::unique_ptr<Pixel>(image.m_Data.release());
-    }
-    
-    //-------------------------------------------------------------------------------------
-    
 }

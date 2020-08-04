@@ -3,6 +3,8 @@
 #include "../Diagnostics/Assert.hpp"
 #include "QuadRenderer.hpp"
 
+#include <iostream>
+
 namespace cbn
 {
 	//-------------------------------------------------------------------------------------
@@ -10,15 +12,23 @@ namespace cbn
 	template<typename VertexData>
 	bool QuadRenderer<VertexData>::should_cull_quad(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4) 
 	{
-		// Find the axis alligned bounding box for these vertices which form a rectangle. 
-		const auto&[top_left,bottom_right] = find_rectangle_aabb(v1, v4, v2, v3);
+		// Find the rough bounding box for these vertices which form a rectangle. 
+		// This is done by fitting the the rectangle within a circle, and then
+		// fitting the circle within a bounding box. 
+		const auto& [bottom_left, top_right] = find_rectangle_circle_bb(v1, v2, v3, v4);
 
-		// The quad should be culled if.... 
-		//	- the leftmost point is past the right of the camera (bounding_box.x >  1.0f)
-		//	- the rightmost point is past the left of the camera (bounding_box.x < -1.0f)
-		//	- the topmost point is past the bottom of the camera (bounding_box.y < -1.0f)
-		//	- the bottommost point is past the top of the camera (bounding_box.y >  1.0f)
-		return top_left.x > 1.0f || bottom_right.x < -1.0f || top_left.y < -1.0f || bottom_right.y > 1.0f;
+		return bottom_left.x > 1.2f || top_right.x < -1.2f || top_right.y < -1.2f || bottom_left.y > 1.2f;
+
+
+		//	// Find the axis alligned bounding box for these vertices which form a rectangle. 
+		//	const auto[top_left,bottom_right] = find_rectangle_aabb(v1, v2, v3, v4);
+		//	
+		//	// The quad should be culled if.... 
+		//	//	- the leftmost point is past the right of the camera (bounding_box.x >  1.0f)
+		//	//	- the rightmost point is past the left of the camera (bounding_box.x < -1.0f)
+		//	//	- the topmost point is past the bottom of the camera (bounding_box.y < -1.0f)
+		//	//	- the bottommost point is past the top of the camera (bounding_box.y >  1.0f)
+		//	return top_left.x > 1.0f || bottom_right.x < -1.0f || top_left.y < -1.0f || bottom_right.y > 1.0f;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -324,12 +334,12 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename VertexData>
-	inline void QuadRenderer<VertexData>::render(ShaderProgram& shader_program)
+	inline void QuadRenderer<VertexData>::render(SRes<ShaderProgram>& shader_program)
 	{
 		// Before we can render the batch, we need to make 
         // sure that the shader and vertex array are bound
 		m_VertexArrayObject.bind();
-		shader_program.bind();
+		shader_program->bind();
 
 		// Perform the draw call using an index buffer. Since there are 6 indices per quad we draw, the draw count
 		// will be the current batch size multiplied by 6 indices. We also need to offset the index buffer by the current section

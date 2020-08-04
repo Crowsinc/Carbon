@@ -69,6 +69,9 @@
     <ClCompile Include="Graphics\Resources\ShaderProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Resources\TextureAtlas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\Event.hpp">
@@ -90,9 +93,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Maths\Maths.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\Resource.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Carbon.hpp">
@@ -149,13 +149,26 @@
     <ClInclude Include="Graphics\Resources\ShaderProgram.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Resources\TextureAtlas.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\Resource.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
     <None Include="Utility\Algorithms.tpp" />
-    <None Include="Utility\Resource.tpp" />
     <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
     <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
+    <None Include="Memory\Resource.tpp" />
+    <None Include="Graphics\OpenGL\GLSLObject.tpp" />
   </ItemGroup>
 </Project>

@@ -16,9 +16,10 @@
 #include <Graphics/Resources/ShaderProgram.hpp>
 
 #include <Graphics/Resources/Texture.hpp>
+#include <Graphics/Resources/TextureAtlas.hpp>
 
 bool runflag = true;
-cbn::Res<cbn::Window> window;
+cbn::URes<cbn::Window> window;
 
 const char* vertex_source = "#version 400 core\n"
 "layout(location = 0) in vec4 VertexData;\n"
@@ -42,23 +43,45 @@ const char* fragment_source = "#version 400 core\n"
 "}\n"
 ";";
 
-//struct VertexData
-//{
-//	glm::vec4 colour;
-//};
-
 struct VertexData
 {
 	glm::vec2 uv;
 };
 
+
+void test_atlas()
+{
+	const std::filesystem::path path = "res/";
+
+	std::vector<cbn::SRes<cbn::Image>> images;
+
+	for(const auto& entry : std::filesystem::directory_iterator(path))
+	{
+		std::filesystem::path image_path = entry.path().string();
+
+		cbn::SRes<cbn::Image> img = cbn::Image::Open(image_path);
+		if(!img)
+		{
+			std::cout << "Could not load image " << image_path.string() << std::endl;
+			continue;
+		}
+
+		images.emplace_back(std::move(img));
+	}
+
+	auto atlas = cbn::TextureAtlas::Pack(2048, 2048, images);
+
+}
+
 int main()
 {
+
+
 	cbn::Window::Properties props{};
 	
 	// Window properties
 	props.title = "Carbon Sample";
-	props.resolution = {1280,720};
+	props.resolution = {1920,1080};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
 	
 	// Window graphics API properties
@@ -102,33 +125,36 @@ int main()
 	std::string error_log;
 
 	const auto vertex_sh = cbn::Shader::Compile(vertex_source, cbn::Shader::Stage::VERTEX, error_log);
-	if(!vertex_sh.exists())
+	if(!vertex_sh)
 	{
 		std::cout << error_log << std::endl;
 	}
 
 	const auto frag_sh = cbn::Shader::Compile(fragment_source, cbn::Shader::Stage::FRAGMENT, error_log);
-	if(!frag_sh.exists())
+	if(!frag_sh)
 	{
 		std::cout << error_log << std::endl;
 	}
 
 	auto program = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh, error_log);
-	if(!program.exists())
+	if(!program)
 	{
 		std::cout << error_log << std::endl;
 	}
 
 
 	std::vector<cbn::Transform> transforms;
-	for(int x = 0; x < props.resolution.x; x += 32)
-	{
-		for(int y = 0; y < props.resolution.y; y += 32)
-		{
-			transforms.emplace_back(glm::vec2{x+ 2,y + 2});
-		}
-	}
-	
+	//for(int x = 0; x < props.resolution.x; x += 32)
+	//{
+	//	for(int y = 0; y < props.resolution.y; y += 32)
+	//	{
+	//		transforms.emplace_back(glm::vec2{x+ 2,y + 2});
+	//	}
+	//}
+
+	transforms.emplace_back(glm::vec2{4096/2,4096/2});
+
+
 	VertexData tmp = {};
 	
 	cbn::VertexDataDescriptor descriptor;
@@ -136,12 +162,7 @@ int main()
 	
 	cbn::QuadRenderer<VertexData> renderer(descriptor);
 
-	glm::vec2 base_size(32);
-
-//	std::vector<cbn::Transform> transforms;
-//	transforms.emplace_back(glm::vec2{100, 100});
-//	transforms.emplace_back(glm::vec2{164, 164});
-
+	glm::vec2 base_size(4096, 4096);
 
 	VertexData ul = {{0, 1}};
 	VertexData ur = {{1, 1}};
@@ -149,24 +170,27 @@ int main()
 	VertexData lr = {{1, 0}};
 
 	cbn::Texture::Properties tprops{};
-	tprops.swizzle_mask = cbn::Texture::SwizzleMask::RGBA;
+	tprops.swizzle = cbn::Swizzle::RGBA;
 
-	cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
-	if(!texture.exists())
-	{
-		std::cout << "Texture load failed" << std::endl;
-		std::cin.get();
-		return 0;
-	}
+	//cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
+	//if(!texture.exists())
+	//{
+	//	std::cout << "Texture load failed" << std::endl;
+	//	std::cin.get();
+	//	return 0;
+	//}
 
-	cbn::Camera cam(1280, 720);
+	test_atlas();
+
+
+	cbn::Camera cam(4096, 4096);
 
 	cbn::Stopwatch watch;
 	watch.start();
 
 	int frames = 0;
 
-	texture->bind();
+	//texture->bind();
 
 	while(runflag)
 	{
@@ -177,7 +201,7 @@ int main()
 		int i = 0;
 		for(auto& trans : transforms)
 		{
-			trans.rotate_by(2);
+		//	trans.rotate_by(1);
 			renderer.submit(base_size, trans.to_transform_matrix(), {ul, ll, lr, ur});
 			i++;
 		}
@@ -197,6 +221,6 @@ int main()
 		}
 
 	}
-	
+
 	return 0;
 }

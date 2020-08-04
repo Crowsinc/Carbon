@@ -94,7 +94,7 @@ namespace cbn
 	
 		void end();
 
-		void render(ShaderProgram& shader_program);
+		void render(SRes<ShaderProgram>& shader_program);
 
 		int get_batch_capacity() const;
 

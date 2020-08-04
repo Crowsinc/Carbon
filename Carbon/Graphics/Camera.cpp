@@ -207,7 +207,7 @@ namespace cbn
 		// Update the camera resolution and calculate the center offset for this resolution. 
 		// Where the center offset is the amount we have to offset the camera so that the translation,
 		// and rotation of the camera relates to the middle of the camera view, while the coordinate
-		// system still has (0,0) being in the top left of the camera when its translation is (0,0)
+		// system still has (0,0) being in the bottom left of the camera when its translation is (0,0)
 		m_CenterOffset.x = resolution.x / 2.0f;
 		m_CenterOffset.y = -resolution.y / 2.0f;
 		m_Resolution = resolution;
@@ -258,12 +258,12 @@ namespace cbn
 		{
 			// Simply create an orthographic matrix using glm, we do not
 			// need to optimize anything for 2D here. This projection will 
-			// make (0,0) in the top left, and (res_x, rex_y) in the bottom right
+			// make (0,0) in the bottom left, and (res_x, rex_y) in the top right
 			// Where res_x and res_y are the camera resolution components multiplied
 			// by the amount of zoom. A higher value of zoom will shrink the resolution
 			// making the camera feel closer while a lower value of zoom will increase the
 			// resolution making it feel further away. 
-			m_ProjectionCache = build_orthographic_matrix(-m_CenterOffset.x * m_Zoom, m_CenterOffset.x * m_Zoom, -m_CenterOffset.y * m_Zoom, m_CenterOffset.y * m_Zoom);
+			m_ProjectionCache = build_orthographic_matrix(-m_CenterOffset.x * m_Zoom, m_CenterOffset.x * m_Zoom, m_CenterOffset.y * m_Zoom, -m_CenterOffset.y * m_Zoom);
 
 			// Clear the outdated flag on the projection cache
 			m_ProjectionCacheOutdated = false;

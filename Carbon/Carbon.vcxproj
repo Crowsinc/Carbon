@@ -143,7 +143,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointModel>Precise</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,6 +159,7 @@
     <ClCompile Include="Graphics\PostProcessor.cpp" />
     <ClCompile Include="Graphics\Resources\Shader.cpp" />
     <ClCompile Include="Graphics\Resources\ShaderProgram.cpp" />
+    <ClCompile Include="Graphics\Resources\TextureAtlas.cpp" />
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
@@ -175,14 +176,17 @@
   <ItemGroup>
     <ClInclude Include="Graphics\Camera.hpp" />
     <ClInclude Include="Graphics\OpenGL\GLObjects.hpp" />
+    <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\GLTypedObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\GLUntypedObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp" />
+    <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp" />
     <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
     <ClInclude Include="Graphics\QuadRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Shader.hpp" />
     <ClInclude Include="Graphics\Resources\ShaderProgram.hpp" />
+    <ClInclude Include="Graphics\Resources\TextureAtlas.hpp" />
     <ClInclude Include="Graphics\Sprite.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
@@ -195,18 +199,19 @@
     <ClInclude Include="Utility\Event.hpp" />
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
     <ClInclude Include="Graphics\Resources\Image.hpp" />
-    <ClInclude Include="Utility\Resource.hpp" />
+    <ClInclude Include="Memory\Resource.hpp" />
     <ClInclude Include="Utility\String.hpp" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Graphics\OpenGL\GLSLObject.tpp" />
     <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
     <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Utility\Algorithms.tpp" />
     <None Include="Utility\Event.tpp" />
-    <None Include="Utility\Resource.tpp" />
+    <None Include="Memory\Resource.tpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

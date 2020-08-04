@@ -8,6 +8,7 @@ namespace cbn
 	class GLUntypedObject
 	{
 	public:
+		
 		typedef void(*GeneratorFunction)(GLsizei, GLuint*);
 		typedef void(*DeleterFunction)(GLsizei, const GLuint*);
 		typedef void(*BinderFunction)(GLuint);

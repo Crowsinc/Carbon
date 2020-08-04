@@ -6,7 +6,7 @@
 #include "OpenGL/OpenGL.hpp"
 #include "../Utility/Event.hpp"
 #include "../Utility/Version.hpp"
-#include "../Utility/Resource.hpp"
+#include "../Memory/Resource.hpp"
 
 #include <iostream>
 
@@ -45,7 +45,7 @@ namespace cbn
 			Version opengl_version;
 		};
 
-		static Res<Window> Create(Properties window_properties);
+		static URes<Window> Create(Properties window_properties);
 
 	private:
 
@@ -72,13 +72,11 @@ namespace cbn
 
 		Window(GLFWwindow* glfw_handle, Properties properties);
 
-		static void Delete(Window& window);
-		
 	public:
 
-		Window(const Window& window) = delete;
-
 		Window(Window&& window) noexcept;
+
+		~Window();
 
 		void show();
 
@@ -113,7 +111,6 @@ namespace cbn
 		void set_display_mode(const DisplayMode display_mode);
 		
 		void operator=(Window&& window) noexcept;
-
 	};
 
 }

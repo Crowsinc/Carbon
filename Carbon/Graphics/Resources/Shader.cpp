@@ -9,29 +9,28 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Res<Shader> Shader::Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
+	SRes<Shader> Shader::Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
 	{
 		// Create a shader of the given pipeline stage
-		Shader shader_resource{pipeline_stage};
-		Res<Shader> shader = Res<Shader>::Wrap(shader_resource, &Shader::destroy);
+		SRes<Shader> shader = Resource::WrapShared(new Shader(pipeline_stage));
 
 		// Attempt to compile the given source into the shader, 
 		const GLchar* c_shader_source = shader_source.data();
-		glShaderSource(shader->m_ShaderID, 1, &c_shader_source, nullptr);
-		glCompileShader(shader->m_ShaderID);
+		glShaderSource(shader->m_ObjectID, 1, &c_shader_source, nullptr);
+		glCompileShader(shader->m_ObjectID);
 
 		// Check if the compilation was successful
 		GLint compiled = 0;
-		glGetShaderiv(shader->m_ShaderID, GL_COMPILE_STATUS, &compiled);
+		glGetShaderiv(shader->m_ObjectID, GL_COMPILE_STATUS, &compiled);
 		if(compiled == GL_FALSE)
 		{
 			// If compilation failed, get the length of the compilation error log
 			GLint log_length = 0;
-			glGetShaderiv(shader->m_ShaderID, GL_INFO_LOG_LENGTH, &log_length);
+			glGetShaderiv(shader->m_ObjectID, GL_INFO_LOG_LENGTH, &log_length);
 
 			// Create a vector to hold the log and retrieve it from OpenGL
 			std::vector<GLchar> compilation_log(log_length);
-			glGetShaderInfoLog(shader->m_ShaderID, log_length, &log_length, compilation_log.data());
+			glGetShaderInfoLog(shader->m_ObjectID, log_length, &log_length, compilation_log.data());
 
 			// Set the given error log to the compilation error log 
 			// and return nullptr. The shader destructor will handle
@@ -47,14 +46,6 @@ namespace cbn
 
 		// The shader was successfully created so return it
 		return shader;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void Shader::destroy(Shader& shader)
-	{
-		// Delete the shader object to avoid memory leaks
-		glDeleteShader(shader.m_ShaderID);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -93,12 +84,10 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	Shader::Shader(const Shader::Stage pipeline_stage)
-		: m_ShaderID(NULL),
-		m_PipelineStage(pipeline_stage)
-	{
-		// Create the shader OpenGL object in the correct pipeline stage
-		m_ShaderID = glCreateShader(static_cast<GLuint>(pipeline_stage));
-	}
+		// Note that we do not pass a binder function because one does not exist for shader objects
+		// this is fine because the GLSLObject inheritance is not exposed publically so bind is never called. 
+		: GLSLObject(glCreateShader, static_cast<GLenum>(pipeline_stage), glDeleteShader, nullptr), 
+		m_PipelineStage(pipeline_stage) {}
 
 	//-------------------------------------------------------------------------------------
 

@@ -5,12 +5,13 @@
 #include <filesystem>
 
 #include "../OpenGL/OpenGL.hpp"
-#include "../../Utility/Resource.hpp"
+#include "../OpenGL/GLSLObject.hpp"
+#include "../../Memory/Resource.hpp"
 
 namespace cbn
 {
 
-	class Shader
+	class Shader : private GLSLObject<GL_SHADER>
 	{
 		friend class ShaderProgram;
 	public:
@@ -22,17 +23,14 @@ namespace cbn
 			GEOMETRY = GL_GEOMETRY_SHADER,
 		};
 
-		static Res<Shader> Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
+		static SRes<Shader> Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
 
 	private:
 
-		GLuint m_ShaderID;
 		Stage m_PipelineStage;
 		std::vector<std::string> m_UniformNames;
 
 		void find_uniform_names(const std::string_view& shader_source);
-
-		static void destroy(Shader& shader);
 
 		explicit Shader(const Stage pipeline_stage);
 

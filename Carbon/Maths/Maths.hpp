@@ -21,6 +21,8 @@ namespace cbn
 
 	std::tuple<glm::vec2, glm::vec2> find_rectangle_aabb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4);
 
+	std::tuple<glm::vec2, glm::vec2> find_rectangle_circle_bb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4);
+
 	glm::vec2 transform(const glm::vec2& point, const glm::mat4& transform);
 
 	glm::vec2 rotate(const glm::vec2& point, const float rotation_radians);

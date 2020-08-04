@@ -1,5 +1,8 @@
 #include "Maths.hpp"
 
+#include <iostream>
+
+#include <algorithm>
 
 namespace cbn
 {
@@ -160,41 +163,71 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	std::tuple<glm::vec2, glm::vec2> find_rectangle_aabb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4)
+	std::tuple<glm::vec2, glm::vec2> find_rectangle_aabb(const glm::vec2& ul, const glm::vec2& ll, const glm::vec2& lr, const glm::vec2& ur)
 	{
+		// ul, ll, lr and ur a rectangle whose direction is the normal between ul and ur.
+		// Where ul, lr, lr and ur are the vertices in the upper left, lower left, lower right
+		// and upper right of the rectangle when it is facing straight north. 
+
 		// Since the vertices describe a rectangle, we can immediately determine which 
 		// vertices will be the furthest left, right, up and down, based on direction
 		// of the rectangle and the relative locations of each vertex. This function will 
 		// return a tuple containing the top left and bottom right coords of the aabb
 
-		// Treat the midpoint between the vertices v1 and v2, which should be adjacent,
-		// as direction that the rectangle is facing, and determine the direction angle
-		const float direction = atan2f((v1.x + v2.x) / 2.0f, (v1.y + v2.y) / 2.0f);
+		const glm::vec2 centre = (ul + lr) / 2.0f;
+		const glm::vec2 top_centre = (ul + ur) / 2.0f;
+		const glm::vec2 direction_vector = top_centre - centre;
 
-		// If the rectangle's direction is between 0 and 90 degrees, then v1 is the upmost
-		// vertex, v3 is the leftmost, v4 is the bottommost and v2 is the rightmost
+		// Find the direction angle of the rectangle, where 0 radians is true North. 
+		const float direction = atan2f(direction_vector.x, direction_vector.y);
+
+		// If the rectangle's direction is between 0 and 90 degrees, then the rectangle
+		// is pointing somewhere between North and East. Hence, ul will be the topmost
+		// point, ur will be the rightmost, lr will be the bottommost, and ll the leftmost. 
 		if(direction >= 0 && direction < PI_2)
 		{
-			return std::make_tuple(glm::vec2{v3.x, v1.y}, glm::vec2{v2.x, v4.y});
+			// We return the AABB as top left and bottom right coordinates
+			return std::make_tuple(glm::vec2{ll.x, ul.y}, glm::vec2{ur.x, lr.y});
 		}
-		// If the rectangle's direction is between 90 and 180 degrees, then v2 is the upmost
-		// vertex, v1 is the leftmost, v3 is the bottommost and v4 is the rightmost. 
+		// If the rectangle's direction is between 90 and 180 degrees, then the rectangle is 
+		// pointing somewhere between South and East. Hence, ll will be the topmost point
+		// ul the rightmost, ur the bottommost and lr the leftmost. 
 		else if(direction >= PI_2 && direction < PI)
 		{
-			return std::make_tuple(glm::vec2{v1.x, v2.y}, glm::vec2{v4.x, v3.y});
+			return std::make_tuple(glm::vec2{lr.x, ll.y}, glm::vec2{ul.x, ur.y});
 		}
-		// If the rectangle's direction is between 0 and -90 degrees, then v3 is the upmost
-		// vertex, v4 is the leftmost, v2 is the bottommost and v1 is the rightmost. 
+		// If the rectangle's direction is between 180 and 270 degrees, then the rectangle is 
+		// pointing somewhere between South and West. Hence, lr will be the topmost point
+		// ll the rightmost, ul the bottommost and ur the leftmost. 
 		else if(direction >= -PI_2 && direction < 0)
 		{
-			return std::make_tuple(glm::vec2{v4.x, v3.y}, glm::vec2{v1.x, v2.y});
+			return std::make_tuple(glm::vec2{ur.x, lr.y}, glm::vec2{ll.x, ul.y});
 		}
-		// If the rectangle's direction is between -90 and -180 degrees, then v4 is the upmost
-		// vertex, v2 is the leftmost, v1 is the bottommost and v3 is the rightmost. 
+		// If the rectangle's direction is between 270 and 360 degrees, then the rectangle is 
+		// pointing somewhere between North and West. Hence, ur will be the topmost point
+		// lr the rightmost, ll the bottommost and ul the leftmost. 
 		else
 		{
-			return std::make_tuple(glm::vec2{v2.x, v4.y}, glm::vec2{v3.x, v1.y});
+			return std::make_tuple(glm::vec2{ul.x, ur.y}, glm::vec2{lr.x, ll.y});
 		}
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	std::tuple<glm::vec2, glm::vec2> find_rectangle_circle_bb(const glm::vec2& ul, const glm::vec2& ll, const glm::vec2& lr, const glm::vec2& ur)
+	{
+		// ul, ll, lr and ur a rectangle whose direction is the normal between ul and ur.
+		// Where ul, lr, lr and ur are the vertices in the upper left, lower left, lower right
+		// and upper right of the rectangle when it is facing straight north
+
+		// Here we will find a rough bounding box of the rectangle by treating it as a circle
+		// where its diameter is the length of the diagonals of the rectangle. 
+
+		const float radius = glm::length(ul - lr) / 2.0f;
+
+		const glm::vec2 centre = {(ul.x + ll.x + lr.x + ur.x) / 4.0f, (ul.y + ll.y + lr.y + ur.y) / 4.0f};
+
+		return std::make_tuple(centre - radius, centre + radius);
 	}
 
 	//-------------------------------------------------------------------------------------

@@ -135,7 +135,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	Res<Window> Window::Create(Properties window_properties)
+	URes<Window> Window::Create(Properties window_properties)
 	{
 
 		// Initialize GLFW for the first time. If GLFW is already initialized then it 
@@ -214,15 +214,7 @@ namespace cbn
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// If we have made it here, then the window was successfully created
-		Window window_resource(glfw_handle, window_properties);
-		return Res<Window>::Wrap(window_resource, &Window::Delete);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void Window::Delete(Window& window)
-	{
-		glfwDestroyWindow(window.m_GLFWHandle);
+		return Resource::WrapUnique(new Window(glfw_handle, window_properties));
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -260,6 +252,13 @@ namespace cbn
 	{
 		// Since this new window object will now control the GLFW handle, we need to update the user pointer
 		glfwSetWindowUserPointer(m_GLFWHandle, this);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	Window::~Window()
+	{
+		glfwDestroyWindow(m_GLFWHandle);
 	}
 	
 	//-------------------------------------------------------------------------------------
