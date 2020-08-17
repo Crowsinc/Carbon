@@ -67,7 +67,7 @@ namespace cbn
 
 		void fill(const Image& image);
 
-		void insert(const unsigned x, const unsigned y, const Image& image, const bool rotate_90_degrees = false);
+		void insert(const unsigned x, const unsigned y, const SRes<Image>& image, const bool rotate_90_degrees = false);
 		
 		void set_pixel(const unsigned x, const unsigned y, const Pixel& pixel);
 

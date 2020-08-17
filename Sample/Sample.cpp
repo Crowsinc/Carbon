@@ -69,7 +69,9 @@ void test_atlas()
 		images.emplace_back(std::move(img));
 	}
 
-	auto atlas = cbn::TextureAtlas::Pack(2048, 2048, images);
+	std::cout << "Packing... " << images.size() << " textures" << std::endl;
+
+	auto atlas = cbn::TextureAtlas::Pack(4096, 4096, {}, images);
 
 }
 

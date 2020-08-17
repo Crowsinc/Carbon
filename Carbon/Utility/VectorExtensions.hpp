@@ -6,9 +6,6 @@
 
 namespace cbn
 {
-
-	// Vector Algorithms
-
 	template<typename T>
 	void swap_erase(std::vector<T>& container, const size_t index);
 
@@ -20,4 +17,4 @@ namespace cbn
 
 }
 
-#include "Algorithms.tpp"
+#include "VectorExtensions.tpp"

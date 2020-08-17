@@ -193,12 +193,12 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void Image::insert(const unsigned x, const unsigned y, const Image& image, const bool rotate_90_degrees)
+    void Image::insert(const unsigned x, const unsigned y, const SRes<Image>& image, const bool rotate_90_degrees)
     {
         if(rotate_90_degrees)
-            insert_pixels_rotated(x, y, image.m_Data.get(), image.width(), image.height());
+            insert_pixels_rotated(x, y, image->m_Data.get(), image->width(), image->height());
         else
-            insert_pixels(x, y, image.m_Data.get(), image.width(), image.height());
+            insert_pixels(x, y, image->m_Data.get(), image->width(), image->height());
     }
     
     //-------------------------------------------------------------------------------------

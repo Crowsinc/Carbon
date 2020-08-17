@@ -72,6 +72,9 @@
     <ClCompile Include="Graphics\Resources\TextureAtlas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Algorithms\BinPacking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\Event.hpp">
@@ -96,9 +99,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Carbon.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\Algorithms.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp">
@@ -161,14 +161,21 @@
     <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\VectorExtensions.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Algorithms\BinPacking.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
-    <None Include="Utility\Algorithms.tpp" />
     <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
     <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Memory\Resource.tpp" />
     <None Include="Graphics\OpenGL\GLSLObject.tpp" />
+    <None Include="Utility\VectorExtensions.tpp" />
+    <None Include="Maths\Shapes.hpp" />
   </ItemGroup>
 </Project>

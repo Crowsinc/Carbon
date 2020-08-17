@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 
+#include "../../Algorithms/BinPacking.hpp"
 #include "../OpenGL/TextureParameters.hpp"
 #include "../OpenGL/GLTypedObject.hpp"
 #include "../../Memory/Resource.hpp"
@@ -19,14 +20,19 @@ namespace cbn
 
 		struct ImageReference
 		{
-			int index;
-			bool rotated;
-			std::string key;
 			unsigned x, y;
 			unsigned width, height;
 		};
 
-		static SRes<TextureAtlas> Pack(const unsigned max_width, const unsigned max_height, const std::vector<SRes<Image>>& images);
+		struct PackingSettings
+		{
+			BinPackingHeuristic heuristic = BinPackingHeuristic::BLSF_BAF_SQR;
+			bool allow_image_rotation = true;
+			bool shrink_to_footprint = true;
+		};
+
+
+		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const PackingSettings settings, const std::vector<SRes<Image>> images);
 
 		static SRes<TextureAtlas> Open(const std::filesystem::path& path, Swizzle swizzle = Swizzle::RGBA);
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Algorithms.hpp"
-
+#include "VectorExtensions.hpp"
 
 namespace cbn
 {

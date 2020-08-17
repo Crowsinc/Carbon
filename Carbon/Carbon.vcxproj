@@ -154,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
+    <ClCompile Include="Algorithms\BinPacking.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Graphics\OpenGL\VertexDataDescriptor.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
@@ -174,6 +175,7 @@
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Algorithms\BinPacking.hpp" />
     <ClInclude Include="Graphics\Camera.hpp" />
     <ClInclude Include="Graphics\OpenGL\GLObjects.hpp" />
     <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp" />
@@ -194,7 +196,7 @@
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
-    <ClInclude Include="Utility\Algorithms.hpp" />
+    <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
@@ -209,7 +211,8 @@
     <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
     <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
-    <None Include="Utility\Algorithms.tpp" />
+    <None Include="Maths\Shapes.hpp" />
+    <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Utility\Event.tpp" />
     <None Include="Memory\Resource.tpp" />
   </ItemGroup>
