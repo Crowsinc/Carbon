@@ -41,7 +41,6 @@ namespace cbn
 
 		GLuint id() const;
 
-		void operator=(GLTypedObject&& object);
 	};
 }
 

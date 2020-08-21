@@ -37,7 +37,7 @@ namespace cbn
 			update_key(key);
 		}
 
-		void operator==(const CachedKey<T>& other) const
+		bool operator==(const CachedKey<T>& other) const
 		{
 			return hash() == other.hash();
 		}
@@ -70,7 +70,7 @@ namespace std
 	template<typename T>
 	struct hash<cbn::CachedKey<T>>
 	{
-		std::size_t operator()(const cbn::CachedKey<T>& key)
+		std::size_t operator()(const cbn::CachedKey<T>& key) const
 		{
 			return key.hash();
 		}
@@ -79,7 +79,7 @@ namespace std
 	template<typename T>
 	struct less<cbn::CachedKey<T>>
 	{
-		std::size_t operator()(const cbn::CachedKey<T>& left, const cbn::CachedKey<T>& right)
+		std::size_t operator()(const cbn::CachedKey<T>& left, const cbn::CachedKey<T>& right) const
 		{
 			return left.hash() < right.hash();
 		}

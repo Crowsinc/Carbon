@@ -104,9 +104,12 @@ namespace cbn
         unsigned end_y = std::min(y_offset + width, this->height());
 
         // Copy over all pixels to the image
-        for(unsigned y = y_offset; y < end_y; y++)
+        // Note that we are retrieving values from the pixels
+        // array with a switched x and y coord, so to avoid 
+        // cache misses, we actually want to loop x first. 
+        for(unsigned x = x_offset; x < end_x; x++)
         {
-            for(unsigned x = x_offset; x < end_x; x++)
+            for(unsigned y = y_offset; y < end_y; y++)
             {
                 // The image is being inserted with a rotation, so the x and y
                 // are swapped between the coordinated of this image and the pixels

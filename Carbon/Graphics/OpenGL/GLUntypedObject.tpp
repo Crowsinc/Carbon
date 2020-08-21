@@ -89,18 +89,4 @@ namespace cbn
 	}
 
 	//-------------------------------------------------------------------------------------
-	
-	template<GLenum ObjectTypeID>
-	void GLUntypedObject<ObjectTypeID>::operator=(GLUntypedObject&& object)
-	{
-		m_ObjectID = object.m_ObjectID;
-		m_BindFunction = object.m_BindFunction;
-		m_DeleteFunction = object.m_DeleteFunction;
-
-		// Remove the delete function of the other object so 
-		// that it doesnt invalidate our object when it goes out of scope
-		object.m_DeleteFunction = nullptr;
-	}
-
-	//-------------------------------------------------------------------------------------
 }

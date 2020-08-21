@@ -11,6 +11,10 @@ namespace cbn
 	constexpr float PI_4 = PI / 4.0f;
 	constexpr float PI_6 = PI / 6.0f;
 
+	int next_power(int value, int base);
+
+	unsigned next_power(unsigned value, unsigned base);
+
 	float to_degrees(const float radians);
 
 	float to_radians(const float degrees);

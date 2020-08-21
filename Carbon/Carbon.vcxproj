@@ -196,6 +196,7 @@
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
+    <ClInclude Include="Utility\CachedKey.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />

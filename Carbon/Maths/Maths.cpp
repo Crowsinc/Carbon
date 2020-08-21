@@ -9,6 +9,20 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
+	int next_power(int value, int base)
+	{
+		return std::pow(2, std::ceil(std::log(value) / log(base)));
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	unsigned next_power(unsigned value, unsigned base)
+	{
+		return std::pow(2, std::ceil(std::log(value) / log(base)));
+	}
+	
+	//-------------------------------------------------------------------------------------
+
 	float to_degrees(const float radians)
 	{
 		return (radians * 180.0f) / PI;

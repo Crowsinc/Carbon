@@ -27,6 +27,14 @@ namespace cbn
 			Swizzle swizzle = Swizzle::RGBA;
 		};
 
+		struct UVMap
+		{
+			glm::vec2 ul;
+			glm::vec2 ll;
+			glm::vec2 lr;
+			glm::vec2 ur;
+		};
+
 		static SRes<Texture> Create(const SRes<Image>& image, const Properties& properties);
 
 		static SRes<Texture> Open(const std::filesystem::path& path, const Properties& properties);
@@ -51,6 +59,8 @@ namespace cbn
 		const unsigned height() const;
 
 		glm::uvec2 resolution() const;
+
+		UVMap uvs() const;
 	};
 
 }

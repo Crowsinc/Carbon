@@ -48,31 +48,32 @@ struct VertexData
 	glm::vec2 uv;
 };
 
+using namespace cbn;
 
-void test_atlas()
+SRes<TextureAtlas> test_atlas()
 {
 	const std::filesystem::path path = "res/";
 
-	std::vector<cbn::SRes<cbn::Image>> images;
+	std::map<CKey<std::string>, SRes<Image>> images;
 
 	for(const auto& entry : std::filesystem::directory_iterator(path))
 	{
 		std::filesystem::path image_path = entry.path().string();
 
-		cbn::SRes<cbn::Image> img = cbn::Image::Open(image_path);
+		SRes<Image> img = Image::Open(image_path);
 		if(!img)
 		{
 			std::cout << "Could not load image " << image_path.string() << std::endl;
 			continue;
 		}
 
-		images.emplace_back(std::move(img));
+		images.insert({{entry.path().filename().string()}, std::move(img)});
 	}
 
 	std::cout << "Packing... " << images.size() << " textures" << std::endl;
 
 	auto atlas = cbn::TextureAtlas::Pack(4096, 4096, {}, images);
-
+	return atlas;
 }
 
 int main()
@@ -164,15 +165,15 @@ int main()
 	
 	cbn::QuadRenderer<VertexData> renderer(descriptor);
 
-	glm::vec2 base_size(4096, 4096);
+	glm::vec2 base_size(2048, 2048);
 
-	VertexData ul = {{0, 1}};
-	VertexData ur = {{1, 1}};
-	VertexData ll = {{0, 0}};
-	VertexData lr = {{1, 0}};
+	auto texture = test_atlas();
 
-	cbn::Texture::Properties tprops{};
-	tprops.swizzle = cbn::Swizzle::RGBA;
+
+	VertexData ll = {texture->get_sub_texture_data({"pp.png"}).uvs.ll};
+	VertexData lr = {texture->get_sub_texture_data({"pp.png"}).uvs.lr};
+	VertexData ul = {texture->get_sub_texture_data({"pp.png"}).uvs.ul};
+	VertexData ur = {texture->get_sub_texture_data({"pp.png"}).uvs.ur};
 
 	//cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
 	//if(!texture.exists())
@@ -182,7 +183,6 @@ int main()
 	//	return 0;
 	//}
 
-	test_atlas();
 
 
 	cbn::Camera cam(4096, 4096);
@@ -192,7 +192,7 @@ int main()
 
 	int frames = 0;
 
-	//texture->bind();
+	texture->bind();
 
 	while(runflag)
 	{

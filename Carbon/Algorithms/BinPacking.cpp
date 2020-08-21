@@ -100,16 +100,16 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool has_sqr_heuristic(const BinPackingHeuristic heuristic)
+	bool has_sqr_heuristic(const RectanglePackingHeuristic heuristic)
 	{
 		switch(heuristic)
 		{
-			case BinPackingHeuristic::BLSF_BSSF_SQR:
-			case BinPackingHeuristic::BSSF_BLSF_SQR:
-			case BinPackingHeuristic::BLSF_BAF_SQR:
-			case BinPackingHeuristic::BSSF_BAF_SQR:
-			case BinPackingHeuristic::BSSF_SQR:
-			case BinPackingHeuristic::BLSF_SQR:
+			case RectanglePackingHeuristic::BLSF_BSSF_SQR:
+			case RectanglePackingHeuristic::BSSF_BLSF_SQR:
+			case RectanglePackingHeuristic::BLSF_BAF_SQR:
+			case RectanglePackingHeuristic::BSSF_BAF_SQR:
+			case RectanglePackingHeuristic::BSSF_SQR:
+			case RectanglePackingHeuristic::BLSF_SQR:
 				return true;
 			default:
 				return false;
@@ -119,55 +119,51 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 
-	std::tuple<int, int> calculate_score(const Rect<int> bin, const Rect<int> rect, const BinPackingHeuristic heuristic)
+	std::tuple<int, int> calculate_score(const Rect<int> bin, const Rect<int> rect, const RectanglePackingHeuristic heuristic)
 	{
-	
-
 		std::tuple<int, int> scores;
 
 		switch(heuristic)
 		{
-			case BinPackingHeuristic::BAF:
+			case RectanglePackingHeuristic::BAF:
 				scores = best_area_fit(bin, rect);
 				break;
-			case BinPackingHeuristic::BSSF:
-			case BinPackingHeuristic::BSSF_SQR:
+			case RectanglePackingHeuristic::BSSF:
+			case RectanglePackingHeuristic::BSSF_SQR:
 				scores = best_short_side_fit(bin, rect);
 				break;
-			case BinPackingHeuristic::BLSF:
-			case BinPackingHeuristic::BLSF_SQR:
+			case RectanglePackingHeuristic::BLSF:
+			case RectanglePackingHeuristic::BLSF_SQR:
 				scores = best_short_side_fit(bin, rect);
 				break;
-			case BinPackingHeuristic::BSSF_BLSF:
-			case BinPackingHeuristic::BSSF_BLSF_SQR:
+			case RectanglePackingHeuristic::BSSF_BLSF:
+			case RectanglePackingHeuristic::BSSF_BLSF_SQR:
 				scores = best_short_side_fit_blsf(bin, rect);
 				break;
-			case BinPackingHeuristic::BLSF_BSSF:
-			case BinPackingHeuristic::BLSF_BSSF_SQR:
+			case RectanglePackingHeuristic::BLSF_BSSF:
+			case RectanglePackingHeuristic::BLSF_BSSF_SQR:
 				scores = best_long_side_fit_bssf(bin, rect);
 				break;
-			case BinPackingHeuristic::BAF_BSSF:
+			case RectanglePackingHeuristic::BAF_BSSF:
 				scores = best_area_fit_bssf(bin, rect);
 				break;
-			case BinPackingHeuristic::BAF_BLSF:
+			case RectanglePackingHeuristic::BAF_BLSF:
 				scores = best_area_fit_blsf(bin, rect);
 				break;
-			case BinPackingHeuristic::BSSF_BAF:
-			case BinPackingHeuristic::BSSF_BAF_SQR:
+			case RectanglePackingHeuristic::BSSF_BAF:
+			case RectanglePackingHeuristic::BSSF_BAF_SQR:
 				scores = best_short_side_fit_baf(bin, rect);
 				break;
-			case BinPackingHeuristic::BLSF_BAF:
-			case BinPackingHeuristic::BLSF_BAF_SQR:
+			case RectanglePackingHeuristic::BLSF_BAF:
+			case RectanglePackingHeuristic::BLSF_BAF_SQR:
 				scores = best_long_side_fit_baf(bin, rect);
 				break;
 			default:
 				return {0,0};
 		}
 
-		// If we want a square footprint, add a score penalty for 
-		// how distant the bin is from the top left of plane.
-		// This is so we favour packing in an outwards growing
-		// square from the top left, squaring up the footprint.
+		// If we are also using the SQR heuristic, we 
+		// need to calculate a score penalty for it
 		if(has_sqr_heuristic(heuristic))
 			std::get<0>(scores) += calculate_sqr_score_penalty(bin, rect);
 
@@ -299,23 +295,32 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	 
-	bool max_rects_optimal(const glm::uvec2& size, const bool allow_rotation, const BinPackingHeuristic heuristic, std::vector<Rect<int>>& rectangles)
+	bool max_rects_optimal(const glm::uvec2& size, const bool allow_rotation, const RectanglePackingHeuristic heuristic, std::vector<Rect<int>>& rectangles)
 	{
 		// We do not want to change the order of the given rectangles vector
 		// so we will make a new vector which references each of the rectangles
-		// Also since we are iterating over the rectangles, we can determine
-		// what the smallest dimension is, we will use this for optimisation later. 
-		std::vector<Rect<int>*> references;
-		references.resize(rectangles.size());
+		// Also since we are iterating over the rectangles, we want to determine
+		// the total rectangle area, and the minimum rectangle dimension. 
 		int minimum_dimension = std::numeric_limits<int>::max();
-		std::transform(rectangles.begin(), rectangles.end(), references.begin(), [&](Rect<int>& rect)
-		{
-			const int rect_minimum_dimension = std::min(rect.width, rect.height);
-			if(rect_minimum_dimension < minimum_dimension)
-				minimum_dimension = rect_minimum_dimension;
+		unsigned required_rectangle_area = 0;
 
-			return &rect;
-		});
+		std::vector<Rect<int>*> references;
+		references.reserve(rectangles.size());
+		for(auto& rect : rectangles)
+		{
+			// Accumulate the area
+			required_rectangle_area += rect.width * rect.height;
+
+			// Update minimum dimension
+			if(int dim = std::min(rect.width, rect.height); dim < minimum_dimension)
+				minimum_dimension = dim;
+
+			references.push_back(&rect);
+		}
+		
+		// If the total area of the rectangles exceeds the given area, exit out early
+		if(required_rectangle_area > size.x * size.y)
+			return false;
 
 		std::vector<Rect<int>> bins;
 		bins.push_back({0, 0, static_cast<int>(size.x), static_cast<int>(size.y)});
@@ -335,7 +340,6 @@ namespace cbn
 
 			// Since we are finding the optimal packing. We want
 			// to find the global optimal combination of bin and rect
-			// This will end up being O(BR^2), where B = bins, R = rects. 
 			for(int b = 0; b < bins.size(); b++)
 			{
 				const auto& bin = bins[b];
