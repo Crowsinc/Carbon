@@ -4,6 +4,10 @@ namespace cbn
 {
 
 	//-------------------------------------------------------------------------------------
+	
+	std::array<GLint, static_cast<size_t>(TopUnit)> Texture::s_BoundTexturesByUnit = {};
+
+	//-------------------------------------------------------------------------------------
 
 	SRes<Texture> Texture::Create(const SRes<Image>& image, const Properties& properties)
 	{
@@ -35,6 +39,15 @@ namespace cbn
 		// Continue with the normal create function 
 		return Create(image, properties);
 	}
+
+	//-------------------------------------------------------------------------------------
+
+	GLint Texture::SupportedTextureUnits()
+	{
+		GLint texture_units;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+		return texture_units;
+	}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -49,10 +62,11 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	Texture::Texture(const SRes<Image>& image, const Properties& properties)
-		: GLTypedObject(glGenTextures, glDeleteTextures, glBindTexture)
 	{
-		// The super constructor creates the texture, so we just need to 
-		// set its parameters and then upload the texture data
+		// Create the texture
+		glGenTextures(1, &m_TextureID);
+
+		// Configure texture properties
 		configure(properties);
 		
 		// Note that this can fail if the graphics device is out of memory,
@@ -110,7 +124,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Texture::UVMap Texture::uvs() const
+	Texture::UVMap Texture::uv_mapping() const
 	{
 		constexpr UVMap uvs = {
 			{0.0f, 0.0f},
@@ -119,6 +133,55 @@ namespace cbn
 			{1.0f, 0.0f}
 		};
 		return uvs;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void Texture::bind(const Enum<TextureUnit> texture_unit) const
+	{
+		// Only bind the texture if it is not already 
+		// bound to the given texture unit
+		if(!is_bound(texture_unit))
+		{
+			// Update the texture binding states
+			s_BoundTexturesByUnit[texture_unit.to_int()] = m_TextureID;
+			m_TextureUnit = texture_unit;
+
+			// Bind the texture to the correct unit
+			glActiveTexture(GL_TEXTURE0 + texture_unit.to_int());
+			glBindTexture(GL_TEXTURE_2D, m_TextureID);
+		}
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool Texture::is_bound(const Enum<TextureUnit> texture_unit) const
+	{
+		return m_TextureUnit == texture_unit && s_BoundTexturesByUnit[texture_unit.to_int()] == m_TextureID;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	Texture::~Texture()
+	{
+		glDeleteTextures(1, &m_TextureID);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void Texture::unbind() const
+	{
+		// Only unbind if the texture is actually bound in the first place
+		if(is_bound(m_TextureUnit))
+		{
+			// Unbind from the texture unit the texture is bound to
+			glActiveTexture(GL_TEXTURE0 + m_TextureUnit.to_int());
+			glBindTexture(GL_TEXTURE_2D, 0);
+			
+			// Reset state information
+			s_BoundTexturesByUnit[m_TextureUnit.to_int()] = 0;
+			m_TextureUnit = TextureUnit::UNIT_0;
+		}
 	}
 	
 	//-------------------------------------------------------------------------------------

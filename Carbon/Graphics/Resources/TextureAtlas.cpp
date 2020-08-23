@@ -25,7 +25,7 @@ namespace cbn
         uvs.lr /= atlas_resolution;
         uvs.ur /= atlas_resolution;
 
-        // If the texture is rotated, we need to counter rotate the uvs
+        // If the texture is rotated clockwise by 90 degrees, we need to counter rotate the uvs
         if(rotated)
         {
             const glm::vec2 temp_ul = uvs.ul;
@@ -110,7 +110,7 @@ namespace cbn
                 sub_texture.width = rect.width;
                 sub_texture.height = rect.height;
                 sub_texture.rotated = is_rotated(rect, image);
-                sub_texture.uvs = calculate_uvs(rect, is_rotated(rect, image), atlas_image->resolution());
+                sub_texture.uv_mapping = calculate_uvs(rect, is_rotated(rect, image), atlas_image->resolution());
                 sub_texture_data[key] = sub_texture;
             
                 atlas_image->insert(sub_texture.x, sub_texture.y, image, sub_texture.rotated);
@@ -139,9 +139,9 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void TextureAtlas::bind() const
+    void TextureAtlas::bind(const Enum<TextureUnit> texture_unit) const
     {
-        return m_AtlasTexture->bind();
+        return m_AtlasTexture->bind(texture_unit);
     }
     
     //-------------------------------------------------------------------------------------
@@ -153,16 +153,16 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TextureAtlas::is_bound() const
+    bool TextureAtlas::is_bound(const Enum<TextureUnit> texture_unit) const
     {
-        return m_AtlasTexture->is_bound();
+        return m_AtlasTexture->is_bound(texture_unit);
     }
     
     //-------------------------------------------------------------------------------------
 
     Texture::UVMap TextureAtlas::uvs() const
     {
-        return m_AtlasTexture->uvs();
+        return m_AtlasTexture->uv_mapping();
     }
 
     //-------------------------------------------------------------------------------------
@@ -184,6 +184,14 @@ namespace cbn
     {
         return m_AtlasTexture->resolution();
     }
+
+    //-------------------------------------------------------------------------------------
+
+    bool TextureAtlas::has_sub_texture(const CKey<std::string>& key) const
+    {
+        return m_SubTextureData.count(key);
+    }
+    
     //-------------------------------------------------------------------------------------
 
     std::vector<CKey<std::string>> TextureAtlas::get_sub_texture_keys() const
@@ -216,6 +224,13 @@ namespace cbn
     Texture::Properties TextureAtlas::get_properties() const
     {
         return m_AtlasTexture->get_properties();
+    }
+    
+    //-------------------------------------------------------------------------------------
+
+    const SRes<Texture> TextureAtlas::as_texture() const
+    {
+        return m_AtlasTexture;
     }
     
     //-------------------------------------------------------------------------------------

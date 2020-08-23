@@ -37,7 +37,7 @@ namespace cbn
 		struct SubTextureData
 		{
 			bool rotated;
-			Texture::UVMap uvs;
+			Texture::UVMap uv_mapping;
 			unsigned x, y, width, height;
 		};
 	
@@ -54,11 +54,12 @@ namespace cbn
 		
 	public:
 
-		void bind() const;
 
 		void unbind() const;
 
-		bool is_bound() const;
+		void bind(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
+
+		bool is_bound(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
 
 		Texture::UVMap uvs() const;
 
@@ -68,6 +69,8 @@ namespace cbn
 		
 		glm::uvec2 resolution() const;
 
+		bool has_sub_texture(const CKey<std::string>& key) const;
+
 		std::vector<CKey<std::string>> get_sub_texture_keys() const;
 
 		SubTextureData get_sub_texture_data(const CKey<std::string>& key) const;
@@ -75,6 +78,8 @@ namespace cbn
 		void configure(const Texture::Properties& properties);
 
 		Texture::Properties get_properties() const;
+
+		const SRes<Texture> as_texture() const;
 		
 	};
 

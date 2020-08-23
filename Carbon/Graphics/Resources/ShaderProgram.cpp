@@ -7,12 +7,9 @@
 
 //-------------------------------------------------------------------------------------
 
-#define VALIDATE_UNIFORM_LOC(loc) \
+#define VALIDATE_UNIFORM_LOC(uniform) \
 CBN_Assert(is_bound(), "Cannot set uniform to a shader program which is not bound"); \
-CBN_Assert(std::any_of(m_UniformLocations.begin(), m_UniformLocations.end(), [&](std::pair<std::string, GLint> pair) \
-{\
-	return uniform_location == pair.second;\
-}), "Cannot set uniform, as uniform location does not exist");\
+CBN_Assert(m_UniformLocations.count(uniform) == 1, "Cannot set uniform, as uniform location does not exist")
 
 //-------------------------------------------------------------------------------------
 
@@ -134,313 +131,305 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool ShaderProgram::has_uniform(const std::string& uniform_name) const
+	bool ShaderProgram::has_uniform(const CKey<std::string>& uniform) const
 	{
-		return m_UniformLocations.count(uniform_name);
+		return m_UniformLocations.count(uniform);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	GLint ShaderProgram::get_uniform_location(const std::string& uniform_name) const
-	{
-		CBN_Assert(has_uniform(uniform_name), "Cannot get location to uniform which does not exist");
-		return m_UniformLocations.at(uniform_name);
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLfloat value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLfloat value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform1f(uniform_location, value);
+		glUniform1f(m_UniformLocations.at(uniform), value);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLint value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLint value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 
 		// Set the uniform for the shader program
-		glUniform1i(uniform_location, value);
+		glUniform1i(m_UniformLocations.at(uniform), value);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLuint value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLuint value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform1ui(uniform_location, value);
+		glUniform1ui(m_UniformLocations.at(uniform), value);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLfloat value_1, const GLfloat value_2) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLfloat value_1, const GLfloat value_2) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform2f(uniform_location, value_1, value_2);
+		glUniform2f(m_UniformLocations.at(uniform), value_1, value_2);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLint value_1, const GLint value_2) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLint value_1, const GLint value_2) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform2i(uniform_location, value_1, value_2);
+		glUniform2i(m_UniformLocations.at(uniform), value_1, value_2);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLuint value_1, const GLuint value_2) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLuint value_1, const GLuint value_2) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform2ui(uniform_location, value_1, value_2);
+		glUniform2ui(m_UniformLocations.at(uniform), value_1, value_2);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::vec2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::vec2& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y);
+		set_uniform(uniform, value.x, value.y);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::ivec2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::ivec2& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y);
+		set_uniform(uniform, value.x, value.y);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::uvec2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::uvec2& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y);
+		set_uniform(uniform, value.x, value.y);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLfloat value_1, const GLfloat value_2, const GLfloat value_3) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLfloat value_1, const GLfloat value_2, const GLfloat value_3) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform3f(uniform_location, value_1, value_2, value_3);
+		glUniform3f(m_UniformLocations.at(uniform), value_1, value_2, value_3);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLint value_1, const GLint value_2, const GLint value_3) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLint value_1, const GLint value_2, const GLint value_3) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform3i(uniform_location, value_1, value_2, value_3);
+		glUniform3i(m_UniformLocations.at(uniform), value_1, value_2, value_3);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLuint value_1, const GLuint value_2, const GLuint value_3) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLuint value_1, const GLuint value_2, const GLuint value_3) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform3ui(uniform_location, value_1, value_2, value_3);
+		glUniform3ui(m_UniformLocations.at(uniform), value_1, value_2, value_3);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::vec3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::vec3& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z);
+		set_uniform(uniform, value.x, value.y, value.z);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::ivec3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::ivec3& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z);
+		set_uniform(uniform, value.x, value.y, value.z);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::uvec3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::uvec3& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z);
+		set_uniform(uniform, value.x, value.y, value.z);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLfloat value_1, const GLfloat value_2, const GLfloat value_3, const GLfloat value_4) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLfloat value_1, const GLfloat value_2, const GLfloat value_3, const GLfloat value_4) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform4f(uniform_location, value_1, value_2, value_3, value_4);
+		glUniform4f(m_UniformLocations.at(uniform), value_1, value_2, value_3, value_4);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLint value_1, const GLint value_2, const GLint value_3, const GLint value_4) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLint value_1, const GLint value_2, const GLint value_3, const GLint value_4) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform4i(uniform_location, value_1, value_2, value_3, value_4);
+		glUniform4i(m_UniformLocations.at(uniform), value_1, value_2, value_3, value_4);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const GLuint value_1, const GLuint value_2, const GLuint value_3, const GLuint value_4) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const GLuint value_1, const GLuint value_2, const GLuint value_3, const GLuint value_4) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniform4ui(uniform_location, value_1, value_2, value_3, value_4);
+		glUniform4ui(m_UniformLocations.at(uniform), value_1, value_2, value_3, value_4);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::vec4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::vec4& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z, value.w);
+		set_uniform(uniform, value.x, value.y, value.z, value.w);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::ivec4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::ivec4& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z, value.w);
+		set_uniform(uniform, value.x, value.y, value.z, value.w);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::uvec4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::uvec4& value) const
 	{
-		set_uniform(uniform_location, value.x, value.y, value.z, value.w);
+		set_uniform(uniform, value.x, value.y, value.z, value.w);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat2& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix2fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix2fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat3& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix3fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix3fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat4& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix4fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat2x3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat2x3& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix2x3fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix2x3fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat3x2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat3x2& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix3x2fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix3x2fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat2x4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat2x4& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix2x4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix2x4fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat4x2& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat4x2& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix4x2fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix4x2fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat3x4& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat3x4& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix3x4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix3x4fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::set_uniform(const GLint uniform_location, const glm::mat4x3& value) const
+	void ShaderProgram::set_uniform(const CKey<std::string>& uniform, const glm::mat4x3& value) const
 	{
 		// Make sure that the program is bound and that the uniform location exists
-		VALIDATE_UNIFORM_LOC(uniform_location)
+		VALIDATE_UNIFORM_LOC(uniform);
 
 		// Set the uniform for the shader program
-		glUniformMatrix4x3fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value));
+		glUniformMatrix4x3fv(m_UniformLocations.at(uniform), 1, GL_FALSE, glm::value_ptr(value));
 	}
 
 	//-------------------------------------------------------------------------------------

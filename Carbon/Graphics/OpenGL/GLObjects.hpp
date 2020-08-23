@@ -29,4 +29,10 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
+	struct UniformBuffer : public GLTypedObject<GL_BUFFER, GL_UNIFORM_BUFFER>
+	{
+		UniformBuffer() : GLTypedObject(glGenBuffers, glDeleteBuffers, glBindBuffer) {}
+	};
+
+	//-------------------------------------------------------------------------------------
 }

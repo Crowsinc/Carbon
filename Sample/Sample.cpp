@@ -1,5 +1,4 @@
-
-#define CBN_DISABLE_ASSERTS
+//#define CBN_DISABLE_ASSERTS
 
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
@@ -35,10 +34,10 @@ const char* vertex_source = "#version 400 core\n"
 const char* fragment_source = "#version 400 core\n"
 "in vec2 _uvs;\n"
 "out vec4 fragColour;\n"
-"uniform sampler2D text;"
+"uniform sampler2D text[16];"
 "void main(void)\n"
 "{\n"
-"	fragColour = texture(text, _uvs);\n"
+"	fragColour = texture(text[0], _uvs);\n"
 "   //fragColour = vec4(1, 1, 1, 1);\n"
 "}\n"
 ";";
@@ -125,6 +124,10 @@ int main()
 	// Should create an error
 	glEnable(GL_TEXTURE_1D);
 
+	int i;
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &i);
+	std::cout << "Image Units Supported: " << i << std::endl;
+
 	std::string error_log;
 
 	const auto vertex_sh = cbn::Shader::Compile(vertex_source, cbn::Shader::Stage::VERTEX, error_log);
@@ -170,10 +173,10 @@ int main()
 	auto texture = test_atlas();
 
 
-	VertexData ll = {texture->get_sub_texture_data({"pp.png"}).uvs.ll};
-	VertexData lr = {texture->get_sub_texture_data({"pp.png"}).uvs.lr};
-	VertexData ul = {texture->get_sub_texture_data({"pp.png"}).uvs.ul};
-	VertexData ur = {texture->get_sub_texture_data({"pp.png"}).uvs.ur};
+	VertexData ll = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ll};
+	VertexData lr = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.lr};
+	VertexData ul = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ul};
+	VertexData ur = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ur};
 
 	//cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
 	//if(!texture.exists())

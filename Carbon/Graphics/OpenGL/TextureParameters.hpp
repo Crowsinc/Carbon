@@ -7,6 +7,26 @@
 
 namespace cbn
 {
+	enum class TextureUnit : GLint
+	{
+		UNIT_0 = 0,
+		UNIT_1,
+		UNIT_2,
+		UNIT_3,
+		UNIT_4,
+		UNIT_5,
+		UNIT_6,
+		UNIT_7,
+		UNIT_8,
+		UNIT_9,
+		UNIT_10,
+		UNIT_11,
+		UNIT_12,
+		UNIT_13,
+		UNIT_14,
+		UNIT_15,
+	};
+	constexpr TextureUnit TopUnit = TextureUnit::UNIT_15;
 
 	enum class Swizzle
 	{

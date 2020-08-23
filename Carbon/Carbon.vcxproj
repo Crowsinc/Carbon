@@ -144,6 +144,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -164,6 +165,7 @@
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
+    <ClCompile Include="Graphics\TextureSet.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
@@ -192,11 +194,13 @@
     <ClInclude Include="Graphics\Sprite.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
+    <ClInclude Include="Graphics\TextureSet.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Utility\CachedKey.hpp" />
+    <ClInclude Include="Utility\Enum.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
