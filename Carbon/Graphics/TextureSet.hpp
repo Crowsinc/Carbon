@@ -34,9 +34,9 @@ namespace cbn
 
 		int unused_unit_count() const;
 
-		void clear(const Enum<TextureUnit> unit);
+		void clear(const TextureUnit unit);
 
-		bool is_set(const Enum<TextureUnit> unit) const;
+		bool is_set(const TextureUnit unit) const;
 
 		bool contains(const CKey<std::string> key) const;
 
@@ -46,9 +46,9 @@ namespace cbn
 
 		std::variant<SRes<Texture>, SRes<TextureAtlas>> get(const CKey<std::string> key) const;
 		
-		std::variant<SRes<Texture>, SRes<TextureAtlas>> get(const Enum<TextureUnit> unit) const;
+		std::variant<SRes<Texture>, SRes<TextureAtlas>> get(const TextureUnit unit) const;
 		
-		void set(const Enum<TextureUnit> unit, const CKey<std::string> key, const std::variant<SRes<Texture>, SRes<TextureAtlas>>& texture);
+		void set(const TextureUnit unit, const CKey<std::string> key, const std::variant<SRes<Texture>, SRes<TextureAtlas>>& texture);
 
 	};
 

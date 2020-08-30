@@ -2,14 +2,12 @@
 
 #include "OpenGL.hpp"
 
-#include <array>
-#include <unordered_map>
-
 namespace cbn
 {
+
 	enum class TextureUnit : GLint
 	{
-		UNIT_0 = 0,
+		UNIT_0,
 		UNIT_1,
 		UNIT_2,
 		UNIT_3,
@@ -26,31 +24,22 @@ namespace cbn
 		UNIT_14,
 		UNIT_15,
 	};
-	constexpr TextureUnit TopUnit = TextureUnit::UNIT_15;
 
-	enum class Swizzle
+	enum class TextureSwizzle
 	{
 		RGBA,
 		BGRA,
 		RGB,
 		BGR
 	};
-	
-	const std::unordered_map<Swizzle, const std::array<GLint,4>> SwizzleMasks = 
-	{
-		{Swizzle::RGBA, std::array<GLint, 4>{GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA}},
-		{Swizzle::BGRA, std::array<GLint, 4>{GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA}},
-		{Swizzle::RGB, std::array<GLint, 4>{GL_RED, GL_GREEN, GL_BLUE, GL_ONE}},
-		{Swizzle::BGR, std::array<GLint, 4>{GL_BLUE, GL_GREEN, GL_RED, GL_ONE}}
-	};
 
-	enum class Filter : GLint
+	enum class TextureFilter : GLint
 	{
 		NEAREST = GL_NEAREST,
 		LINEAR = GL_LINEAR
 	};
 
-	enum class Wrapping : GLint
+	enum class TextureWrapping : GLint
 	{
 		REPEAT = GL_REPEAT,
 		REPEAT_MIRRORED = GL_MIRRORED_REPEAT,

@@ -5,13 +5,12 @@
 #include <filesystem>
 
 #include "../OpenGL/OpenGL.hpp"
-#include "../OpenGL/GLSLObject.hpp"
 #include "../../Memory/Resource.hpp"
 
 namespace cbn
 {
 
-	class Shader : private GLSLObject<GL_SHADER>
+	class Shader
 	{
 		friend class ShaderProgram;
 	public:
@@ -27,7 +26,8 @@ namespace cbn
 
 	private:
 
-		Stage m_PipelineStage;
+		const GLuint m_ShaderID;
+		const Stage m_PipelineStage;
 		std::vector<std::string> m_UniformNames;
 
 		void find_uniform_names(const std::string_view& shader_source);
@@ -35,6 +35,8 @@ namespace cbn
 		explicit Shader(const Stage pipeline_stage);
 
 	public:
+
+		~Shader();
 
 		Stage get_pipeline_stage() const;
 

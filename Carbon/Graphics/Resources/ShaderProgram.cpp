@@ -16,6 +16,7 @@ CBN_Assert(m_UniformLocations.count(uniform) == 1, "Cannot set uniform, as unifo
 namespace cbn
 {
 
+	GLuint ShaderProgram::s_BoundProgramID = 0;
 
 	//-------------------------------------------------------------------------------------
 
@@ -40,27 +41,27 @@ namespace cbn
 		SRes<ShaderProgram> program = Resource::WrapShared(new ShaderProgram()); 
 
 		// Attach all the shaders to the shader program
-		glAttachShader(program->m_ObjectID, vertex_shader->m_ObjectID);
-		glAttachShader(program->m_ObjectID, fragment_shader->m_ObjectID);
+		glAttachShader(program->m_ProgramID, vertex_shader->m_ShaderID);
+		glAttachShader(program->m_ProgramID, fragment_shader->m_ShaderID);
 
 		// The geometry shader is optional so check if it is given
 		if(geometry_shader)
 		{
-			glAttachShader(program->m_ObjectID, geometry_shader->m_ObjectID);
+			glAttachShader(program->m_ProgramID, geometry_shader->m_ShaderID);
 		}
 
 		// Link and validate the program
-		glLinkProgram(program->m_ObjectID);
-		glValidateProgram(program->m_ObjectID);
+		glLinkProgram(program->m_ProgramID);
+		glValidateProgram(program->m_ProgramID);
 
 		// Check if the program linked correctly
 		GLint linked = 0;
-		glGetProgramiv(program->m_ObjectID, GL_LINK_STATUS, &linked);
+		glGetProgramiv(program->m_ProgramID, GL_LINK_STATUS, &linked);
 		if(linked == GL_FALSE)
 		{
 			// If the link failed, get the length of the linking log
 			GLint log_length = 0;
-			glGetProgramiv(program->m_ObjectID, GL_INFO_LOG_LENGTH, &log_length);
+			glGetProgramiv(program->m_ProgramID, GL_INFO_LOG_LENGTH, &log_length);
 
 			// If the log length is 0, then a driver issue probably ocurred 
 			// so set the error log to an unknown error and return nullptr.
@@ -73,7 +74,7 @@ namespace cbn
 
 			// Create a vector to hold the log and retrieved it from OpenGL
 			std::vector<GLchar> linking_log(log_length);
-			glGetProgramInfoLog(program->m_ObjectID, log_length, &log_length, linking_log.data());
+			glGetProgramInfoLog(program->m_ProgramID, log_length, &log_length, linking_log.data());
 
 			// Set the error log to the linking error log and return nullptr
 			// The program will delete its self with the programs destructor
@@ -86,14 +87,14 @@ namespace cbn
 		program->find_shader_uniform_locations(vertex_shader);
 		program->find_shader_uniform_locations(fragment_shader);
 
-		glDetachShader(program->m_ObjectID, vertex_shader->m_ObjectID);
-		glDetachShader(program->m_ObjectID, fragment_shader->m_ObjectID);
+		glDetachShader(program->m_ProgramID, vertex_shader->m_ShaderID);
+		glDetachShader(program->m_ProgramID, fragment_shader->m_ShaderID);
 
 		// The geometry shader is optional so check if it is given
 		if(geometry_shader)
 		{
 			program->find_shader_uniform_locations(geometry_shader);
-			glDetachShader(program->m_ObjectID, geometry_shader->m_ObjectID);
+			glDetachShader(program->m_ProgramID, geometry_shader->m_ShaderID);
 		}
 
 		// If we get here, the shader program was created successfully, so return it
@@ -111,7 +112,7 @@ namespace cbn
 			// Only try to the uniform location if the uniform name doesn't already exist
 			if(m_UniformLocations.count(uniform_name) == 0)
 			{
-				GLint location = glGetUniformLocation(m_ObjectID, uniform_name.c_str());
+				GLint location = glGetUniformLocation(m_ProgramID, uniform_name.c_str());
 
 				// If the location is no -1, then it actually exists in the program so add its location
 				// Note that a location may not exist if the variable is optimized out of the shader
@@ -127,7 +128,43 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	ShaderProgram::ShaderProgram()
-		: GLSLObject(glCreateProgram, glDeleteProgram, glUseProgram) {}
+		: m_ProgramID(glCreateProgram()) {} 
+
+	//-------------------------------------------------------------------------------------
+
+	ShaderProgram::~ShaderProgram()
+	{
+		glDeleteProgram(m_ProgramID);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void ShaderProgram::bind()
+	{
+		if(!is_bound())
+		{
+			s_BoundProgramID = m_ProgramID;
+			glUseProgram(m_ProgramID);
+		}
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void ShaderProgram::unbind()
+	{
+		if(is_bound())
+		{
+			s_BoundProgramID = 0;
+			glUseProgram(0);
+		}
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool ShaderProgram::is_bound() const
+	{
+		return s_BoundProgramID == m_ProgramID;
+	}
 	
 	//-------------------------------------------------------------------------------------
 

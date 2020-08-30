@@ -59,7 +59,7 @@ namespace cbn
 
 	int TextureSet::total_unit_count() const
 	{
-		return Enum(TopUnit).to_int();
+		return static_cast<int>(TextureUnit::UNIT_15) + 1;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void TextureSet::clear(const Enum<TextureUnit> unit)
+	void TextureSet::clear(const TextureUnit unit)
 	{
 		// Only clear if the unit is actually in use
 		if(m_Bindings.count(unit) == 1)
@@ -101,7 +101,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool TextureSet::is_set(const Enum<TextureUnit> unit) const
+	bool TextureSet::is_set(const TextureUnit unit) const
 	{
 		return m_Bindings.count(unit) == 1;
 	}
@@ -149,7 +149,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	std::variant<SRes<Texture>, SRes<TextureAtlas>> TextureSet::get(const Enum<TextureUnit> unit) const
+	std::variant<SRes<Texture>, SRes<TextureAtlas>> TextureSet::get(const TextureUnit unit) const
 	{
 		CBN_Assert(m_Bindings.count(unit), "Key is not associated with any textures in this set");
 		
@@ -167,7 +167,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void TextureSet::set(const Enum<TextureUnit> unit, const CKey<std::string> key, const std::variant<SRes<Texture>, SRes<TextureAtlas>>& texture)
+	void TextureSet::set(const TextureUnit unit, const CKey<std::string> key, const std::variant<SRes<Texture>, SRes<TextureAtlas>>& texture)
 	{
 		CBN_Assert(!contains(key), "Key is already associated with a texture within this set");
 

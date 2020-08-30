@@ -1,13 +1,11 @@
 #pragma once
 
+#include <unordered_map>
 #include <array>
-
-#include "../OpenGL/GLTypedObject.hpp"
-#include "../OpenGL/OpenGL.hpp"
 
 #include "../OpenGL/TextureParameters.hpp"
 #include "../../Memory/Resource.hpp"
-#include "../../Utility/Enum.hpp"
+#include "../OpenGL/OpenGL.hpp"
 #include "Image.hpp"
 
 namespace cbn
@@ -19,13 +17,13 @@ namespace cbn
 
 		struct Properties
 		{
-			Filter magnifying_filter = Filter::NEAREST;
-			Filter minifying_filter = Filter::LINEAR;
+			TextureFilter magnifying_filter = TextureFilter::NEAREST;
+			TextureFilter minifying_filter = TextureFilter::LINEAR;
 
-			Wrapping horizontal_wrapping = Wrapping::REPEAT;
-			Wrapping vertical_wrapping = Wrapping::REPEAT;
+			TextureWrapping horizontal_wrapping = TextureWrapping::REPEAT;
+			TextureWrapping vertical_wrapping = TextureWrapping::REPEAT;
 
-			Swizzle swizzle = Swizzle::RGBA;
+			TextureSwizzle swizzle = TextureSwizzle::RGBA;
 		};
 
 		struct UVMap
@@ -44,14 +42,16 @@ namespace cbn
 
 	private:
 
-		static std::array<GLint, static_cast<size_t>(TopUnit)> s_BoundTexturesByUnit;
+		static std::unordered_map<TextureUnit,GLint> s_BoundTextures;
 
-		mutable Enum<TextureUnit> m_TextureUnit;
+		mutable TextureUnit m_TextureUnit;
 		Properties m_Properties;
 		glm::uvec2 m_Resolution;
 		GLuint m_TextureID;
 
 		void upload_image_data(const Image::Pixel* data, const unsigned width, const unsigned height);
+
+		std::array<GLint, 4> create_swizzle_mask(const TextureSwizzle swizzle);
 
 		Texture(const SRes<Image>& image, const Properties& properties);
 
@@ -61,9 +61,9 @@ namespace cbn
 
 		void unbind() const;
 
-		void bind(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
+		void bind(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		bool is_bound(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
+		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
 		void configure(const Properties& properties);
 

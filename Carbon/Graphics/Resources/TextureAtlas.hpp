@@ -57,9 +57,9 @@ namespace cbn
 
 		void unbind() const;
 
-		void bind(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
+		void bind(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		bool is_bound(const Enum<TextureUnit> texture_unit = TextureUnit::UNIT_0) const;
+		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
 		Texture::UVMap uvs() const;
 

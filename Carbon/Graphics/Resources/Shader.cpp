@@ -16,21 +16,21 @@ namespace cbn
 
 		// Attempt to compile the given source into the shader, 
 		const GLchar* c_shader_source = shader_source.data();
-		glShaderSource(shader->m_ObjectID, 1, &c_shader_source, nullptr);
-		glCompileShader(shader->m_ObjectID);
+		glShaderSource(shader->m_ShaderID, 1, &c_shader_source, nullptr);
+		glCompileShader(shader->m_ShaderID);
 
 		// Check if the compilation was successful
 		GLint compiled = 0;
-		glGetShaderiv(shader->m_ObjectID, GL_COMPILE_STATUS, &compiled);
+		glGetShaderiv(shader->m_ShaderID, GL_COMPILE_STATUS, &compiled);
 		if(compiled == GL_FALSE)
 		{
 			// If compilation failed, get the length of the compilation error log
 			GLint log_length = 0;
-			glGetShaderiv(shader->m_ObjectID, GL_INFO_LOG_LENGTH, &log_length);
+			glGetShaderiv(shader->m_ShaderID, GL_INFO_LOG_LENGTH, &log_length);
 
 			// Create a vector to hold the log and retrieve it from OpenGL
 			std::vector<GLchar> compilation_log(log_length);
-			glGetShaderInfoLog(shader->m_ObjectID, log_length, &log_length, compilation_log.data());
+			glGetShaderInfoLog(shader->m_ShaderID, log_length, &log_length, compilation_log.data());
 
 			// Set the given error log to the compilation error log 
 			// and return nullptr. The shader destructor will handle
@@ -84,10 +84,15 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	Shader::Shader(const Shader::Stage pipeline_stage)
-		// Note that we do not pass a binder function because one does not exist for shader objects
-		// this is fine because the GLSLObject inheritance is not exposed publically so bind is never called. 
-		: GLSLObject(glCreateShader, static_cast<GLenum>(pipeline_stage), glDeleteShader, nullptr), 
-		m_PipelineStage(pipeline_stage) {}
+		: m_ShaderID(glCreateShader(static_cast<GLenum>(pipeline_stage))),
+		  m_PipelineStage(pipeline_stage) {}
+
+	//-------------------------------------------------------------------------------------
+
+	Shader::~Shader()
+	{
+		glDeleteShader(m_ShaderID);
+	}
 
 	//-------------------------------------------------------------------------------------
 

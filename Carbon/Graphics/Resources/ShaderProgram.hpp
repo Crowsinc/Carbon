@@ -4,14 +4,13 @@
 #include <unordered_map>
 
 #include "Shader.hpp"
-#include "../OpenGL/GLSLObject.hpp"
 #include "../../Memory/Resource.hpp"
 #include "../../Utility/CachedKey.hpp"
 
 namespace cbn
 {
 
-	class ShaderProgram : public GLSLObject<GL_PROGRAM>
+	class ShaderProgram 
 	{
 	public:
 
@@ -19,6 +18,9 @@ namespace cbn
 
 	private:
 
+		static GLuint s_BoundProgramID;
+
+		const GLuint m_ProgramID;
 		std::unordered_map<CKey<std::string>, GLint> m_UniformLocations;
 
 		void find_shader_uniform_locations(const SRes<Shader>& shader);
@@ -26,6 +28,14 @@ namespace cbn
 		explicit ShaderProgram();
 
 	public:
+
+		~ShaderProgram();
+
+		void bind();
+
+		void unbind();
+
+		bool is_bound() const;
 
 		bool has_uniform(const CKey<std::string>& uniform) const;
 

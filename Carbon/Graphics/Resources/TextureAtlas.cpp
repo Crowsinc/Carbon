@@ -118,10 +118,10 @@ namespace cbn
 
             // Create the texture
             Texture::Properties properties;
-            properties.minifying_filter = Filter::NEAREST;
-            properties.magnifying_filter = Filter::NEAREST;
-            properties.vertical_wrapping = Wrapping::CLAMP_TO_EDGE;
-            properties.horizontal_wrapping = Wrapping::CLAMP_TO_EDGE;
+            properties.minifying_filter = TextureFilter::NEAREST;
+            properties.magnifying_filter = TextureFilter::NEAREST;
+            properties.vertical_wrapping = TextureWrapping::CLAMP_TO_EDGE;
+            properties.horizontal_wrapping = TextureWrapping::CLAMP_TO_EDGE;
             SRes<Texture> atlas_texture = Texture::Create(atlas_image, properties);
             
             if(!atlas_texture)
@@ -139,7 +139,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void TextureAtlas::bind(const Enum<TextureUnit> texture_unit) const
+    void TextureAtlas::bind(const TextureUnit texture_unit) const
     {
         return m_AtlasTexture->bind(texture_unit);
     }
@@ -153,7 +153,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TextureAtlas::is_bound(const Enum<TextureUnit> texture_unit) const
+    bool TextureAtlas::is_bound(const TextureUnit texture_unit) const
     {
         return m_AtlasTexture->is_bound(texture_unit);
     }

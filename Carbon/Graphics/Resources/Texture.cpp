@@ -5,7 +5,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	
-	std::array<GLint, static_cast<size_t>(TopUnit)> Texture::s_BoundTexturesByUnit = {};
+	std::unordered_map<TextureUnit, GLint> Texture::s_BoundTextures;
 
 	//-------------------------------------------------------------------------------------
 
@@ -57,7 +57,26 @@ namespace cbn
 		bind();
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	}	
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	std::array<GLint, 4> Texture::create_swizzle_mask(const TextureSwizzle swizzle)
+	{
+		switch(swizzle)
+		{
+			case TextureSwizzle::RGBA:
+				return std::array<GLint, 4>{GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+			case TextureSwizzle::BGRA:
+				return std::array<GLint, 4>{GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA};
+			case TextureSwizzle::RGB:
+				return std::array<GLint, 4>{GL_RED, GL_GREEN, GL_BLUE, GL_ONE};
+			case TextureSwizzle::BGR:
+				return std::array<GLint, 4>{GL_BLUE, GL_GREEN, GL_RED, GL_ONE};
+			default:
+				return {};
+		}
+	}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -88,7 +107,7 @@ namespace cbn
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, static_cast<GLint>(properties.magnifying_filter));
 	
 		// Update the swizzle mask
-		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, SwizzleMasks.at(properties.swizzle).data());
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, create_swizzle_mask(properties.swizzle).data());
 
 		// Update the stored properties
 		m_Properties = properties;
@@ -137,27 +156,27 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void Texture::bind(const Enum<TextureUnit> texture_unit) const
+	void Texture::bind(const TextureUnit texture_unit) const
 	{
 		// Only bind the texture if it is not already 
 		// bound to the given texture unit
 		if(!is_bound(texture_unit))
 		{
 			// Update the texture binding states
-			s_BoundTexturesByUnit[texture_unit.to_int()] = m_TextureID;
+			s_BoundTextures[texture_unit] = m_TextureID;
 			m_TextureUnit = texture_unit;
 
 			// Bind the texture to the correct unit
-			glActiveTexture(GL_TEXTURE0 + texture_unit.to_int());
+			glActiveTexture(GL_TEXTURE0 + static_cast<int>(texture_unit));
 			glBindTexture(GL_TEXTURE_2D, m_TextureID);
 		}
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	bool Texture::is_bound(const Enum<TextureUnit> texture_unit) const
+	bool Texture::is_bound(const TextureUnit texture_unit) const
 	{
-		return m_TextureUnit == texture_unit && s_BoundTexturesByUnit[texture_unit.to_int()] == m_TextureID;
+		return m_TextureUnit == texture_unit && s_BoundTextures[texture_unit] == m_TextureID;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -175,11 +194,11 @@ namespace cbn
 		if(is_bound(m_TextureUnit))
 		{
 			// Unbind from the texture unit the texture is bound to
-			glActiveTexture(GL_TEXTURE0 + m_TextureUnit.to_int());
+			glActiveTexture(GL_TEXTURE0 + static_cast<int>(m_TextureUnit));
 			glBindTexture(GL_TEXTURE_2D, 0);
 			
 			// Reset state information
-			s_BoundTexturesByUnit[m_TextureUnit.to_int()] = 0;
+			s_BoundTextures[m_TextureUnit] = 0;
 			m_TextureUnit = TextureUnit::UNIT_0;
 		}
 	}

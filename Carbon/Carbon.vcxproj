@@ -157,10 +157,12 @@
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
-    <ClCompile Include="Graphics\OpenGL\VertexDataDescriptor.cpp" />
+    <ClCompile Include="Graphics\OpenGL\Buffer.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
     <ClCompile Include="Graphics\Resources\Shader.cpp" />
     <ClCompile Include="Graphics\Resources\ShaderProgram.cpp" />
+    <ClCompile Include="Graphics\Resources\StaticBuffer.cpp" />
+    <ClCompile Include="Graphics\Resources\StreamBuffer.cpp" />
     <ClCompile Include="Graphics\Resources\TextureAtlas.cpp" />
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
@@ -179,17 +181,16 @@
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
     <ClInclude Include="Graphics\Camera.hpp" />
-    <ClInclude Include="Graphics\OpenGL\GLObjects.hpp" />
-    <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp" />
-    <ClInclude Include="Graphics\OpenGL\GLTypedObject.hpp" />
-    <ClInclude Include="Graphics\OpenGL\GLUntypedObject.hpp" />
+    <ClInclude Include="Graphics\OpenGL\Buffer.hpp" />
+    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp" />
     <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp" />
-    <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
     <ClInclude Include="Graphics\QuadRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Shader.hpp" />
     <ClInclude Include="Graphics\Resources\ShaderProgram.hpp" />
+    <ClInclude Include="Graphics\Resources\StaticBuffer.hpp" />
+    <ClInclude Include="Graphics\Resources\StreamBuffer.hpp" />
     <ClInclude Include="Graphics\Resources\TextureAtlas.hpp" />
     <ClInclude Include="Graphics\Sprite.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
@@ -200,7 +201,6 @@
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Utility\CachedKey.hpp" />
-    <ClInclude Include="Utility\Enum.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />
@@ -212,9 +212,7 @@
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\OpenGL\GLSLObject.tpp" />
-    <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
-    <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
+    <None Include="Graphics\OpenGL\VertexArrayObject.cpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Maths\Shapes.hpp" />
     <None Include="Utility\VectorExtensions.tpp" />

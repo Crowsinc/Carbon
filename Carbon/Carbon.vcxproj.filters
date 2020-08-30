@@ -36,9 +36,6 @@
     <ClCompile Include="Maths\Maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\OpenGL\VertexDataDescriptor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\String.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,6 +75,15 @@
     <ClCompile Include="Graphics\TextureSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Resources\StaticBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\OpenGL\Buffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Resources\StreamBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\Event.hpp">
@@ -102,18 +108,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Carbon.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\VertexDataDescriptor.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\GLTypedObject.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\GLUntypedObject.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\GLObjects.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp">
@@ -155,13 +149,7 @@
     <ClInclude Include="Graphics\Resources\TextureAtlas.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Memory\Resource.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\GLSLObject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility\VectorExtensions.hpp">
@@ -176,18 +164,28 @@
     <ClInclude Include="Graphics\TextureSet.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\Enum.hpp">
+    <ClInclude Include="Graphics\Resources\StaticBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\Buffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Resources\StreamBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
-    <None Include="Graphics\OpenGL\GLTypedObject.tpp" />
-    <None Include="Graphics\OpenGL\GLUntypedObject.tpp" />
     <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Memory\Resource.tpp" />
-    <None Include="Graphics\OpenGL\GLSLObject.tpp" />
     <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Maths\Shapes.hpp" />
+    <None Include="Graphics\OpenGL\VertexArrayObject.cpp" />
   </ItemGroup>
 </Project>
