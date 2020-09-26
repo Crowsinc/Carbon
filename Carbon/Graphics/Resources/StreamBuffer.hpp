@@ -10,7 +10,7 @@
 namespace cbn
 {
 
-	class StreamBuffer : Buffer
+	class StreamBuffer : public Buffer
 	{
 	public:
 		
@@ -18,27 +18,22 @@ namespace cbn
 
 	private:
 		
-		uint64_t m_MappedOffset, m_MappedLength;
 		const bool m_Unsynchronized;
-		GLbitfield m_MappingFlags;
+		const GLbitfield m_MappingFlags;
 		const uint64_t m_ByteSize;
-		const bool m_Persistent;
-		void* m_MappedPtr;
-		bool m_IsMapped;
+		bool m_Mapped;
 
-		StreamBuffer(const Buffer::Target target, const uint64_t byte_size, const bool unsynchronized, const bool persistent);
+		StreamBuffer(const Buffer::Target target, const uint64_t byte_size, const bool unsynchronized);
 
 	public:
 
-		void* map(const uint64_t offset = 0, const uint64_t length = 0);
+		void* map();
 
 		void unmap();
 
 		uint64_t size() const;
 
 		bool is_mapped() const;
-
-		bool is_persistent() const;
 
 		bool is_unsynchronized() const;
 

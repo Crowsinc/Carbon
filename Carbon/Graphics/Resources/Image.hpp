@@ -65,13 +65,15 @@ namespace cbn
 
 		void fill(const Pixel& color);
 
-		void fill(const Image& image);
+		void fill(const SRes<Image>& image);
 
 		void insert(const unsigned x, const unsigned y, const SRes<Image>& image, const bool rotate_90_degrees = false);
 		
 		void set_pixel(const unsigned x, const unsigned y, const Pixel& pixel);
 
 		Pixel get_pixel(const unsigned x, const unsigned y) const;
+
+		//TODO: draw(x, y, shape, colour)
 
 		bool save(const std::filesystem::path& path) const;
 
@@ -80,6 +82,8 @@ namespace cbn
 		const unsigned height() const;
 
 		glm::uvec2 resolution() const;
+
+		uint64_t byte_size() const;
 
 		unsigned size() const;
 

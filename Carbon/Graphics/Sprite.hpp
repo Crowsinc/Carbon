@@ -10,54 +10,79 @@
 namespace cbn
 {
 
-	struct AnimationNode
-	{
-		SKey main_texture;
-		std::optional<SKey> aux_texture_1;
-		std::optional<SKey> aux_texture_2;
-		std::optional<SKey> aux_texture_3;
-		std::optional<AnimationNode> next;
-	};
-
-
 	class Sprite : public cbn::Transform
 	{
 	public:
 
-		using Textures = std::tuple<SKey, std::optional<SKey>, std::optional<SKey>, std::optional<SKey>, std::optional<SKey>>;
+		struct Textures
+		{
+			SKey main_texture = std::string{};
+			std::optional<SKey> aux_texture_1;
+			std::optional<SKey> aux_texture_2;
+			std::optional<SKey> aux_texture_3;
+		};
+
+		struct AnimationNode
+		{
+			Textures textures;
+			std::optional<AnimationNode> next;
+
+			void operator=(const AnimationNode& other);
+		};
+
+		struct Tint
+		{
+			glm::u8vec4 ul_vertex;
+			glm::u8vec4 ll_vertex;
+			glm::u8vec4 lr_vertex;
+			glm::u8vec4 ur_vertex;
+		};
+
+		struct Vertices
+		{
+			glm::vec2 ul_vertex;
+			glm::vec2 ll_vertex;
+			glm::vec2 lr_vertex;
+			glm::vec2 ur_vertex;
+		};
 
 	private:
 
-		const glm::vec2 m_BaseSize;
-		glm::u8vec4 m_TintColour;
-
+		glm::vec2 m_Size;
+		Tint m_TintColour;
+		Vertices m_LocalVertices;
 		AnimationNode m_StartAnimationNode;
 		AnimationNode m_CurrAnimationNode;
-		unsigned m_CurrNodeFrames;
+
+		void set_local_vertices(const glm::vec2 size);
 
 	public:
 
-		Sprite(const glm::vec2 size);
+		Sprite(const glm::vec2 size, const glm::vec2 position);
 
-		Textures get_textures() const;
-		
-		void set_tint(glm::u8vec4& colour);
+		void set_size(const glm::vec2 size);
 
-		void set_texture(const SKey& main_texture);
+		void set_tint(const Tint colour);
 
-		void set_texture(const SKey& main_texture, const SKey& aux_texture_1);
-		
-		void set_texture(const SKey& main_texture, const SKey& aux_texture_1, const SKey& aux_texture_2);
-		
-		void set_texture(const SKey& main_texture, const SKey& aux_texture_1, const SKey& aux_texture_2, const SKey& aux_texture_3);
+		void set_tint(const glm::u8vec4 colour);
 
-		void set_animation(const AnimationNode& node);
+		void set_textures(const Textures& sprite_textures);
 
-		void advance_animation();
+		void set_animation(const AnimationNode node);
 
 		void reset_animation();
-		
 
+		void advance_animation();
+		
+		Tint get_tint() const;
+
+		glm::vec2 get_size() const;
+
+		Textures get_textures() const;
+
+		Vertices get_vertices() const;
+
+		Vertices get_local_vertices() const;
 	};
 
 }

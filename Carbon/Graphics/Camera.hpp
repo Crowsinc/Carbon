@@ -63,9 +63,9 @@ namespace cbn
 
 		const glm::vec2& get_resolution() const;
 
-		glm::mat4 to_projection_matrix();
+		glm::mat4 to_projection_matrix() const;
 
-		glm::mat4 to_view_matrix();
+		glm::mat4 to_view_matrix() const;
 
 	};
 

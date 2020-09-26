@@ -80,8 +80,8 @@ namespace cbn
     void Image::insert_pixels(const unsigned x_offset, const unsigned y_offset, const Pixel* pixels, const unsigned width, const unsigned height)
     {
         // Clip the pixels if they extend out of the image
-        unsigned end_x = std::min(x_offset + width, this->width());
-        unsigned end_y = std::min(y_offset + height, this->height());
+        const unsigned end_x = std::min(x_offset + width, this->width());
+        const unsigned end_y = std::min(y_offset + height, this->height());
 
         // Copy over all pixels to the image
         for(unsigned y = y_offset; y < end_y; y++)
@@ -100,8 +100,8 @@ namespace cbn
         // Clip the pixels if they extend out of the image
         // Note that we are rotating the pixels, so we compare the 
         // height of the pixels with the width of this image vice-versa. 
-        unsigned end_x = std::min(x_offset + height, this->width());
-        unsigned end_y = std::min(y_offset + width, this->height());
+        const unsigned end_x = std::min(x_offset + height, this->width());
+        const unsigned end_y = std::min(y_offset + width, this->height());
 
         // Copy over all pixels to the image
         // Note that we are retrieving values from the pixels
@@ -181,24 +181,24 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void Image::fill(const Image & image)
+    void Image::fill(const SRes<Image>& image)
     {
         // Re-use the insert pixels method to insert the image
         // If the image is smaller than this image, tile it
-        for(unsigned y = 0; y < height(); y += image.height())
+        for(unsigned y = 0; y < height(); y += image->height())
         {
-            for(unsigned x = 0; x < width(); x += image.width())
+            for(unsigned x = 0; x < width(); x += image->width())
             {
-                insert_pixels(x, y, image.m_Data.get(), image.width(), image.height());
+                insert_pixels(x, y, image->m_Data.get(), image->width(), image->height());
             }
         }
     }
     
     //-------------------------------------------------------------------------------------
 
-    void Image::insert(const unsigned x, const unsigned y, const SRes<Image>& image, const bool rotate_90_degrees)
+    void Image::insert(const unsigned x, const unsigned y, const SRes<Image>& image, const bool rotate)
     {
-        if(rotate_90_degrees)
+        if(rotate)
             insert_pixels_rotated(x, y, image->m_Data.get(), image->width(), image->height());
         else
             insert_pixels(x, y, image->m_Data.get(), image->width(), image->height());
@@ -249,6 +249,13 @@ namespace cbn
     glm::uvec2 Image::resolution() const
     {
         return m_Resolution;
+    }
+
+    //-------------------------------------------------------------------------------------
+
+    uint64_t Image::byte_size() const
+    {
+        return static_cast<uint64_t>(m_Resolution.x) * m_Resolution.y * sizeof(Pixel);
     }
 
     //-------------------------------------------------------------------------------------

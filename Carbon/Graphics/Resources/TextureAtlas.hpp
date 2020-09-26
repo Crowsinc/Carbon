@@ -7,7 +7,6 @@
 #include <map>
 
 #include "../../Algorithms/BinPacking.hpp"
-#include "../OpenGL/TextureParameters.hpp"
 #include "../../Utility/CachedKey.hpp"
 #include "../../Memory/Resource.hpp"
 #include "Texture.hpp"
@@ -16,44 +15,64 @@
 namespace cbn
 {
 
+	using TextureName = CKey<std::string>;
+
+	struct TexturePackingSettings
+	{
+		RectanglePackingHeuristic heuristic = RectanglePackingHeuristic::BLSF_BAF_SQR;
+		bool allow_image_rotation = true;
+		bool shrink_to_footprint = true;
+	};
+
+	/*
+		TODO: 
+		struct SubImage
+		{
+			const bool rotated;
+			const glm::vec2 position;
+			const glm::vec2 resolution;
+		}
+
+		struct SubTexture
+		{
+			SubImage subimage;
+			const TextureUVMap uvs;
+			const TextureName texture_name;
+		}
+
+	
+	*/
+
+	struct SubTexture
+	{
+		const bool rotated;
+		const TextureUVMap uvs;
+		const glm::vec2 position;
+		const glm::vec2 resolution;
+		const TextureName texture_name;
+	};
+
 	class TextureAtlas
 	{
 	public:
 
-		struct PackingSettings
-		{
-			RectanglePackingHeuristic heuristic = RectanglePackingHeuristic::BLSF_BAF_SQR;
-			bool allow_image_rotation = true;
-			bool shrink_to_footprint = true;
-		};
-
-		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const PackingSettings settings, const std::map<CKey<std::string>,SRes<Image>> images);
-
-		//TODO: static SRes<TextureAtlas> PackToFile(const unsigned width, const unsigned height, const PackingSettings settings, const std::map<CKey<std::string>, SRes<Image>> images);
-		//TODO: static SRes<TextureAtlas> Open(const std::filesystem::path& path, Swizzle swizzle = Swizzle::RGBA);
+		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const std::unordered_map<TextureName, SRes<Image>>& images, const TexturePackingSettings settings = {});
 
 	private:
 
-		struct SubTextureData
-		{
-			bool rotated;
-			Texture::UVMap uv_mapping;
-			unsigned x, y, width, height;
-		};
-	
-		std::unordered_map<CKey<std::string>, SubTextureData> m_SubTextureData;
+		std::unordered_map<TextureName, int> m_SubTextureMap;
+		const std::vector<SubTexture> m_SubTextures;
 		SRes<Texture> m_AtlasTexture;
 
-		static Texture::UVMap calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::uvec2& atlas_resolution);
-
-		static bool is_rotated(const Rect<int>& rect, const SRes<Image>& image);
+		static TextureUVMap calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::vec2& atlas_resolution);
 
 		static glm::uvec2 determine_footprint(const std::vector<Rect<int>>& rectangles);
 
-		TextureAtlas(const SRes<Texture>& texture, const std::unordered_map<CKey<std::string>, SubTextureData>& sub_texture_data);
+		static bool is_rotated(const Rect<int>& rect, const SRes<Image>& image);
+
+		TextureAtlas(const SRes<Texture>& texture, const std::vector<SubTexture>& subtextures);
 		
 	public:
-
 
 		void unbind() const;
 
@@ -61,7 +80,7 @@ namespace cbn
 
 		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		Texture::UVMap uvs() const;
+		constexpr TextureUVMap uvs() const;
 
 		const unsigned width() const;
 
@@ -69,18 +88,18 @@ namespace cbn
 		
 		glm::uvec2 resolution() const;
 
-		bool has_sub_texture(const CKey<std::string>& key) const;
+		bool has_subtexture(const TextureName& reference_name) const;
 
-		std::vector<CKey<std::string>> get_sub_texture_keys() const;
+		SubTexture get_subtexture(const TextureName& reference_name) const;
 
-		SubTextureData get_sub_texture_data(const CKey<std::string>& key) const;
+		const std::vector<SubTexture>& subtextures() const;
 
-		void configure(const Texture::Properties& properties);
+		void set_properties(const TextureProperties& properties);
 
-		Texture::Properties get_properties() const;
+		TextureProperties get_properties() const;
 
-		const SRes<Texture> as_texture() const;
-		
+		SRes<Texture> as_texture() const;
+
 	};
 
 }

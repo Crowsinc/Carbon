@@ -12,30 +12,34 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    Texture::UVMap TextureAtlas::calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::uvec2& atlas_resolution)
+    TextureUVMap TextureAtlas::calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::vec2& atlas_resolution)
     {
-        Texture::UVMap uvs;
-        uvs.ul = {rect.x, rect.y};
-        uvs.ll = {rect.x, rect.y + rect.height};
-        uvs.lr = {rect.x + rect.width, rect.y + rect.height};
-        uvs.ur = {rect.x + rect.width,  rect.y};
+        const glm::vec2 top_left_uv = glm::vec2{rect.x, rect.y} / atlas_resolution;
+        const glm::vec2 bot_left_uv = glm::vec2{rect.x, rect.y} / atlas_resolution;
+        const glm::vec2 bot_right_uv = glm::vec2{rect.x + rect.width, rect.y + rect.height} / atlas_resolution;
+        const glm::vec2 top_right_uv = glm::vec2{rect.x + rect.width,  rect.y} / atlas_resolution;
 
-        uvs.ul /= atlas_resolution;
-        uvs.ll /= atlas_resolution;
-        uvs.lr /= atlas_resolution;
-        uvs.ur /= atlas_resolution;
-
-        // If the texture is rotated clockwise by 90 degrees, we need to counter rotate the uvs
+        
+        // If the texture is rotated, we need to counter rotate the uvs by 90 degrees
         if(rotated)
         {
-            const glm::vec2 temp_ul = uvs.ul;
-            uvs.ul = uvs.ll;
-            uvs.ll = uvs.lr;
-            uvs.lr = uvs.ur;
-            uvs.ur = temp_ul;
+            return {
+                bot_left_uv,
+                bot_right_uv,
+                top_right_uv,
+                top_left_uv
+            };
+        }
+        else
+        {
+            return {
+                top_left_uv,
+                bot_left_uv,
+                bot_right_uv,
+                top_right_uv
+            };
         }
 
-        return uvs;
     }
     
     //-------------------------------------------------------------------------------------
@@ -49,29 +53,27 @@ namespace cbn
 
     glm::uvec2 TextureAtlas::determine_footprint(const std::vector<Rect<int>>& rectangles)
     {
-        const auto max_horz_rect = std::max_element(rectangles.begin(), rectangles.end(), [](const Rect<int> left, const Rect<int> right)
+        const auto rightmost_rect = std::max_element(rectangles.begin(), rectangles.end(), [](const Rect<int> left, const Rect<int> right)
         {
             return left.x + left.width < right.x + right.width;
         });
 
-        const auto max_vert_rect = std::max_element(rectangles.begin(), rectangles.end(), [](const Rect<int> left, const Rect<int> right)
+        const auto leftmost_rect = std::max_element(rectangles.begin(), rectangles.end(), [](const Rect<int> left, const Rect<int> right)
         {
             return left.y + left.height < right.y + right.height;
         });
 
-        return {max_horz_rect->x + max_horz_rect->width, max_vert_rect->y + max_vert_rect->height};
+        return {rightmost_rect->x + rightmost_rect->width, leftmost_rect->y + leftmost_rect->height};
     }
 
     //-------------------------------------------------------------------------------------
     
-    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const PackingSettings settings, const std::map<CKey<std::string>, SRes<Image>> images)
+    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const std::unordered_map<TextureName, SRes<Image>>& images, const TexturePackingSettings settings)
     {
-        // Create rectangles representing the images, these will be used 
-        // in a rectangle packing algorithm to represent the textures. 
-        // The rectangles will correspond with the texture of the same index. 
-        // Note that out map is ordered, so we always iterate over it the same way.
+        // Create rectangles representing the images, these will be used in a rectangle packing algorithm to represent the textures. 
+        // The rects in the rectangles vector are in the same order as those in the images unordered map when iterated. 
         std::vector<Rect<int>> rectangles(images.size());
-        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<CKey<std::string>, SRes<Image>>& pair)
+        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<TextureName, SRes<Image>>& pair)
         {
             return Rect<int>{0, 0, static_cast<int>(pair.second->width()), static_cast<int>(pair.second->height())};
         });
@@ -98,26 +100,26 @@ namespace cbn
             // Insert images and generate references. The references 
             // and rectangles are in the order of the images map
             int i = 0;
-            std::unordered_map<CKey<std::string>,SubTextureData> sub_texture_data;
-            for(auto const& [key, image] : images)
+            std::vector<SubTexture> subtextures;
+            for(auto const& [reference_name, image] : images)
             {
-                SubTextureData sub_texture;
-                const auto& rect = rectangles[i];
-                i++;
-                
-                sub_texture.x = rect.x;
-                sub_texture.y = rect.y;
-                sub_texture.width = rect.width;
-                sub_texture.height = rect.height;
-                sub_texture.rotated = is_rotated(rect, image);
-                sub_texture.uv_mapping = calculate_uvs(rect, is_rotated(rect, image), atlas_image->resolution());
-                sub_texture_data[key] = sub_texture;
-            
-                atlas_image->insert(sub_texture.x, sub_texture.y, image, sub_texture.rotated);
+                const auto& rect = rectangles[i++];
+                const bool rotated = is_rotated(rect, image);
+
+                const SubTexture subtexture = {
+                    rotated,
+                    calculate_uvs(rect, rotated, atlas_image->resolution()),
+                    {rect.x, rect.y},
+                    {rect.width, rect.height},
+                    reference_name
+                };
+
+                subtextures.push_back(subtexture);
+                atlas_image->insert(rect.x, rect.y, image, rotated);
             }
 
             // Create the texture
-            Texture::Properties properties;
+            TextureProperties properties;
             properties.minifying_filter = TextureFilter::NEAREST;
             properties.magnifying_filter = TextureFilter::NEAREST;
             properties.vertical_wrapping = TextureWrapping::CLAMP_TO_EDGE;
@@ -127,15 +129,20 @@ namespace cbn
             if(!atlas_texture)
                 return nullptr;
 
-            return Resource::WrapShared<TextureAtlas>(new TextureAtlas(atlas_texture, sub_texture_data));
+            return Resource::WrapShared<TextureAtlas>(new TextureAtlas(atlas_texture, subtextures));
         }
-        else return nullptr;
+        return nullptr;
     }
+    
     //-------------------------------------------------------------------------------------
    
-    TextureAtlas::TextureAtlas(const SRes<Texture>& texture, const std::unordered_map<CKey<std::string>, SubTextureData>& sub_texture_data)
+    TextureAtlas::TextureAtlas(const SRes<Texture>& texture, const std::vector<SubTexture>& subtextures)
         : m_AtlasTexture(texture),
-        m_SubTextureData(sub_texture_data) {}
+        m_SubTextures(subtextures) 
+    {
+        for(int i = 0; i < m_SubTextures.size(); i++)
+            m_SubTextureMap[m_SubTextures[i].texture_name] = i;
+    }
     
     //-------------------------------------------------------------------------------------
 
@@ -160,9 +167,9 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    Texture::UVMap TextureAtlas::uvs() const
+    constexpr TextureUVMap TextureAtlas::uvs() const
     {
-        return m_AtlasTexture->uv_mapping();
+        return m_AtlasTexture->uvs();
     }
 
     //-------------------------------------------------------------------------------------
@@ -187,48 +194,44 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TextureAtlas::has_sub_texture(const CKey<std::string>& key) const
+    bool TextureAtlas::has_subtexture(const TextureName& reference_name) const
     {
-        return m_SubTextureData.count(key);
-    }
-    
-    //-------------------------------------------------------------------------------------
-
-    std::vector<CKey<std::string>> TextureAtlas::get_sub_texture_keys() const
-    {
-        std::vector<CKey<std::string>> keys;
-        keys.reserve(m_SubTextureData.size());
-        for(const auto& [key, sub_texture_data] : m_SubTextureData)
-        {
-            keys.push_back(key);
-        }
-        return keys;
+        return m_SubTextureMap.count(reference_name);
     }
 
     //-------------------------------------------------------------------------------------
 
-    TextureAtlas::SubTextureData TextureAtlas::get_sub_texture_data(const CKey<std::string>& key) const
+    SubTexture TextureAtlas::get_subtexture(const TextureName& reference_name) const
     {
-        CBN_Assert(m_SubTextureData.count(key) == 1, "Key is not associated with any sub-textures");
-        return m_SubTextureData.at(key);
-    }
-    //-------------------------------------------------------------------------------------
+        CBN_Assert(has_subtexture(reference_name), "Reference name does not belong to a sub-texture in this atlas");
 
-    void TextureAtlas::configure(const Texture::Properties& properties)
-    {
-        m_AtlasTexture->configure(properties);
+        return m_SubTextures[m_SubTextureMap.at(reference_name)];
     }
 
     //-------------------------------------------------------------------------------------
 
-    Texture::Properties TextureAtlas::get_properties() const
+    const std::vector<SubTexture>& TextureAtlas::subtextures() const
+    {
+        return m_SubTextures;
+    }
+
+    //-------------------------------------------------------------------------------------
+
+    void TextureAtlas::set_properties(const TextureProperties& properties)
+    {
+        m_AtlasTexture->set_properties(properties);
+    }
+
+    //-------------------------------------------------------------------------------------
+
+    TextureProperties TextureAtlas::get_properties() const
     {
         return m_AtlasTexture->get_properties();
     }
     
     //-------------------------------------------------------------------------------------
 
-    const SRes<Texture> TextureAtlas::as_texture() const
+    SRes<Texture> TextureAtlas::as_texture() const
     {
         return m_AtlasTexture;
     }

@@ -167,7 +167,7 @@
     <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
-    <ClCompile Include="Graphics\TextureSet.cpp" />
+    <ClCompile Include="Graphics\TexturePack.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
@@ -184,7 +184,6 @@
     <ClInclude Include="Graphics\OpenGL\Buffer.hpp" />
     <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp" />
-    <ClInclude Include="Graphics\OpenGL\TextureParameters.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
     <ClInclude Include="Graphics\QuadRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Shader.hpp" />
@@ -195,7 +194,7 @@
     <ClInclude Include="Graphics\Sprite.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
-    <ClInclude Include="Graphics\TextureSet.hpp" />
+    <ClInclude Include="Graphics\TexturePack.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />

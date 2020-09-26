@@ -250,7 +250,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	glm::mat4 Camera::to_projection_matrix()
+	glm::mat4 Camera::to_projection_matrix() const
 	{
 		// If the cached projection matrix is outdated, then we need to update it
 		// otherwise we can just return the current cached projection matrix
@@ -273,7 +273,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	glm::mat4 Camera::to_view_matrix()
+	glm::mat4 Camera::to_view_matrix() const
 	{
 		// If the cached view matrix is outdated, then we need to update it
 		// otherwise we can just return the current cached view matrix
