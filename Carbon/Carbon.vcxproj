@@ -174,6 +174,7 @@
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
     <ClCompile Include="Graphics\Resources\Image.cpp" />
+    <ClCompile Include="Utility\Colour.cpp" />
     <ClCompile Include="Utility\String.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Utility\CachedKey.hpp" />
+    <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Utility\Event.hpp" />

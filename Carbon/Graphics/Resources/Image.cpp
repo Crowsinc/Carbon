@@ -10,14 +10,7 @@ namespace cbn
 {
     //-------------------------------------------------------------------------------------
 
-    void Image::Pixel::operator=(const Pixel& other)
-    {
-        data = other.data;
-    }
-
-    //-------------------------------------------------------------------------------------
-
-    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>& data)
+    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Colour>& data)
     {
         // If the given data does not exactly match the resolution 
         // or the resolution makes no sense, fail image creation
@@ -30,7 +23,7 @@ namespace cbn
    
     //-------------------------------------------------------------------------------------
 
-    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Pixel>&& data)
+    SRes<Image> Image::Create(const unsigned width, const unsigned height, std::vector<Colour>&& data)
     {
         // If the given data does not exactly match the resolution 
         // or the resolution makes no sense, fail image creation
@@ -72,12 +65,12 @@ namespace cbn
         // image_data, but we will instead deallocate it normally since
         // thats all it does in this version of stb_image and it will provide
         // a performance boost since we dont need to copy the data. 
-        return Resource::WrapShared(new Image(width, height, reinterpret_cast<Pixel*>(image_data), true));
+        return Resource::WrapShared(new Image(width, height, reinterpret_cast<Colour*>(image_data), true));
     }
 
     //-------------------------------------------------------------------------------------
     
-    void Image::insert_pixels(const unsigned x_offset, const unsigned y_offset, const Pixel* pixels, const unsigned width, const unsigned height)
+    void Image::insert_pixels(const unsigned x_offset, const unsigned y_offset, const Colour* pixels, const unsigned width, const unsigned height)
     {
         // Clip the pixels if they extend out of the image
         const unsigned end_x = std::min(x_offset + width, this->width());
@@ -95,7 +88,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    void Image::insert_pixels_rotated(const unsigned x_offset, const unsigned y_offset, const Pixel* pixels, const unsigned width, const unsigned height)
+    void Image::insert_pixels_rotated(const unsigned x_offset, const unsigned y_offset, const Colour* pixels, const unsigned width, const unsigned height)
     {
         // Clip the pixels if they extend out of the image
         // Note that we are rotating the pixels, so we compare the 
@@ -124,9 +117,9 @@ namespace cbn
     void Image::allocate(const unsigned width, const unsigned height, bool set_to_zero)
     {
         if(set_to_zero)
-            m_Data = std::unique_ptr<Pixel>(new Pixel[static_cast<uint64_t>(width) * height]{0});
+            m_Data = std::unique_ptr<Colour>(new Colour[static_cast<uint64_t>(width) * height]);
         else
-            m_Data = std::unique_ptr<Pixel>(new Pixel[static_cast<uint64_t>(width) * height]);
+            m_Data = std::unique_ptr<Colour>(new Colour[static_cast<uint64_t>(width) * height]);
     }
  
     //-------------------------------------------------------------------------------------
@@ -144,14 +137,14 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    Image::Image(const unsigned width, const unsigned height, Pixel* data, bool take_ownership)
+    Image::Image(const unsigned width, const unsigned height, Colour* data, bool take_ownership)
         : m_Resolution(width, height)
     {
         // If we are taking ownership of the data, simply wrap it in a unique pointer and use it
         // Otherwise, create a backing array and copy the data over. 
         if(take_ownership)
         {
-            m_Data = std::unique_ptr<Pixel>(data);
+            m_Data = std::unique_ptr<Colour>(data);
         }
         else
         {
@@ -170,12 +163,12 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
     
-    void Image::fill(const Pixel& color)
+    void Image::fill(const Colour& colour)
     {
-        // Replace all pixels with the given color
+        // Replace all pixels with the given colour
         for(unsigned i = 0; i < size(); i++)
         {
-            *(m_Data.get() + i) = color;
+            *(m_Data.get() + i) = colour;
         }
     }
     
@@ -206,7 +199,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void Image::set_pixel(const unsigned x, const unsigned y, const Pixel& pixel)
+    void Image::set_pixel(const unsigned x, const unsigned y, const Colour& pixel)
     {
         CBN_Assert(x < width() && y < height(), "Coordinate out of bounds");
 
@@ -215,7 +208,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
     
-    Image::Pixel Image::get_pixel(const unsigned x, const unsigned y) const
+    Colour Image::get_pixel(const unsigned x, const unsigned y) const
     {
         CBN_Assert(x < width() && y < height(), "Coordinate out of bounds");
 
@@ -227,7 +220,7 @@ namespace cbn
     bool Image::save(const std::filesystem::path& path) const
     {
         // Use stb_image_write to save the image to a png file
-        return stbi_write_png(path.string().c_str(), width(), height(), m_Components, m_Data.get(), sizeof(Pixel) * width());
+        return stbi_write_png(path.string().c_str(), width(), height(), m_Components, m_Data.get(), sizeof(Colour) * width());
     }
     
     //-------------------------------------------------------------------------------------
@@ -255,7 +248,7 @@ namespace cbn
 
     uint64_t Image::byte_size() const
     {
-        return static_cast<uint64_t>(m_Resolution.x) * m_Resolution.y * sizeof(Pixel);
+        return static_cast<uint64_t>(m_Resolution.x) * m_Resolution.y * sizeof(Colour);
     }
 
     //-------------------------------------------------------------------------------------
@@ -274,14 +267,14 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    const Image::Pixel* Image::data() const
+    const Colour* Image::data() const
     {
         return m_Data.get();
     }
     
     //-------------------------------------------------------------------------------------
     
-    Image::Pixel& Image::operator()(const unsigned x, const unsigned y)
+    Colour& Image::operator()(const unsigned x, const unsigned y)
     {
         CBN_Assert(x < width() && y < height(), "Coordinate out of bounds");
     
