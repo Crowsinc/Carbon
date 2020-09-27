@@ -7,14 +7,14 @@ namespace cbn
   
     //-------------------------------------------------------------------------------------
 
-    TexturePack::TexturePack(const std::unordered_map<TextureName, TextureEntry>& textures)
+    TexturePack::TexturePack(const std::unordered_map<Name, TextureEntry>& textures)
     {
         add(textures);
     }
     
     //-------------------------------------------------------------------------------------
 
-    void TexturePack::add(const std::unordered_map<TextureName, TextureEntry>& textures)
+    void TexturePack::add(const std::unordered_map<Name, TextureEntry>& textures)
     {
         // Simply defer to the individual add methods
         for(const auto& [texture_name, entry] : textures)
@@ -28,7 +28,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void TexturePack::add(const TextureName& texture_name, const SRes<Texture>& texture)
+    void TexturePack::add(const Name& texture_name, const SRes<Texture>& texture)
     {
         CBN_Assert(!contains(texture_name), "Cannot add texture because the given name is already taken");
         CBN_Assert(texture != nullptr, "Texture is empty resource");
@@ -41,7 +41,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    void TexturePack::add(const TextureName& atlas_name, const SRes<TextureAtlas>& atlas)
+    void TexturePack::add(const Name& atlas_name, const SRes<TextureAtlas>& atlas)
     {
         CBN_Assert(!contains(atlas_name), "Cannot add texture atlas because the given name is already taken");
         CBN_Assert(atlas != nullptr, "Texture atlas is empty resource");
@@ -66,7 +66,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    void TexturePack::remove(const TextureName& texture_name)
+    void TexturePack::remove(const Name& texture_name)
     {
         CBN_Assert(contains(texture_name) && !is_subtexture(texture_name), "Given texture name is not associated with any textures in the pack");
 
@@ -121,7 +121,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    TextureUVMap TexturePack::get_uvs(const TextureName & texture_name) const
+    TextureUVMap TexturePack::get_uvs(const Name & texture_name) const
     {
         CBN_Assert(contains(texture_name), "The given texture name is not associated with any textures in the pack");
 
@@ -135,7 +135,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    SubTexture TexturePack::get_subtexture(const TextureName& texture_name) const
+    SubTexture TexturePack::get_subtexture(const Name& texture_name) const
     {
         CBN_Assert(is_subtexture(texture_name), "The given texture name is not associated with any subtextures in the pack");
 
@@ -144,7 +144,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    SRes<Texture> TexturePack::get_texture(const TextureName& texture_name) const
+    SRes<Texture> TexturePack::get_texture(const Name& texture_name) const
     {
         CBN_Assert(contains(texture_name) && !is_subtexture(texture_name), "The given texture name is not associated with any textures in the pack");
 
@@ -153,7 +153,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    SRes<TextureAtlas> TexturePack::get_texture_atlas(const TextureName& texture_name) const
+    SRes<TextureAtlas> TexturePack::get_texture_atlas(const Name& texture_name) const
     {
         CBN_Assert(is_texture_atlas(texture_name), "The given texture name is not associated with any textures in the pack");
 
@@ -162,7 +162,7 @@ namespace cbn
    
     //-------------------------------------------------------------------------------------
 
-    TextureName TexturePack::resolve_texture_atlas(const TextureName& subtexture_name) const
+    Name TexturePack::resolve_texture_atlas(const Name& subtexture_name) const
     {
         CBN_Assert(is_subtexture(subtexture_name), "The given texture name is not associated with any subtextures in the pack");
 
@@ -171,7 +171,7 @@ namespace cbn
    
     //-------------------------------------------------------------------------------------
 
-    bool TexturePack::contains(const TextureName& texture_name) const
+    bool TexturePack::contains(const Name& texture_name) const
     {
         // All atlases are also in the texture map with their backend 
         // textures so we dont need to check the texture atlas map
@@ -180,7 +180,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TexturePack::is_texture(const TextureName& texture_name) const
+    bool TexturePack::is_texture(const Name& texture_name) const
     {
         CBN_Assert(contains(texture_name), "Texture name is not associated with anything in the texture pack");
 
@@ -189,7 +189,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    bool TexturePack::is_subtexture(const TextureName& texture_name) const
+    bool TexturePack::is_subtexture(const Name& texture_name) const
     {
         CBN_Assert(contains(texture_name), "Texture name is not associated with anything in the texture pack");
 
@@ -198,7 +198,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    bool TexturePack::is_texture_atlas(const TextureName& texture_name) const
+    bool TexturePack::is_texture_atlas(const Name& texture_name) const
     {
         CBN_Assert(contains(texture_name), "Texture name is not associated with anything in the texture pack");
 
@@ -221,7 +221,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    const std::vector<SubTexture>& TexturePack::subtextures(const TextureName& atlas_name) const
+    const std::vector<SubTexture>& TexturePack::subtextures(const Name& atlas_name) const
     {
         CBN_Assert(contains(atlas_name) && is_texture_atlas(atlas_name), "Given atlas name does not correspond to any texture atlases");
         

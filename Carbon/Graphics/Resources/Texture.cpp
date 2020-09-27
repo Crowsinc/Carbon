@@ -51,7 +51,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void Texture::upload_image_data(const Image::Pixel* data, const unsigned width, const unsigned height)
+	void Texture::upload_image_data(const Colour* data, const unsigned width, const unsigned height)
 	{
 		// We need to bind the image before we can update its contents
 		bind();

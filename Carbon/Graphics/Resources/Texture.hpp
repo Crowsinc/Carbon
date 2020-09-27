@@ -10,7 +10,6 @@
 
 namespace cbn
 {
-
 	enum class TextureUnit : GLint
 	{
 		UNIT_0,
@@ -108,7 +107,7 @@ namespace cbn
 		glm::uvec2 m_Resolution;
 		GLuint m_TextureID;
 
-		void upload_image_data(const Image::Pixel* data, const unsigned width, const unsigned height);
+		void upload_image_data(const Colour* data, const unsigned width, const unsigned height);
 
 		std::array<GLint, 4> create_swizzle_mask(const TextureSwizzle swizzle);
 

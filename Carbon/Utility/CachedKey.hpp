@@ -61,6 +61,7 @@ namespace cbn
 
 	template<typename T>
 	using CKey = CachedKey<T>;
+	using Name = CKey<std::string>;
 
 }
 

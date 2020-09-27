@@ -156,6 +156,9 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
+    <ClCompile Include="Graphics\Animation\Animation.cpp" />
+    <ClCompile Include="Graphics\Animation\AnimationChain.cpp" />
+    <ClCompile Include="Graphics\Animation\AnimationNode.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Graphics\OpenGL\Buffer.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
@@ -181,6 +184,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
+    <ClInclude Include="Graphics\Animation\Animation.hpp" />
+    <ClInclude Include="Graphics\Animation\AnimationChain.hpp" />
+    <ClInclude Include="Graphics\Animation\AnimationNode.hpp" />
     <ClInclude Include="Graphics\Camera.hpp" />
     <ClInclude Include="Graphics\OpenGL\Buffer.hpp" />
     <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp" />

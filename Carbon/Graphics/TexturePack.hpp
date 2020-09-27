@@ -9,9 +9,7 @@
 
 namespace cbn
 {
-
 	using TextureEntry = std::variant<Texture, TextureAtlas>;
-	using TextureName = CKey<std::string>;
 
 	class TexturePack
 	{
@@ -19,47 +17,48 @@ namespace cbn
 
 		std::vector<SRes<Texture>> m_Textures; // Contains textures and backend texture atlas textures
 		std::vector<SRes<TextureAtlas>> m_TextureAtlases; // Contains texture atlases
-		std::unordered_map<TextureName, int> m_TextureMap;
-		std::unordered_map<TextureName, int> m_TextureAtlasMap;
-		std::unordered_map<TextureName, TextureName> m_SubTextureMap;
+		
+		std::unordered_map<Name, int> m_TextureMap;
+		std::unordered_map<Name, int> m_TextureAtlasMap;
+		std::unordered_map<Name, Name> m_SubTextureMap;
 
 	public:
 
 		TexturePack() = default;
 
-		TexturePack(const std::unordered_map<TextureName, TextureEntry>& textures);
+		TexturePack(const std::unordered_map<Name, TextureEntry>& textures);
 		
-		void add(const std::unordered_map<TextureName, TextureEntry>& textures);
+		void add(const std::unordered_map<Name, TextureEntry>& textures);
 
-		void add(const TextureName& texture_name, const SRes<Texture>& texture);
+		void add(const Name& texture_name, const SRes<Texture>& texture);
 
-		void add(const TextureName& atlas_name, const SRes<TextureAtlas>& atlas);
+		void add(const Name& atlas_name, const SRes<TextureAtlas>& atlas);
 
-		void remove(const TextureName& texture_name);
+		void remove(const Name& texture_name);
 
-		TextureUVMap get_uvs(const TextureName& texture_name) const;
+		TextureUVMap get_uvs(const Name& texture_name) const;
 
-		SubTexture get_subtexture(const TextureName& texture_name) const;
+		SubTexture get_subtexture(const Name& texture_name) const;
 
-		SRes<Texture> get_texture(const TextureName& texture_name) const;
+		SRes<Texture> get_texture(const Name& texture_name) const;
 
-		SRes<TextureAtlas> get_texture_atlas(const TextureName& texture_name) const;
+		SRes<TextureAtlas> get_texture_atlas(const Name& texture_name) const;
 		
-		TextureName resolve_texture_atlas(const TextureName& subtexture_name) const;
+		Name resolve_texture_atlas(const Name& subtexture_name) const;
 
-		bool contains(const TextureName& texture_name) const;
+		bool contains(const Name& texture_name) const;
 
-		bool is_texture(const TextureName& texture_name) const;
+		bool is_texture(const Name& texture_name) const;
 
-		bool is_subtexture(const TextureName& texture_name) const;
+		bool is_subtexture(const Name& texture_name) const;
 
-		bool is_texture_atlas(const TextureName& texture_name) const;
+		bool is_texture_atlas(const Name& texture_name) const;
 
 		const std::vector<SRes<Texture>>& textures() const;
 		
 		const std::vector<SRes<TextureAtlas>>& texture_atlases() const;
 
-		const std::vector<SubTexture>& subtextures(const TextureName& atlas_name) const;
+		const std::vector<SubTexture>& subtextures(const Name& atlas_name) const;
 
 		int subtexture_count() const;
 

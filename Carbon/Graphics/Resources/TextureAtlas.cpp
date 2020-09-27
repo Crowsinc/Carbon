@@ -68,12 +68,12 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
     
-    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const std::unordered_map<TextureName, SRes<Image>>& images, const TexturePackingSettings settings)
+    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const std::unordered_map<Name, SRes<Image>>& images, const TexturePackingSettings settings)
     {
         // Create rectangles representing the images, these will be used in a rectangle packing algorithm to represent the textures. 
         // The rects in the rectangles vector are in the same order as those in the images unordered map when iterated. 
         std::vector<Rect<int>> rectangles(images.size());
-        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<TextureName, SRes<Image>>& pair)
+        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<Name, SRes<Image>>& pair)
         {
             return Rect<int>{0, 0, static_cast<int>(pair.second->width()), static_cast<int>(pair.second->height())};
         });
@@ -194,14 +194,14 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TextureAtlas::has_subtexture(const TextureName& reference_name) const
+    bool TextureAtlas::has_subtexture(const Name& reference_name) const
     {
         return m_SubTextureMap.count(reference_name);
     }
 
     //-------------------------------------------------------------------------------------
 
-    SubTexture TextureAtlas::get_subtexture(const TextureName& reference_name) const
+    SubTexture TextureAtlas::get_subtexture(const Name& reference_name) const
     {
         CBN_Assert(has_subtexture(reference_name), "Reference name does not belong to a sub-texture in this atlas");
 

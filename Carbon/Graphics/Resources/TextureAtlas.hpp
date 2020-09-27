@@ -15,7 +15,23 @@
 namespace cbn
 {
 
-	using TextureName = CKey<std::string>;
+	/*
+	TODO:
+	struct SubImage
+	{
+		const bool rotated;
+		const glm::vec2 position;
+		const glm::vec2 resolution;
+	}
+
+	struct SubTexture
+	{
+		SubImage subimage;
+		const TextureUVMap uvs;
+		const TextureName texture_name;
+	}
+
+*/
 
 	struct TexturePackingSettings
 	{
@@ -24,43 +40,24 @@ namespace cbn
 		bool shrink_to_footprint = true;
 	};
 
-	/*
-		TODO: 
-		struct SubImage
-		{
-			const bool rotated;
-			const glm::vec2 position;
-			const glm::vec2 resolution;
-		}
-
-		struct SubTexture
-		{
-			SubImage subimage;
-			const TextureUVMap uvs;
-			const TextureName texture_name;
-		}
-
-	
-	*/
-
 	struct SubTexture
 	{
 		const bool rotated;
 		const TextureUVMap uvs;
 		const glm::vec2 position;
 		const glm::vec2 resolution;
-		const TextureName texture_name;
+		const Name texture_name;
 	};
 
 	class TextureAtlas
 	{
 	public:
 
-		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const std::unordered_map<TextureName, SRes<Image>>& images, const TexturePackingSettings settings = {});
+		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const std::unordered_map<Name, SRes<Image>>& images, const TexturePackingSettings settings = {});
 
 	private:
 
-		std::unordered_map<TextureName, int> m_SubTextureMap;
+		std::unordered_map<Name, int> m_SubTextureMap;
 		const std::vector<SubTexture> m_SubTextures;
 		SRes<Texture> m_AtlasTexture;
 
@@ -88,9 +85,9 @@ namespace cbn
 		
 		glm::uvec2 resolution() const;
 
-		bool has_subtexture(const TextureName& reference_name) const;
+		bool has_subtexture(const Name& reference_name) const;
 
-		SubTexture get_subtexture(const TextureName& reference_name) const;
+		SubTexture get_subtexture(const Name& reference_name) const;
 
 		const std::vector<SubTexture>& subtextures() const;
 
