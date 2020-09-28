@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Maths.hpp"
+#include "../Graphics/Camera.hpp"
 
 namespace cbn
 {
@@ -16,6 +17,8 @@ namespace cbn
 		float m_Rotation;
 
 	public:
+
+		Transform();
 
 		Transform(const float x = 0, const float y = 0, const float scale_x = 1, const float scale_y = 1, const float rotation_degrees = 0);
 
@@ -60,7 +63,15 @@ namespace cbn
 		const glm::vec2& get_translation() const;
 
 		glm::mat4 to_transform_matrix() const;
+
+		glm::vec2 apply_transform(const glm::vec2 position) const;
+
+		glm::vec2 apply_transform(const glm::vec2 position, const Camera& camera) const;
 		
+		glm::vec2 apply_transform(const glm::vec2 position, const glm::mat4& vp_matrix) const;
+
+		glm::vec2 apply_transform(const glm::vec2 position, const glm::mat4& view_matrix, const glm::mat4& projection_matrix) const;
+
 	};
 
 }

@@ -77,7 +77,7 @@ namespace cbn
 		glm::vec2 top_right;
 	};
 
-	struct TextureProperties
+	struct TextureSettings
 	{
 		TextureFilter magnifying_filter = TextureFilter::NEAREST;
 		TextureFilter minifying_filter = TextureFilter::LINEAR;
@@ -92,9 +92,9 @@ namespace cbn
 	{
 	public:
 
-		static SRes<Texture> Create(const SRes<Image>& image, const TextureProperties& properties);
+		static SRes<Texture> Create(const SRes<Image>& image, const TextureSettings& settings);
 
-		static SRes<Texture> Open(const std::filesystem::path& path, const TextureProperties& properties);
+		static SRes<Texture> Open(const std::filesystem::path& path, const TextureSettings& settings);
 
 		static GLint SupportedTextureUnits();
 
@@ -103,7 +103,7 @@ namespace cbn
 		static std::unordered_map<TextureUnit,GLint> s_BoundTextures;
 
 		mutable TextureUnit m_TextureUnit;
-		TextureProperties m_Properties;
+		TextureSettings m_Settings;
 		glm::uvec2 m_Resolution;
 		GLuint m_TextureID;
 
@@ -111,7 +111,7 @@ namespace cbn
 
 		std::array<GLint, 4> create_swizzle_mask(const TextureSwizzle swizzle);
 
-		Texture(const SRes<Image>& image, const TextureProperties& properties);
+		Texture(const SRes<Image>& image, const TextureSettings& settings);
 
 	public:
 
@@ -123,9 +123,9 @@ namespace cbn
 
 		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		void set_properties(const TextureProperties& properties);
+		void set_settings(const TextureSettings& settings);
 
-		TextureProperties get_properties() const;
+		TextureSettings get_settings() const;
 
 		const unsigned width() const;
 

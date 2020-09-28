@@ -91,9 +91,9 @@ namespace cbn
 
 		const std::vector<SubTexture>& subtextures() const;
 
-		void set_properties(const TextureProperties& properties);
+		void set_settings(const TextureSettings& settings);
 
-		TextureProperties get_properties() const;
+		TextureSettings get_settings() const;
 
 		SRes<Texture> as_texture() const;
 

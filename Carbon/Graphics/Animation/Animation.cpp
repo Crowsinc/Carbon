@@ -1,129 +1,75 @@
 #include "Animation.hpp"
 
-#include "../../Diagnostics/Assert.hpp"
-
 namespace cbn
 {
-
 	//-------------------------------------------------------------------------------------
 
-	Animation::Animation(const AnimationChain& default_chain)
-		: m_DefaultAnimationChain(default_chain) {}
-
-	//-------------------------------------------------------------------------------------
-
-	void Animation::remove(const Name& chain_name)
-	{
-		CBN_Assert(contains(chain_name), "Animation does not contain a chain belonging to the given name");
-
-		// If the chain being removed is the current chain, then we need to swap to the default chain
-		if(m_CurrentChain == &m_AnimationChains[chain_name])
-		{
-			reset_to_default();
-		}
-		m_AnimationChains.erase(chain_name);
-	}
+	Animation::Animation(const AnimationNode&& start_node)
+		: m_StartingNode(start_node),
+		m_CurrentNode(&m_StartingNode) {}
 	
 	//-------------------------------------------------------------------------------------
 
-	void Animation::set_default(const AnimationChain& default_chain)
-	{
-		m_DefaultAnimationChain = default_chain;
-	}
+	Animation::Animation(const AnimationNode& start_node)
+		: m_StartingNode(start_node),
+		m_CurrentNode(&m_StartingNode) {}
 	
 	//-------------------------------------------------------------------------------------
 
-	void Animation::add(const Name& chain_name, const AnimationChain& animation_chain)
-	{
-		CBN_Assert(!contains(chain_name), "Animation already contains a chain belonging to the given name");
-
-		m_AnimationChains.insert(std::make_pair(chain_name, animation_chain));
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	AnimationChain Animation::get(const Name& chain_name) const
-	{
-		CBN_Assert(contains(chain_name), "Animation does not contain a chain belonging to the given name");
-		
-		return m_AnimationChains.at(chain_name);
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	AnimationChain Animation::get_default() const
-	{
-		return m_DefaultAnimationChain;
-	}
+	Animation::Animation(const Animation&& animation)
+		: m_StartingNode(animation.m_StartingNode),
+		m_CurrentNode(&m_StartingNode) {}
 	
 	//-------------------------------------------------------------------------------------
 
-	bool Animation::contains(const Name& chain_name) const
+	Animation::Animation(const Animation& animation)
+		: m_StartingNode(animation.m_StartingNode),
+		m_CurrentNode(&m_StartingNode) {}
+	
+	//-------------------------------------------------------------------------------------
+
+	void Animation::operator=(const Animation& animation)
 	{
-		return m_AnimationChains.count(chain_name) == 1;
+		m_StartingNode = animation.m_StartingNode;
+		m_CurrentNode = &m_StartingNode;
 	}
 
 	//-------------------------------------------------------------------------------------
-
-	void Animation::reset_to_default()
+	
+	void Animation::advance()
 	{
-		m_CurrentChain = &m_DefaultAnimationChain;
-		reset();
+		if(can_advance())
+			m_CurrentNode = &m_CurrentNode->next.value();
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	void Animation::reset()
 	{
-		m_CurrentChain->reset();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void Animation::advance()
-	{
-		if(can_advance())
-			m_CurrentChain->advance();
+		m_CurrentNode = &m_StartingNode;
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	bool Animation::can_advance() const
 	{
-		return m_CurrentChain->can_advance();
+		return m_CurrentNode->next.has_value();
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void Animation::swap_to(const Name& chain_name)
+	const Name& Animation::current_texture() const
 	{
-		CBN_Assert(contains(chain_name), "Animation does not contain a chain belonging to the given name");
-
-		m_CurrentChain = &m_AnimationChains[chain_name];
-		reset();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	Name Animation::current_texture() const
-	{
-		return m_CurrentChain->current_texture();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	AnimationNode Animation::current_node() const
-	{
-		return m_CurrentChain->current();
+		return m_CurrentNode->texture_name;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	AnimationChain Animation::current_chain() const
+	const AnimationNode& Animation::current() const
 	{
-		return *m_CurrentChain;
+		return *m_CurrentNode;
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
 }

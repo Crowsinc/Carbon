@@ -156,8 +156,8 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
+    <ClCompile Include="Graphics\Animation\Animator.cpp" />
     <ClCompile Include="Graphics\Animation\Animation.cpp" />
-    <ClCompile Include="Graphics\Animation\AnimationChain.cpp" />
     <ClCompile Include="Graphics\Animation\AnimationNode.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Graphics\OpenGL\Buffer.cpp" />
@@ -167,7 +167,6 @@
     <ClCompile Include="Graphics\Resources\StaticBuffer.cpp" />
     <ClCompile Include="Graphics\Resources\StreamBuffer.cpp" />
     <ClCompile Include="Graphics\Resources\TextureAtlas.cpp" />
-    <ClCompile Include="Graphics\Sprite.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
     <ClCompile Include="Graphics\TexturePack.cpp" />
@@ -184,8 +183,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
+    <ClInclude Include="Graphics\Animation\Animator.hpp" />
     <ClInclude Include="Graphics\Animation\Animation.hpp" />
-    <ClInclude Include="Graphics\Animation\AnimationChain.hpp" />
     <ClInclude Include="Graphics\Animation\AnimationNode.hpp" />
     <ClInclude Include="Graphics\Camera.hpp" />
     <ClInclude Include="Graphics\OpenGL\Buffer.hpp" />
@@ -198,7 +197,6 @@
     <ClInclude Include="Graphics\Resources\StaticBuffer.hpp" />
     <ClInclude Include="Graphics\Resources\StreamBuffer.hpp" />
     <ClInclude Include="Graphics\Resources\TextureAtlas.hpp" />
-    <ClInclude Include="Graphics\Sprite.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
     <ClInclude Include="Graphics\TexturePack.hpp" />

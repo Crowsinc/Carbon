@@ -15,6 +15,7 @@ namespace cbn
 	Camera::Camera(const float width, const float height, const float x, const float y, const float zoom, const float rotation_degrees)
 		: m_ViewCacheOutdated(true),
 		m_ProjectionCacheOutdated(true),
+		m_ViewProjectionCacheOutdated(true),
 		m_ViewCache(1.0),
 		m_ProjectionCache(1.0),
 		m_Resolution(0,0),
@@ -33,6 +34,7 @@ namespace cbn
 	Camera::Camera(const glm::vec2 & resolution, const glm::vec2 & translation, const float zoom, const float rotation_degrees)
 		: m_ViewCacheOutdated(true),
 		m_ProjectionCacheOutdated(true),
+		m_ViewProjectionCacheOutdated(true),
 		m_ViewCache(1.0),
 		m_ProjectionCache(1.0),
 		m_Resolution(0,0),
@@ -267,6 +269,10 @@ namespace cbn
 
 			// Clear the outdated flag on the projection cache
 			m_ProjectionCacheOutdated = false;
+
+			// Since we updated the projection cache, the projection cache flag is no 
+            // longer on but the view projection cache needs to be updated
+			m_ViewProjectionCacheOutdated = true;
 		}
 		return m_ProjectionCache;
 	}
@@ -284,8 +290,25 @@ namespace cbn
 			
 			// Clear the outdated flag on the view cache
 			m_ViewCacheOutdated = false;
+
+			// Since we updated the view cache, the view cache flag is no 
+			// longer on but the view projection cache needs to be updated
+			m_ViewProjectionCacheOutdated = true;
 		}
 		return m_ViewCache;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	glm::mat4 Camera::to_view_projection_matrix() const
+	{
+		// If any of the caches are outdated, then we need to update the view projection cache
+		if(m_ViewCacheOutdated || m_ProjectionCacheOutdated || m_ViewProjectionCacheOutdated)
+		{
+			m_ViewProjectionCache = build_vp_matrix(to_view_matrix(), to_projection_matrix());
+			m_ViewProjectionCacheOutdated = false;
+		}
+		return m_ViewProjectionCache;
 	}
 
 	//-------------------------------------------------------------------------------------

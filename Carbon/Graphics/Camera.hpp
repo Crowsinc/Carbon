@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../Maths/Transform.hpp"
-
 namespace cbn
 {
 	
@@ -11,8 +9,8 @@ namespace cbn
 
 		constexpr static float s_MinimumZoomValue = 0.0001f;
 		
-		mutable bool m_ViewCacheOutdated, m_ProjectionCacheOutdated;
-		mutable glm::mat4 m_ViewCache, m_ProjectionCache;
+		mutable bool m_ViewCacheOutdated, m_ProjectionCacheOutdated, m_ViewProjectionCacheOutdated;
+		mutable glm::mat4 m_ViewCache, m_ProjectionCache, m_ViewProjectionCache;
 		
 		glm::vec2 m_Resolution, m_CenterOffset;
 		float m_Rotation, m_Zoom;
@@ -66,6 +64,8 @@ namespace cbn
 		glm::mat4 to_projection_matrix() const;
 
 		glm::mat4 to_view_matrix() const;
+
+		glm::mat4 to_view_projection_matrix() const;
 
 	};
 

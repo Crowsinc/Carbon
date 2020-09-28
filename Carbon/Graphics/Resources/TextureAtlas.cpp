@@ -119,7 +119,7 @@ namespace cbn
             }
 
             // Create the texture
-            TextureProperties properties;
+            TextureSettings properties;
             properties.minifying_filter = TextureFilter::NEAREST;
             properties.magnifying_filter = TextureFilter::NEAREST;
             properties.vertical_wrapping = TextureWrapping::CLAMP_TO_EDGE;
@@ -217,16 +217,16 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    void TextureAtlas::set_properties(const TextureProperties& properties)
+    void TextureAtlas::set_settings(const TextureSettings& settings)
     {
-        m_AtlasTexture->set_properties(properties);
+        m_AtlasTexture->set_settings(settings);
     }
 
     //-------------------------------------------------------------------------------------
 
-    TextureProperties TextureAtlas::get_properties() const
+    TextureSettings TextureAtlas::get_settings() const
     {
-        return m_AtlasTexture->get_properties();
+        return m_AtlasTexture->get_settings();
     }
     
     //-------------------------------------------------------------------------------------

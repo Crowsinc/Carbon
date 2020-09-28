@@ -3,6 +3,131 @@
 namespace cbn
 {
 
+	//-------------------------------------------------------------------------------------
+
+	bool SpriteRenderer::should_cull(const BoundingBox& sprite)
+	{
+		//TODO: implement when the bounding box class is implemented
+		// return sprite.as_bounding_circle().collides(m_CameraBoundingBox);
+		return false;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	uint32_t SpriteRenderer::pack_texture(const Name& texture_name)
+	{
+		return uint32_t();
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	uint32_t SpriteRenderer::extract_data(const SpriteData& data)
+	{
+		return uint32_t();
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	SRes<StaticBuffer> SpriteRenderer::create_index_buffer()
+	{
+		return SRes<StaticBuffer>();
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::create_batch_objects()
+	{}
+	
+	//-------------------------------------------------------------------------------------
+
+	SpriteRenderer::SpriteRenderer(const SpriteRendererProperties& properties)
+		: m_Properties(properties),
+		m_BatchStarted(false),
+		m_BatchEnded(false),
+		m_BatchSize(0)
+	{
+		create_index_buffer();
+
+	
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::begin_batch(const Camera & camera)
+	{
+		CBN_Assert(!m_BatchStarted && m_BatchEnded, "Cannot start a new batch while batching is currently active");
+
+		m_BatchStarted = true;
+	
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(BoundingBox sprite, const SpriteData sprite_data_0, const SpriteData sprite_data_1, const SpriteData sprite_data_2, const SpriteData sprite_data_3, const SpriteData sprite_data_4, const SpriteData sprite_data_5)
+	{
+		CBN_Assert(m_BatchStarted, "No batch exists for submission");
+
+	
+	
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::end_batch()
+	{
+		CBN_Assert(m_BatchStarted, "Cannot end an unstarted batch");
+
+		m_BatchStarted = false;
+		m_BatchEnded = true;
+
+		// unmap
+
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::render(const ShaderProgram & shader)
+	{
+		CBN_Assert(m_BatchEnded, "Cannot render an unfinished batch");
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool SpriteRenderer::is_batch_started() const
+	{
+		return m_BatchStarted;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool SpriteRenderer::is_batch_full() const
+	{
+		return m_BatchSize == m_Properties.maximum_batch_size;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	int SpriteRenderer::batch_size() const
+	{
+		return m_BatchSize;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	SpriteRendererProperties SpriteRenderer::get_settings() const
+	{
+		return SpriteRendererProperties();
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::set_texture_pack(const TexturePack& textures)
+	{}
+
+	//-------------------------------------------------------------------------------------
+}
+
+/*
 	const char* vertex_source = "#version 400 core\n"
 		"layout(location = 0) in vec4 VertexData;\n"
 		"layout(location = 1) in vec2 uvs;\n"
@@ -238,3 +363,4 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 }
+*/
