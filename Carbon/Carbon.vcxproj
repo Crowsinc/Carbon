@@ -143,8 +143,10 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <FloatingPointModel>Precise</FloatingPointModel>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -161,12 +163,14 @@
     <ClCompile Include="Graphics\Animation\AnimationNode.cpp" />
     <ClCompile Include="Graphics\Camera.cpp" />
     <ClCompile Include="Graphics\OpenGL\Buffer.cpp" />
+    <ClCompile Include="Graphics\OpenGL\VertexArrayObject.cpp" />
     <ClCompile Include="Graphics\PostProcessor.cpp" />
     <ClCompile Include="Graphics\Resources\Shader.cpp" />
     <ClCompile Include="Graphics\Resources\ShaderProgram.cpp" />
     <ClCompile Include="Graphics\Resources\StaticBuffer.cpp" />
     <ClCompile Include="Graphics\Resources\StreamBuffer.cpp" />
     <ClCompile Include="Graphics\Resources\TextureAtlas.cpp" />
+    <ClCompile Include="Graphics\Resources\BufferTexture.cpp" />
     <ClCompile Include="Graphics\SpriteRenderer.cpp" />
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
     <ClCompile Include="Graphics\TexturePack.cpp" />
@@ -188,15 +192,15 @@
     <ClInclude Include="Graphics\Animation\AnimationNode.hpp" />
     <ClInclude Include="Graphics\Camera.hpp" />
     <ClInclude Include="Graphics\OpenGL\Buffer.hpp" />
-    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp" />
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp" />
+    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp" />
     <ClInclude Include="Graphics\PostProcessor.hpp" />
-    <ClInclude Include="Graphics\QuadRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Shader.hpp" />
     <ClInclude Include="Graphics\Resources\ShaderProgram.hpp" />
     <ClInclude Include="Graphics\Resources\StaticBuffer.hpp" />
     <ClInclude Include="Graphics\Resources\StreamBuffer.hpp" />
     <ClInclude Include="Graphics\Resources\TextureAtlas.hpp" />
+    <ClInclude Include="Graphics\Resources\BufferTexture.hpp" />
     <ClInclude Include="Graphics\SpriteRenderer.hpp" />
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
     <ClInclude Include="Graphics\TexturePack.hpp" />
@@ -217,8 +221,6 @@
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\OpenGL\VertexArrayObject.cpp" />
-    <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Maths\Shapes.hpp" />
     <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Utility\Event.tpp" />

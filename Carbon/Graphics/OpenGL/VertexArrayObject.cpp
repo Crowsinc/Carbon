@@ -1,5 +1,7 @@
 #include "VertexArrayObject.hpp"
 
+#include <iostream>
+
 namespace cbn
 {
 
@@ -9,7 +11,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	inline VertexArrayObject::VertexArrayObject()
+	VertexArrayObject::VertexArrayObject()
 		: m_ObjectID(0)
 	{
 		glGenVertexArrays(1, &m_ObjectID);
@@ -19,6 +21,7 @@ namespace cbn
 
 	VertexArrayObject::~VertexArrayObject()
 	{
+		std::cout << "deconstructing";
 		glDeleteVertexArrays(1, &m_ObjectID);
 	}
 
@@ -52,7 +55,7 @@ namespace cbn
 	{
 		return m_ObjectID == s_BoundObjectID;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 }

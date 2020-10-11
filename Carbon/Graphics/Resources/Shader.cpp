@@ -1,11 +1,30 @@
 #include "Shader.hpp"
 
 #include <sstream>
+#include <fstream>
 
 #include "../../Utility/String.hpp"
 
 namespace cbn
 {
+	
+	//-------------------------------------------------------------------------------------
+
+	SRes<Shader> Shader::Open(const std::filesystem::path& shader_path, const Stage pipeline_stage, std::string& error_log)
+	{
+		std::ifstream file_stream;
+
+		file_stream.open(shader_path);
+
+		if(file_stream.good())
+		{
+			std::stringstream shader_source;
+			shader_source << file_stream.rdbuf();
+
+			return Shader::Compile(shader_source.str(), pipeline_stage, error_log);
+		}
+		return nullptr;
+	}
 
 	//-------------------------------------------------------------------------------------
 
@@ -74,8 +93,24 @@ namespace cbn
 				auto split_line = line.split(" ");
 				if(split_line.size() >= 3)
 				{
-					// If the split line contains 3 words, then add the 3rd to the uniform list
-					m_UniformNames.emplace_back(split_line[2]);
+					// If the split line contains 3 words, then add the 3rd will be the name
+					String name = split_line[2];
+
+					// If the name contains square brackets, then its an array and we need to add separate uniforms for each index
+					if(name.contains("[") && name.contains("]"))
+					{
+						const auto start_index = name.find("[");
+						const auto end_index = name.find("]");
+						CBN_Assert(start_index < end_index, "Invalid array uniform");
+
+						const String name_only = name.extract(0, start_index);
+						const int array_size = std::stoi(name.extract(start_index + 1, end_index - start_index - 1).as_array());
+						for(int i = 0; i < array_size; i++)
+						{
+							const String ending = "[" + std::to_string(i) + "]";
+							m_UniformNames.emplace_back(name_only + ending);
+						}
+					} else m_UniformNames.emplace_back(name);
 				}
 			}
 		}

@@ -2,53 +2,137 @@
 
 namespace cbn
 {
-
+	
 	//-------------------------------------------------------------------------------------
-
-	bool SpriteRenderer::should_cull(const BoundingBox& sprite)
+	
+	void SpriteRenderer::initialize_renderer(const Version& opengl_version)
 	{
-		//TODO: implement when the bounding box class is implemented
-		// return sprite.as_bounding_circle().collides(m_CameraBoundingBox);
-		return false;
+		const auto index_buffer_indices = m_SpritesPerStreamBuffer * c_IndicesPerSprite;
+
+		// Create batch indices for the entire stream buffer+
+		std::vector<uint32_t> batch_indices;
+		batch_indices.reserve(index_buffer_indices);
+		for(auto index = 0, base_sprite_index = 0; index < index_buffer_indices; index += c_IndicesPerSprite, base_sprite_index += c_VerticesPerSprite)
+		{
+			batch_indices.push_back(base_sprite_index + 0);
+			batch_indices.push_back(base_sprite_index + 1);
+			batch_indices.push_back(base_sprite_index + 3);
+			batch_indices.push_back(base_sprite_index + 3);
+			batch_indices.push_back(base_sprite_index + 1);
+			batch_indices.push_back(base_sprite_index + 2);
+		}
+
+		// Allocate the index buffer which will be shared for all batches
+		m_IndexBuffer = StaticBuffer::Allocate(reinterpret_cast<uint8_t*>(batch_indices.data()), batch_indices.size() * sizeof(uint32_t), BufferTarget::ELEMENT_BUFFER, opengl_version);
+		CBN_Assert(m_IndexBuffer != nullptr, "Index buffer creation failed");
+
+		// Allocate the stream buffer which will stream the sprite data to the shaders
+		m_StreamBuffer = StreamBuffer::Allocate(BufferTarget::VERTEX_BUFFER, m_SpritesPerStreamBuffer * sizeof(SpriteLayout), false, opengl_version);
+		CBN_Assert(m_StreamBuffer != nullptr, "Stream buffer creation failed");
+
+		// Set up the vertex array
+		m_VertexArray.bind();
+
+		// Bind the buffers to the vertex array
+		m_StreamBuffer->force_bind();
+		m_IndexBuffer->force_bind();
+
+		// Set attribute bindings for the stream buffer and sprite layout
+		int attribute = 0;
+		glVertexAttribPointer(attribute++, 2, GL_FLOAT, false, sizeof(VertexLayout), (void*)offsetof(VertexLayout, position));
+		glVertexAttribIPointer(attribute++, 4, GL_UNSIGNED_SHORT, sizeof(VertexLayout), (void*)offsetof(VertexLayout, texture));
+		glVertexAttribIPointer(attribute++, 4, GL_UNSIGNED_INT, sizeof(VertexLayout), (void*)offsetof(VertexLayout, data));
+
+		for(auto i = 0; i < attribute; i++)
+			glEnableVertexAttribArray(i);
+
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	uint32_t SpriteRenderer::pack_texture(const Name& texture_name)
+	void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t index_1, const uint16_t index_2, const uint16_t index_3, const uint16_t index_4, const glm::uvec4& vertex_data)
 	{
-		return uint32_t();
+		CBN_Assert(m_BatchStarted, "No batch exists for submission");
+		CBN_Assert(!is_batch_full(), "Batch is full");
+
+		const glm::mat4 mvp_matrix = build_mvp_matrix(m_ViewProjectionMatrix, sprite.transform.to_transform_matrix());
+
+		// Determine the positions of the sprite's vertices in local space. We want the local
+		// position of the verticies to be such that the origin is in the middle so that
+		// the rotations applied by the transform matrix will be around the middle of the sprite. 
+		// Since the origin is in the middle, we only need to specify the local position of two adjacent
+		// vertices because the opposite position can be obtained from the negative of the position vector.
+		const glm::vec2 half_size = sprite.size / 2.0f;
+		const glm::vec2 vertex_0_local_position = {-half_size.x, half_size.y};
+		const glm::vec2 vertex_1_local_position = {-half_size.x, -half_size.y};
+
+		// Perform the transforms on the local space vertices to get their final positions for OpenGL. 
+		const glm::vec2 vertex_1_position = transform(vertex_0_local_position, mvp_matrix);
+		const glm::vec2 vertex_2_position = transform(vertex_1_local_position, mvp_matrix);
+		const glm::vec2 vertex_3_position = transform(-vertex_0_local_position, mvp_matrix);
+		const glm::vec2 vertex_4_position = transform(-vertex_1_local_position, mvp_matrix);
+
+		// Set top left vertex data
+		m_BufferPtr->vertex_1.position = vertex_1_position;
+		m_BufferPtr->vertex_1.texture[0] = index_1 + 0;
+		m_BufferPtr->vertex_1.texture[1] = index_2 + 0;
+		m_BufferPtr->vertex_1.texture[2] = index_3 + 0;
+		m_BufferPtr->vertex_1.texture[3] = index_4 + 0;
+		m_BufferPtr->vertex_1.data = vertex_data;
+
+
+		// Set bottom left vertex data
+		m_BufferPtr->vertex_2.position = vertex_2_position;
+		m_BufferPtr->vertex_2.texture[0] = index_1 + 1;
+		m_BufferPtr->vertex_2.texture[1] = index_2 + 1;
+		m_BufferPtr->vertex_2.texture[2] = index_3 + 1;
+		m_BufferPtr->vertex_2.texture[3] = index_4 + 1;
+		m_BufferPtr->vertex_2.data = vertex_data;
+
+
+		// Set bottom right vertex data
+		m_BufferPtr->vertex_3.position = vertex_3_position;
+		m_BufferPtr->vertex_3.texture[0] = index_1 + 2;
+		m_BufferPtr->vertex_3.texture[1] = index_2 + 2;
+		m_BufferPtr->vertex_3.texture[2] = index_3 + 2;
+		m_BufferPtr->vertex_3.texture[3] = index_4 + 2;
+		m_BufferPtr->vertex_3.data = vertex_data;
+
+
+		// Set top right vertex data
+		m_BufferPtr->vertex_4.position = vertex_4_position;
+		m_BufferPtr->vertex_4.texture[0] = index_1 + 3;
+		m_BufferPtr->vertex_4.texture[1] = index_2 + 3;
+		m_BufferPtr->vertex_4.texture[2] = index_3 + 3;
+		m_BufferPtr->vertex_4.texture[3] = index_4 + 3;
+		m_BufferPtr->vertex_4.data = vertex_data;
+
+		m_BufferPtr++;
+		m_CurrentBatchSize++;
+		m_BatchEndPosition++;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	uint32_t SpriteRenderer::extract_data(const SpriteData& data)
+	bool SpriteRenderer::is_sprite_visible(const BoundingBox& sprite)
 	{
-		return uint32_t();
+		return true;
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	SRes<StaticBuffer> SpriteRenderer::create_index_buffer()
-	{
-		return SRes<StaticBuffer>();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::create_batch_objects()
-	{}
-	
-	//-------------------------------------------------------------------------------------
-
-	SpriteRenderer::SpriteRenderer(const SpriteRendererProperties& properties)
-		: m_Properties(properties),
+	SpriteRenderer::SpriteRenderer(const Version& opengl_version, const SpriteRendererSettings& settings, const SpriteRendererProperties& properties)
+		: m_SpritesPerStreamBuffer(properties.sprites_per_batch * properties.buffer_allocation_bias),
+		m_TexturePack(opengl_version),
+		m_Properties(properties),
+		m_BatchStartPosition(0),
+		m_BatchEndPosition(0),
+		m_CurrentBatchSize(0),
+		m_Settings(settings),
 		m_BatchStarted(false),
-		m_BatchEnded(false),
-		m_BatchSize(0)
+		m_BatchEnded(true)
 	{
-		create_index_buffer();
-
-	
+		initialize_renderer(opengl_version);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -57,20 +141,90 @@ namespace cbn
 	{
 		CBN_Assert(!m_BatchStarted && m_BatchEnded, "Cannot start a new batch while batching is currently active");
 
+		// Reset batch statistics
+		m_BatchEnded = false;
 		m_BatchStarted = true;
-	
+		m_CurrentBatchSize = 0;
+		m_BatchStartPosition = m_BatchEndPosition;
+
+		// Pre-calculate required camera data
+		m_ViewProjectionMatrix = camera.to_view_projection_matrix();
+		//TODO: m_CameraBoundingBox = camera.get_view_bounding_box();
+
+
+		// If there is no space at the end of the buffer for another batch, 
+		// then we should wrap back around to the start of the buffer
+		if(m_BatchStartPosition + m_Properties.sprites_per_batch >= m_SpritesPerStreamBuffer)
+		{
+			m_StreamBuffer->reallocate();
+			m_BatchStartPosition = 0;
+			m_BatchEndPosition = 0;
+		}
+
+		// Map the buffer
+		m_BufferPtr = reinterpret_cast<SpriteLayout*>(m_StreamBuffer->map(m_BatchStartPosition * sizeof(SpriteLayout), m_Properties.sprites_per_batch * sizeof(SpriteLayout)));
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(BoundingBox sprite, const SpriteData sprite_data_0, const SpriteData sprite_data_1, const SpriteData sprite_data_2, const SpriteData sprite_data_3, const SpriteData sprite_data_4, const SpriteData sprite_data_5)
+	void SpriteRenderer::submit(const BoundingBox& sprite)
 	{
-		CBN_Assert(m_BatchStarted, "No batch exists for submission");
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+	
+		push_sprite_to_buffer(sprite, 0, 0, 0, 0, c_EmptyVertexData);
+	}
 
-	
-	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, 0, 0, 0, 0, vertex_data);
 	}
 	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), 0, 0, 0, vertex_data);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), 0, 0, vertex_data);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), m_TexturePack.position_of(texture_name_3), 0, vertex_data);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const Name& texture_name_4, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), m_TexturePack.position_of(texture_name_3), m_TexturePack.position_of(texture_name_4), vertex_data);
+	}
+
 	//-------------------------------------------------------------------------------------
 
 	void SpriteRenderer::end_batch()
@@ -80,287 +234,73 @@ namespace cbn
 		m_BatchStarted = false;
 		m_BatchEnded = true;
 
-		// unmap
-
+		// Finalise changes to the stream buffer by unmapping it
+		m_StreamBuffer->unmap();
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::render(const ShaderProgram & shader)
+	void SpriteRenderer::render(const SRes<ShaderProgram>& shader)
 	{
 		CBN_Assert(m_BatchEnded, "Cannot render an unfinished batch");
+
+		// Bind the vertex array, texture pack and shader
+		m_TexturePack.bind();
+		m_VertexArray.bind();
+		shader->bind();
+
+		glDrawElements(GL_TRIANGLES, m_CurrentBatchSize * c_IndicesPerSprite, GL_UNSIGNED_INT, (void*)(m_BatchStartPosition * c_IndicesPerSprite * sizeof(uint32_t)));
+
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool SpriteRenderer::is_batch_started() const
 	{
 		return m_BatchStarted;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool SpriteRenderer::is_batch_full() const
 	{
-		return m_BatchSize == m_Properties.maximum_batch_size;
+		return m_CurrentBatchSize == m_Properties.sprites_per_batch;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	int SpriteRenderer::batch_size() const
 	{
-		return m_BatchSize;
+		return m_CurrentBatchSize;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	SpriteRendererProperties SpriteRenderer::get_settings() const
+	SpriteRendererSettings SpriteRenderer::settings() const
 	{
-		return SpriteRendererProperties();
+		return m_Settings;
 	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::set_texture_pack(const TexturePack& textures)
-	{}
-
-	//-------------------------------------------------------------------------------------
-}
-
-/*
-	const char* vertex_source = "#version 400 core\n"
-		"layout(location = 0) in vec4 VertexData;\n"
-		"layout(location = 1) in vec2 uvs;\n"
-		"out vec2 _uvs;\n"
-		"void main(void)\n"
-		"{\n"
-		"	gl_Position = vec4(VertexData.xy, 0.0, 1.0);\n"
-		"	_uvs = uvs;\n"
-		"}\n"
-		";";
-
-	const char* fragment_source = "#version 400 core\n"
-		"in vec2 _uvs;\n"
-		"out vec4 fragColour;\n"
-		"uniform sampler2D text[16];"
-		"void main(void)\n"
-		"{\n"
-		"	fragColour = texture(text[0], _uvs);\n"
-		"}\n"
-		";";
 
 	//-------------------------------------------------------------------------------------
 
-	SRes<ShaderProgram> SpriteRenderer::s_DefaultShaderProgram;
-
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::create_default_shader()
-	{
-		std::string error_log;
-		SRes<Shader> vertex_shader = Shader::Compile(vertex_source, Shader::Stage::VERTEX, error_log);
-		CBN_Assert(vertex_shader != nullptr, "Could not compile default vertex shader | " + error_log);
-
-		SRes<Shader> fragment_shader = Shader::Compile(fragment_source, Shader::Stage::FRAGMENT, error_log);
-		CBN_Assert(fragment_shader != nullptr, "Could not compile default fragment shader | " + error_log);
-
-		s_DefaultShaderProgram = ShaderProgram::Create(vertex_shader, nullptr, fragment_shader, error_log);
-		CBN_Assert(fragment_shader != s_DefaultShaderProgram, "Could not link default shader program | " + error_log);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	SpriteRenderer::SpriteRenderer(const Properties properties)
-		: m_Properties(properties)
-	{
-		// If the default shader program has not been made yet, make it
-		if(!s_DefaultShaderProgram)
-			create_default_shader();
-
-
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::begin(const Camera& camera)
-	{
-		CBN_Assert(!m_BatchStarted, "Cannot start batch when one is already started");
-
-		// Reset batch statistics
-		m_BatchSize = 0;
-		m_BatchEnded = false;
-		m_BatchStarted = true;
-
-		// Precalculate view-projection matrix for the whole batch
-		m_VPMatrix = build_vp_matrix(camera.to_view_matrix(), camera.to_projection_matrix());
-
-		// Switch to next buffer
-		m_BufferIndex = (m_BufferIndex + 1) % m_Buffers.size();
-		auto& stream_buffer = m_Buffers[m_BufferIndex];
-
-		// Unlock the new buffer we are using, waiting for the GPU to stop using it if we have to
-		unlock_buffer(stream_buffer);
-
-		// Map the buffer we will use for this batch
-		m_BufferPtr = static_cast<QuadLayout*>(stream_buffer->map());
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::submit(const Sprite& sprite)
-	{
-		CBN_Assert(m_BatchStarted, "Cannot submit sprite without starting new batch");
-		CBN_Assert(!is_batch_full(), "Cannot submit to full batch");
-
-		// If the sprite is out of view and the cull option is true, dont submit
-		if(m_Properties.cull_sprites && should_cull(sprite))
-			return;
-		
-		// Build the full mvp matrix for the sprite and get all its vertex positions
-		const glm::mat4 mvp_matrix = build_mvp_matrix(m_VPMatrix, sprite.to_transform_matrix());
-		
-		const Sprite::Vertices local_vertices = sprite.get_local_vertices();
-		const glm::vec2 ul_vertex_position = transform(local_vertices.ul_vertex, mvp_matrix);
-		const glm::vec2 ll_vertex_position = transform(local_vertices.ll_vertex, mvp_matrix);
-		const glm::vec2 lr_vertex_position = transform(local_vertices.lr_vertex, mvp_matrix);
-		const glm::vec2 ur_vertex_position = transform(local_vertices.ur_vertex, mvp_matrix);
-
-		// Set the positions in the buffer
-		m_BufferPtr->ul_vertex.position = ul_vertex_position;
-		m_BufferPtr->ll_vertex.position = ll_vertex_position;
-		m_BufferPtr->lr_vertex.position = lr_vertex_position;
-		m_BufferPtr->ur_vertex.position = ur_vertex_position;
-
-		// Set sprite tint in buffer
-		const Sprite::Tint tint = sprite.get_tint();
-		m_BufferPtr->ul_vertex.quad_tint = tint.ul_vertex;
-		m_BufferPtr->ll_vertex.quad_tint = tint.ll_vertex;
-		m_BufferPtr->lr_vertex.quad_tint = tint.lr_vertex;
-		m_BufferPtr->ur_vertex.quad_tint = tint.ur_vertex;
-
-		// Get sprite texture data
-		glm::u8vec4 samplers = {255,255,255,255};
-		const Sprite::Textures sprite_textures = sprite.get_textures();
-		
-		// Main Texture
-		const Texture::UVMap main_texture_uvs = m_TextureSet.get_uv_map(sprite_textures.main_texture);
-		samplers.x = static_cast<int>(m_TextureSet.get_unit(sprite_textures.main_texture));
-		m_BufferPtr->ul_vertex.main_uvs = main_texture_uvs.ul;
-		m_BufferPtr->ll_vertex.main_uvs = main_texture_uvs.ll;
-		m_BufferPtr->lr_vertex.main_uvs = main_texture_uvs.lr;
-		m_BufferPtr->ur_vertex.main_uvs = main_texture_uvs.ur;
-
-		// Aux Texture 1
-		if(sprite_textures.aux_texture_1.has_value())
-		{
-			const Texture::UVMap aux_texture_1_uvs = m_TextureSet.get_uv_map(sprite_textures.aux_texture_1.value());
-			samplers.y = static_cast<int>(m_TextureSet.get_unit(sprite_textures.aux_texture_1.value()));
-
-			m_BufferPtr->ul_vertex.aux_uvs_1 = aux_texture_1_uvs.ul;
-			m_BufferPtr->ll_vertex.aux_uvs_1 = aux_texture_1_uvs.ll;
-			m_BufferPtr->lr_vertex.aux_uvs_1 = aux_texture_1_uvs.lr;
-			m_BufferPtr->ur_vertex.aux_uvs_1 = aux_texture_1_uvs.ur;
-		}
-
-		// Aux Texture 2
-		if(sprite_textures.aux_texture_2.has_value())
-		{
-			const Texture::UVMap aux_texture_2_uvs = m_TextureSet.get_uv_map(sprite_textures.aux_texture_2.value());
-			samplers.y = static_cast<int>(m_TextureSet.get_unit(sprite_textures.aux_texture_2.value()));
-
-			m_BufferPtr->ul_vertex.aux_uvs_2 = aux_texture_2_uvs.ul;
-			m_BufferPtr->ll_vertex.aux_uvs_2 = aux_texture_2_uvs.ll;
-			m_BufferPtr->lr_vertex.aux_uvs_2 = aux_texture_2_uvs.lr;
-			m_BufferPtr->ur_vertex.aux_uvs_2 = aux_texture_2_uvs.ur;
-		}
-
-		// Aux Texture 3
-		if(sprite_textures.aux_texture_3.has_value())
-		{
-			const Texture::UVMap aux_texture_3_uvs = m_TextureSet.get_uv_map(sprite_textures.aux_texture_3.value());
-			samplers.y = static_cast<int>(m_TextureSet.get_unit(sprite_textures.aux_texture_3.value()));
-
-			m_BufferPtr->ul_vertex.aux_uvs_3 = aux_texture_3_uvs.ul;
-			m_BufferPtr->ll_vertex.aux_uvs_3 = aux_texture_3_uvs.ll;
-			m_BufferPtr->lr_vertex.aux_uvs_3 = aux_texture_3_uvs.lr;
-			m_BufferPtr->ur_vertex.aux_uvs_3 = aux_texture_3_uvs.ur;
-		}
-
-		// Set samplers
-		m_BufferPtr->ul_vertex.samplers = samplers;
-		m_BufferPtr->ll_vertex.samplers = samplers;
-		m_BufferPtr->lr_vertex.samplers = samplers;
-		m_BufferPtr->ur_vertex.samplers = samplers;
-
-		m_BatchSize++;
-		m_BufferPtr++;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::end()
-	{
-		CBN_Assert(m_BatchStarted, "Cannot end batch without first starting a batch");
-
-		m_BatchEnded = true;
-		m_BatchStarted = false;
-	
-		m_Buffers[m_BufferIndex]->unmap();
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::render()
-	{
-		render(s_DefaultShaderProgram);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::render(const SRes<ShaderProgram>& shader)
-	{
-		CBN_Assert(m_BatchEnded, "Cannot render batch without ending the batch");
-		CBN_Assert(shader != nullptr, "Cannot render with null shader program");
-
-		//shader->bind();
-		//m_QuadVAO.bind();
-		//m_TextureSet.bind();
-		//
-		//glDrawElements(GL_TRIANGLES, m_BatchSize * 6, )
-		//
-		//lock_buffer(m_Buffers[m_BufferIndex]);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	bool SpriteRenderer::is_batch_started() const
-	{
-		return false;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	bool SpriteRenderer::is_batch_full() const
-	{
-		return false;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	SpriteRenderer::Properties SpriteRenderer::get_properties() const
+	SpriteRendererProperties SpriteRenderer::properties() const
 	{
 		return m_Properties;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::set_textures(const TexturePack& textures)
+	void SpriteRenderer::configure(const SpriteRendererSettings& settings)
 	{
-		CBN_Assert(!m_BatchStarted, "Cannot set textures with an active batch");
-		//TODO: check for compatibility (16 textures max, 16384 max size)
+		m_Settings = settings;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
+	void SpriteRenderer::set_texture_pack(const TexturePack& textures)
+	{
+		m_TexturePack = textures;
+	}
+
+	//-------------------------------------------------------------------------------------
 }
-*/

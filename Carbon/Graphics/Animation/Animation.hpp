@@ -10,7 +10,7 @@ namespace cbn
 	private:
 
 		AnimationNode m_StartingNode;
-		AnimationNode* m_CurrentNode;
+		AnimationNode m_CurrentNode;
 
 	public:
 

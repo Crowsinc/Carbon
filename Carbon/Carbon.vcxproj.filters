@@ -72,9 +72,6 @@
     <ClCompile Include="Graphics\Resources\StaticBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\OpenGL\Buffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\Resources\StreamBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -91,6 +88,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\Animation\Animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\OpenGL\VertexArrayObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\OpenGL\Buffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Resources\BufferTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -140,9 +146,6 @@
     <ClInclude Include="Graphics\PostProcessor.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\QuadRenderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\SpriteRenderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -170,13 +173,7 @@
     <ClInclude Include="Graphics\Resources\StaticBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\Buffer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Resources\StreamBuffer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TexturePack.hpp">
@@ -194,13 +191,20 @@
     <ClInclude Include="Graphics\Animation\Animation.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\VertexArrayObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OpenGL\Buffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Resources\BufferTexture.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
-    <None Include="Graphics\QuadRenderer.tpp" />
     <None Include="Memory\Resource.tpp" />
     <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Maths\Shapes.hpp" />
-    <None Include="Graphics\OpenGL\VertexArrayObject.cpp" />
   </ItemGroup>
 </Project>

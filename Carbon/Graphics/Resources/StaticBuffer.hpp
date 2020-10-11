@@ -15,13 +15,15 @@ namespace cbn
 	{
 	public:
 
-		static SRes<StaticBuffer> Allocate(const std::vector<uint8_t>& data, const Buffer::Target target, const Version opengl_version);
+		static SRes<StaticBuffer> Allocate(const std::vector<uint8_t>& data, const BufferTarget target, const Version opengl_version);
+		
+		static SRes<StaticBuffer> Allocate(const uint8_t* data, const uint64_t length, const BufferTarget target, const Version opengl_version);
 
 	private:
 
 		const uint64_t m_ByteSize;
 
-		StaticBuffer(const Buffer::Target target, const uint64_t byte_size);
+		StaticBuffer(const BufferTarget target, const uint64_t byte_size);
 
 	public:
 

@@ -15,6 +15,7 @@ CBN_Assert(m_UniformLocations.count(uniform) == 1, "Cannot set uniform, as unifo
 
 namespace cbn
 {
+	//-------------------------------------------------------------------------------------
 
 	GLuint ShaderProgram::s_BoundProgramID = 0;
 
@@ -139,7 +140,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::bind()
+	void ShaderProgram::bind() const
 	{
 		if(!is_bound())
 		{
@@ -150,7 +151,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void ShaderProgram::unbind()
+	void ShaderProgram::unbind() const
 	{
 		if(is_bound())
 		{

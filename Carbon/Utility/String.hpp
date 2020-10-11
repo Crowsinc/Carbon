@@ -64,7 +64,7 @@ namespace cbn
 
 		size_t size();
 
-		bool isEmpty();
+		bool is_empty();
 
 		const char* as_array();
 
@@ -92,7 +92,13 @@ namespace cbn
 
 		bool operator!=(const std::string& other) const;
 
-		String operator+(const std::string& other);
+		String operator+(const std::string& other) const;
+
+		String operator+(const String& other) const;
+
+		String operator+(const char* other) const;
+
+		String operator+(const int number) const;
 		
 		void operator+=(const char other);
 
@@ -102,7 +108,7 @@ namespace cbn
 
 		operator std::string_view();
 
-		operator const std::string&();
+		operator const std::string&() const;
 
 		operator std::string&();
 

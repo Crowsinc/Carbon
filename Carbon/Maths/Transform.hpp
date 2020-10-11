@@ -66,12 +66,6 @@ namespace cbn
 
 		glm::vec2 apply_transform(const glm::vec2 position) const;
 
-		glm::vec2 apply_transform(const glm::vec2 position, const Camera& camera) const;
-		
-		glm::vec2 apply_transform(const glm::vec2 position, const glm::mat4& vp_matrix) const;
-
-		glm::vec2 apply_transform(const glm::vec2 position, const glm::mat4& view_matrix, const glm::mat4& projection_matrix) const;
-
 	};
 
 }

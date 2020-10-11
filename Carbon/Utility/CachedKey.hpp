@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include <iostream>
 
 namespace cbn
 {
@@ -22,6 +23,8 @@ namespace cbn
 
 	public:
 
+		CachedKey() = default;
+
 		CachedKey(const T& key)
 		{
 			update_key(key);
@@ -39,7 +42,8 @@ namespace cbn
 
 		bool operator==(const CachedKey<T>& other) const
 		{
-			return hash() == other.hash();
+		//	return hash() == other.hash();
+			return m_Key == other.m_Key; // This may drop performance, but is required
 		}
 
 		const std::size_t& hash() const

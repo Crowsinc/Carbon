@@ -1,59 +1,5 @@
 #pragma once
 
-/*
-		Rendering:
-
-		Goal: 100k sprites of different textures at 100fps.
-
-		TODO: Update AABB to take in a rect and be performed with a pre-transformed sprite. 
-		That way we actually skip all the CPU costs of performing the transforms. 
-
-
-		///
-
-		- GL33 round robin buffers (or single buffer split)
-		- GLmap unsynchronised, with my own fast synchronisation. 
-
-	*/
-
-	/*
-			Sprite:
-
-				- Should have the most basic functionality, but with the ability to build it up easily
-
-				- Should be able to be extended, or used through composition
-
-				- Should have helper functions
-
-				-
-
-				Vertex Layout : 32 bytes
-				{
-					position data {glm::vec2} : 8 bytes
-					custom_data_1 {uint32_t}  : 4 bytes
-					custom_data_2 {uint32_t}  : 4 bytes
-					custom_data_3 {uint32_t}  : 4 bytes
-					custom_data_4 {uint32_t}  : 4 bytes
-					custom_data_5 {uint32_t}  : 4 bytes
-					custom_data_6 {uint32_t}  : 4 bytes
-				}
-
-				Each custom_data can be either:
-					1. texture data for one texture
-					2. custom 32bit unsigned integer
-					3. RGBA colour
-
-
-				Set custom data through...
-
-				class TextureData
-
-				Class SpriteData
-
-
-		*/
-
-
 #include <stdint.h>
 #include <variant>
 
@@ -61,6 +7,7 @@
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/StaticBuffer.hpp"
 #include "Resources/StreamBuffer.hpp"
+#include "Animation/Animation.hpp"
 #include "../Maths/Transform.hpp"
 #include "../Utility/Version.hpp"
 #include "TexturePack.hpp"
@@ -78,91 +25,98 @@ namespace cbn
 		//TODO: 
 		/*
 			- AABB & circle bounding boxes
-			- collision etc. 
+			- collision etc.
 			- grabbing of vertices
 			- transforms
 
-			ALSO MAKE A BOUNDING CIRCLE CLASS 
+			ALSO MAKE A BOUNDING CIRCLE CLASS
 				so for collision we can handle both boxes and circles
-		
+
 		*/
 	};
 
 	struct SpriteRendererProperties
 	{
-		Version opengl_version = Version{3,3};
-		uint32_t maximum_batch_size = 16384;
-		bool cull_outside_camera = true;
+		uint16_t sprites_per_batch = 16384;
+		uint32_t buffer_allocation_bias = 3;
 	};
 
-	using SpriteData = std::variant<uint32_t, Name, Colour>;
+	struct SpriteRendererSettings
+	{
+		bool cull_outside_camera = true;
+	};
 
 	class SpriteRenderer
 	{
 	private:
 
-		struct BatchObjects
-		{
-			SRes<StreamBuffer> stream_buffer;
-			VertexArrayObject vertex_array;
-			GLsync fence;
-		};
-
 #pragma pack(push, 1)
-		
+
 		struct VertexLayout
 		{
 			glm::vec2 position;
-			uint32_t data_1;
-			uint32_t data_2;
-			uint32_t data_3;
-			uint32_t data_4;
-			uint32_t data_5;
-			uint32_t data_6;
+			uint16_t texture[4];
+			glm::uvec4 data;
 		};
 
-		struct QuadLayout
+		struct SpriteLayout
 		{
-			VertexLayout top_left_vertex;
-			VertexLayout bot_left_vertex;
-			VertexLayout bot_right_vertex;
-			VertexLayout top_right_vertex;
+			VertexLayout vertex_1;
+			VertexLayout vertex_2;
+			VertexLayout vertex_3;
+			VertexLayout vertex_4;
 		};
 
 #pragma pack(pop)
 
-		const SpriteRendererProperties m_Properties;
-		std::vector<BatchObjects> m_BatchObjects;
-		bool m_BatchStarted, m_BatchEnded;
+		static constexpr uint32_t c_IndicesPerSprite = 6;
+		static constexpr uint32_t c_VerticesPerSprite = 4;
+		static constexpr glm::uvec4 c_EmptyVertexData = {0,0,0,0};
+
+		SRes<StreamBuffer> m_StreamBuffer;
 		SRes<StaticBuffer> m_IndexBuffer;
+		VertexArrayObject m_VertexArray;
+		SpriteLayout* m_BufferPtr;
+
+		bool m_BatchStarted, m_BatchEnded;
+		uint64_t m_SpritesPerStreamBuffer;
+		uint64_t m_BatchStartPosition;
+		uint64_t m_BatchEndPosition;
+		uint32_t m_CurrentBatchSize;
+
+		const SpriteRendererProperties m_Properties;
+		SpriteRendererSettings m_Settings;
 		glm::mat4 m_ViewProjectionMatrix;
 		BoundingBox m_CameraBoundingBox;
 		TexturePack m_TexturePack;
-		int m_CurrentBatchIndex;
-		QuadLayout* m_BatchData;
-		int m_BatchSize;
 
-		uint32_t pack_texture(const Name& texture_name);
+		void initialize_renderer(const Version& opengl_version);
 
-		uint32_t extract_data(const SpriteData& data);
+		bool is_sprite_visible(const BoundingBox& sprite);
 
-		bool should_cull(const BoundingBox& sprite);
-
-		SRes<StaticBuffer> create_index_buffer();
-
-		void create_batch_objects();
+		void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t index_1, const uint16_t index_2, const uint16_t index_3, const uint16_t index_4, const glm::uvec4& vertex_data);
 
 	public:
 
-		SpriteRenderer(const SpriteRendererProperties& properties);
+		SpriteRenderer(const Version& opengl_version, const SpriteRendererSettings& settings = {}, const SpriteRendererProperties& properties = {});
 
 		void begin_batch(const Camera& camera);
 
-		void submit(BoundingBox sprite, const SpriteData sprite_data_0, const SpriteData sprite_data_1 = 0, const SpriteData sprite_data_2 = 0, const SpriteData sprite_data_3 = 0, const SpriteData sprite_data_4 = 0, const SpriteData sprite_data_5 = 0);
+		void submit(const BoundingBox& sprite);
+		
+		void submit(const BoundingBox& sprite, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		
+		void submit(const BoundingBox& sprite, const Name& texture_name_1, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		
+		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		
+		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		
+		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const Name& texture_name_4, const glm::uvec4& vertex_data = c_EmptyVertexData);
 
 		void end_batch();
 
-		void render(const ShaderProgram& shader);
+		void render(const SRes<ShaderProgram>& shader);
 
 		bool is_batch_started() const;
 
@@ -170,9 +124,13 @@ namespace cbn
 
 		int batch_size() const;
 
-		SpriteRendererProperties get_settings() const;
+		SpriteRendererSettings settings() const;
+
+		SpriteRendererProperties properties() const;
+
+		void configure(const SpriteRendererSettings& settings);
 
 		void set_texture_pack(const TexturePack& textures);
-	};
 
+	};
 }

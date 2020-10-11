@@ -38,12 +38,12 @@ namespace cbn
 	bool String::starts_with(const std::string_view & term, bool ignore_whitespace) const
 	{
 		// If we are ignoring whitespace, then trim the string otherwise just leave it
-		std::string& trimmed_view = ignore_whitespace ? left_trim() : m_Data;
+		String trimmed_view = ignore_whitespace ? left_trim() : String{m_Data};
 
 		// If the trimmed view is both long enough to fit our term, and
 		// start with the given term, then we can return true
 		return trimmed_view.size() >= term.size() &&
-			trimmed_view.compare(0, term.size(), term) == 0;
+			trimmed_view.m_Data.compare(0, term.size(), term) == 0;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -51,12 +51,12 @@ namespace cbn
 	bool String::ends_with(const std::string_view& term, bool ignore_whitespace) const
 	{
 		// If we are ignoring whitespace, then trim the string otherwise just leave it
-		std::string& trimmed_view = ignore_whitespace ? right_trim() : m_Data;
+		String trimmed_view = ignore_whitespace ? right_trim() : String{m_Data};
 
 		// If the trimmed view is both long enough to fit our term, and
 		// start with the given term, then we can return true
 		return trimmed_view.size() - term.size() > 0 &&
-			trimmed_view.compare(trimmed_view.size() - term.size(), term.size(), term) == 0;
+			trimmed_view.m_Data.compare(trimmed_view.size() - term.size(), term.size(), term) == 0;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ namespace cbn
 			String section = m_Data.substr(start_pointer, end_pointer - start_pointer);
 
 			// Only add the section if its not empty
-			if(!section.isEmpty())
+			if(!section.is_empty())
 			{
 				sections.push_back(section);
 			}
@@ -87,7 +87,7 @@ namespace cbn
 
 		// Get the final section and add it if its not empty
 		String section = m_Data.substr(start_pointer, end_pointer - start_pointer);
-		if(!section.isEmpty()) sections.push_back(section);
+		if(!section.is_empty()) sections.push_back(section);
 
 		return sections;
 	}
@@ -223,7 +223,8 @@ namespace cbn
 				// This is not a space, so we should add 'i' as the 
 				// new offset in the string_view, which will effectively
 				// trim all the whitespace on the left
-				return String(m_Data.substr(i, m_Data.size() - i));
+				auto a = String(m_Data.substr(i, m_Data.size() - i));
+				return a;
 			}
 
 		}
@@ -252,7 +253,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool String::isEmpty()
+	bool String::is_empty()
 	{
 		return m_Data.empty();
 	}
@@ -349,9 +350,30 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	String String::operator+(const std::string& other) 
+	String String::operator+(const std::string& other) const
 	{
 		return m_Data + other;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	String String::operator+(const String& other) const
+	{
+		return m_Data + other.m_Data;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	String String::operator+(const char* other) const
+	{
+		return m_Data + other;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	String String::operator+(const int number) const
+	{
+		return m_Data + std::to_string(number);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -391,7 +413,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	String::operator const std::string& ()
+	String::operator const std::string&() const
 	{
 		return m_Data;
 	}

@@ -1,4 +1,4 @@
-//#define CBN_DISABLE_ASSERTS
+#define CBN_DISABLE_ASSERTS
 
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
@@ -10,9 +10,10 @@
 #include <iostream>
 #include <thread>
 
+#include <Graphics/SpriteRenderer.hpp>
 #include <Graphics/Resources/Shader.hpp>
-#include <Graphics/QuadRenderer.hpp>
 #include <Graphics/Resources/ShaderProgram.hpp>
+#include <Graphics/OpenGL/VertexArrayObject.hpp>
 
 #include <Graphics/Resources/Texture.hpp>
 #include <Graphics/Resources/TextureAtlas.hpp>
@@ -20,40 +21,13 @@
 bool runflag = true;
 cbn::URes<cbn::Window> window;
 
-const char* vertex_source = "#version 400 core\n"
-"layout(location = 0) in vec4 VertexData;\n"
-"layout(location = 1) in vec2 uvs;\n"
-"out vec2 _uvs;\n"
-"void main(void)\n"
-"{\n"
-"	gl_Position = vec4(VertexData.xy, 0.0, 1.0);\n"
-"	_uvs = uvs;\n"
-"}\n"
-";";
-
-const char* fragment_source = "#version 400 core\n"
-"in vec2 _uvs;\n"
-"out vec4 fragColour;\n"
-"uniform sampler2D text[16];"
-"void main(void)\n"
-"{\n"
-"	fragColour = texture(text[0], _uvs);\n"
-"   //fragColour = vec4(1, 1, 1, 1);\n"
-"}\n"
-";";
-
-struct VertexData
-{
-	glm::vec2 uv;
-};
-
 using namespace cbn;
 
-SRes<TextureAtlas> test_atlas()
+SRes<TextureAtlas> build_atlas()
 {
 	const std::filesystem::path path = "res/";
 
-	std::map<CKey<std::string>, SRes<Image>> images;
+	std::unordered_map<CKey<std::string>, SRes<Image>> images;
 
 	for(const auto& entry : std::filesystem::directory_iterator(path))
 	{
@@ -71,23 +45,22 @@ SRes<TextureAtlas> test_atlas()
 
 	std::cout << "Packing... " << images.size() << " textures" << std::endl;
 
-	auto atlas = cbn::TextureAtlas::Pack(4096, 4096, {}, images);
+	auto atlas = cbn::TextureAtlas::Pack(4096, 4096, images);
 	return atlas;
 }
 
 int main()
 {
 
-
 	cbn::Window::Properties props{};
-	
+
 	// Window properties
 	props.title = "Carbon Sample";
 	props.resolution = {1920,1080};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
-	
+
 	// Window graphics API properties
-	props.opengl_version = {4,6,0};
+	props.opengl_version = {3,3,0};
 
 #ifdef _DEBUG
 	props.opengl_debug = true;
@@ -95,7 +68,7 @@ int main()
 
 #else
 	props.opengl_debug = false;
-	props.vsync = true;
+	props.vsync = false;
 #endif
 
 	window = cbn::Window::Create(props);
@@ -121,22 +94,22 @@ int main()
 
 	window->set_title("Carbon Sample");
 
-	// Should create an error
-	glEnable(GL_TEXTURE_1D);
+	std::string gpu = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+	std::cout << "GPU: " << gpu << std::endl;
 
-	int i;
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &i);
-	std::cout << "Image Units Supported: " << i << std::endl;
+	int i = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &i);
+	std::cout << "Max TBO Texels: " << std::to_string(i) << std::endl;
 
 	std::string error_log;
 
-	const auto vertex_sh = cbn::Shader::Compile(vertex_source, cbn::Shader::Stage::VERTEX, error_log);
+	const auto vertex_sh = cbn::Shader::Open("res/VertexShader.glsl", cbn::Shader::Stage::VERTEX, error_log);
 	if(!vertex_sh)
 	{
 		std::cout << error_log << std::endl;
 	}
 
-	const auto frag_sh = cbn::Shader::Compile(fragment_source, cbn::Shader::Stage::FRAGMENT, error_log);
+	const auto frag_sh = cbn::Shader::Open("res/FragmentShader.glsl", cbn::Shader::Stage::FRAGMENT, error_log);
 	if(!frag_sh)
 	{
 		std::cout << error_log << std::endl;
@@ -147,72 +120,87 @@ int main()
 	{
 		std::cout << error_log << std::endl;
 	}
+	CBN_Assert(program != nullptr, "Failed shader creation");
+
+	//TODO: find a better way to do this
+	program->bind();
+	if(program->has_uniform({"samplers[0]"}))
+		for(int i = 0; i < 15; i++)
+			program->set_uniform(Name{"samplers[" + std::to_string(i) + "]"}, i + 1);
 
 
-	std::vector<cbn::Transform> transforms;
-	//for(int x = 0; x < props.resolution.x; x += 32)
-	//{
-	//	for(int y = 0; y < props.resolution.y; y += 32)
-	//	{
-	//		transforms.emplace_back(glm::vec2{x+ 2,y + 2});
-	//	}
-	//}
+	cbn::SpriteRendererProperties prop;
+	prop.buffer_allocation_bias = 32;
+	prop.sprites_per_batch = 4096;
 
-	transforms.emplace_back(glm::vec2{4096/2,4096/2});
+	//TODO: fix having to do this
+	glViewport(0, 0, 1920, 1080);
 
+	cbn::SpriteRenderer renderer(window->get_opengl_version(),{}, prop);
+	cbn::TexturePack texture_pack(window->get_opengl_version());
 
-	VertexData tmp = {};
+	cbn::SRes<cbn::Texture> rock_texture = cbn::Texture::Open("res/rock.png");
+	cbn::SRes<cbn::Texture> ground_texture = cbn::Texture::Open("res/ground.png");
+
+	CBN_Assert(rock_texture != nullptr && ground_texture != nullptr, "Big fail");
+
+	texture_pack = {
+		TexturePackEntry{Name{"rock"}, rock_texture},
+		TexturePackEntry{Name{"ground"}, ground_texture}
+	};
+
+	renderer.set_texture_pack(texture_pack);
+
+	//const glm::vec2 size = {1,1};
+	const glm::vec2 size = {3.5f,3.5f};
+	//const glm::vec2 size = {8,8};
+	//const glm::vec2 size = {32,32};
+	const glm::vec2 padding = {1,1};
+
+	std::vector<BoundingBox> sprites;
+	std::vector<Name> textures;
+	for(float x = size.x / 2; x < 1920; x += size.x + padding.x)
+	{
+		for(float y = size.y / 2; y < 1080; y += size.y + padding.y)
+		{
+			auto& sprite = sprites.emplace_back();
+			sprite.size = size;
+			sprite.transform.translate_to({x,y});
+
+			textures.push_back(rand() % 2 == 0 ? Name{"rock"} : Name{"ground"});
+
+			if(sprites.size() == 500000)
+				break;
+		}
+		if(sprites.size() == 500000)
+			break;
+	}
+
+	window->set_title("Carbon Sample | Sprites: " + std::to_string(sprites.size()));
 	
-	cbn::VertexDataDescriptor descriptor;
-	descriptor.add_attribute(tmp.uv, false);
-	
-	cbn::QuadRenderer<VertexData> renderer(descriptor);
-
-	glm::vec2 base_size(2048, 2048);
-
-	auto texture = test_atlas();
-
-
-	VertexData ll = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ll};
-	VertexData lr = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.lr};
-	VertexData ul = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ul};
-	VertexData ur = {texture->get_sub_texture_data({"pp.png"}).uv_mapping.ur};
-
-	//cbn::Res<cbn::Texture> texture = cbn::Texture::Open("test.png", tprops);
-	//if(!texture.exists())
-	//{
-	//	std::cout << "Texture load failed" << std::endl;
-	//	std::cin.get();
-	//	return 0;
-	//}
-
-
-
-	cbn::Camera cam(4096, 4096);
-
+	cbn::Camera scene_camera(1920, 1080);
 	cbn::Stopwatch watch;
 	watch.start();
 
 	int frames = 0;
 
-	texture->bind();
-
 	while(runflag)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		renderer.begin(cam);
-	 
 		int i = 0;
-		for(auto& trans : transforms)
+		while(i < sprites.size())
 		{
-		//	trans.rotate_by(1);
-			renderer.submit(base_size, trans.to_transform_matrix(), {ul, ll, lr, ur});
-			i++;
+			renderer.begin_batch(scene_camera);
+			const int amount = prop.sprites_per_batch < sprites.size() - i ? prop.sprites_per_batch : sprites.size() - i;
+			for(int j = 0; j < amount; j++)
+			{
+				renderer.submit(sprites[i], textures[j]);
+				i++;
+			}
+			renderer.end_batch();
+			renderer.render(program);
 		}
-
-		renderer.end();
-		renderer.render(program);
 
 		// Update the window
 		window->update();
@@ -220,7 +208,7 @@ int main()
 		frames++;
 		if(watch.get_elapsed_time(cbn::Seconds) > 1)
 		{
-			std::cout << frames << std::endl;
+			window->set_title("Carbon Sample  |  Sprites: " + std::to_string(sprites.size()) + "  |  " + std::to_string(frames) + " fps  |  " + std::to_string(1 / (float)frames) + "ms");
 			frames = 0;
 			watch.restart();
 		}

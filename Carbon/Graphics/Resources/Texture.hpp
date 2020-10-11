@@ -71,10 +71,10 @@ namespace cbn
 
 	struct TextureUVMap
 	{
-		glm::vec2 top_left;
-		glm::vec2 bot_left;
-		glm::vec2 bot_right;
-		glm::vec2 top_right;
+		glm::vec2 uv_1;
+		glm::vec2 uv_2;
+		glm::vec2 uv_3;
+		glm::vec2 uv_4;
 	};
 
 	struct TextureSettings
@@ -92,15 +92,15 @@ namespace cbn
 	{
 	public:
 
-		static SRes<Texture> Create(const SRes<Image>& image, const TextureSettings& settings);
+		static SRes<Texture> Create(const SRes<Image>& image, const TextureSettings& settings = {});
 
-		static SRes<Texture> Open(const std::filesystem::path& path, const TextureSettings& settings);
+		static SRes<Texture> Open(const std::filesystem::path& path, const TextureSettings& settings = {});
 
 		static GLint SupportedTextureUnits();
 
 	private:
 
-		static std::unordered_map<TextureUnit,GLint> s_BoundTextures;
+		static std::unordered_map<TextureUnit,GLint> s_BoundTexture2Ds;
 
 		mutable TextureUnit m_TextureUnit;
 		TextureSettings m_Settings;
@@ -121,11 +121,13 @@ namespace cbn
 
 		void bind(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
+		bool is_bound(const TextureUnit texture_unit) const;
+		
+		bool is_bound() const;
 
-		void set_settings(const TextureSettings& settings);
+		void configure(const TextureSettings& settings);
 
-		TextureSettings get_settings() const;
+		TextureSettings settings() const;
 
 		const unsigned width() const;
 
@@ -133,7 +135,7 @@ namespace cbn
 
 		glm::uvec2 resolution() const;
 
-		constexpr TextureUVMap uvs() const;
+		TextureUVMap uvs() const;
 
 	};
 

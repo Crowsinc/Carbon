@@ -250,25 +250,4 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 Transform::apply_transform(const glm::vec2 position, const Camera& camera) const
-	{
-		return cbn::transform(position, camera.to_view_projection_matrix());
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	glm::vec2 Transform::apply_transform(const glm::vec2 position, const glm::mat4& vp_matrix) const
-	{
-		return cbn::transform(position, build_mvp_matrix(vp_matrix, to_transform_matrix()));
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	glm::vec2 Transform::apply_transform(const glm::vec2 position, const glm::mat4& view_matrix, const glm::mat4& projection_matrix) const
-	{
-		return cbn::transform(position, build_mvp_matrix(to_transform_matrix(), view_matrix, projection_matrix));
-	}
-
-	//-------------------------------------------------------------------------------------
-
 }

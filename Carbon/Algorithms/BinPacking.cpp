@@ -95,7 +95,7 @@ namespace cbn
 		// by this and the heuristic at the same time, so rotations are favoured
 		// which means too much stuff is rotated, so the packing quality suffers. 
 
-		return std::max(bin.x, bin.y) * weight;
+		return std::round(std::max(bin.x, bin.y) * weight);
 	}
 	
 	//-------------------------------------------------------------------------------------

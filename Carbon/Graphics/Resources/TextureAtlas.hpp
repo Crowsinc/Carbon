@@ -77,7 +77,7 @@ namespace cbn
 
 		bool is_bound(const TextureUnit texture_unit = TextureUnit::UNIT_0) const;
 
-		constexpr TextureUVMap uvs() const;
+		TextureUVMap uvs() const;
 
 		const unsigned width() const;
 
@@ -91,9 +91,9 @@ namespace cbn
 
 		const std::vector<SubTexture>& subtextures() const;
 
-		void set_settings(const TextureSettings& settings);
+		void configure(const TextureSettings& settings);
 
-		TextureSettings get_settings() const;
+		TextureSettings settings() const;
 
 		SRes<Texture> as_texture() const;
 

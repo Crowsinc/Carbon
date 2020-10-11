@@ -22,6 +22,8 @@ namespace cbn
 			GEOMETRY = GL_GEOMETRY_SHADER,
 		};
 
+		static SRes<Shader> Open(const std::filesystem::path& shader_path, const Stage pipeline_stage, std::string& error_log);
+		
 		static SRes<Shader> Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
 
 	private:

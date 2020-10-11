@@ -31,9 +31,9 @@ namespace cbn
 
 		~ShaderProgram();
 
-		void bind();
+		void bind() const;
 
-		void unbind();
+		void unbind() const;
 
 		bool is_bound() const;
 

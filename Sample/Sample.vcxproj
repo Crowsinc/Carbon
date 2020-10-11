@@ -144,6 +144,9 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -167,7 +167,7 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
-    constexpr TextureUVMap TextureAtlas::uvs() const
+    TextureUVMap TextureAtlas::uvs() const
     {
         return m_AtlasTexture->uvs();
     }
@@ -217,16 +217,16 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    void TextureAtlas::set_settings(const TextureSettings& settings)
+    void TextureAtlas::configure(const TextureSettings& settings)
     {
-        m_AtlasTexture->set_settings(settings);
+        m_AtlasTexture->configure(settings);
     }
 
     //-------------------------------------------------------------------------------------
 
-    TextureSettings TextureAtlas::get_settings() const
+    TextureSettings TextureAtlas::settings() const
     {
-        return m_AtlasTexture->get_settings();
+        return m_AtlasTexture->settings();
     }
     
     //-------------------------------------------------------------------------------------

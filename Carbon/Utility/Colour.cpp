@@ -84,17 +84,17 @@ namespace cbn
 		const float m = L - C / 2.0f;
 
 		if(H < 60)
-			return Colour{(C + m) * 255, (X + m) * 255, m * 255};
+			return Colour{static_cast<uint8_t>((C + m) * 255), static_cast<uint8_t>((X + m) * 255), static_cast<uint8_t>(m * 255)};
 		else if(H < 120)
-			return Colour{(X + m) * 255, (C + m) * 255, m * 255};
+			return Colour{static_cast<uint8_t>((X + m) * 255), static_cast<uint8_t>((C + m) * 255), static_cast<uint8_t>(m * 255)};
 		else if(H < 180)
-			return Colour{m * 255, (C + m) * 255, (X + m) * 255};
+			return Colour{static_cast<uint8_t>(m * 255), static_cast<uint8_t>((C + m) * 255), static_cast<uint8_t>((X + m) * 255)};
 		else if(H < 240)
-			return Colour{m * 255, (X + m) * 255, (X + m) * 255};
+			return Colour{static_cast<uint8_t>(m * 255), static_cast<uint8_t>((X + m) * 255), static_cast<uint8_t>((X + m) * 255)};
 		else if(H < 300)
-			return Colour{(X + m) * 255, m * 255, (C + m) * 255};
+			return Colour{static_cast<uint8_t>((X + m) * 255), static_cast<uint8_t>(m * 255), static_cast<uint8_t>((C + m) * 255)};
 		else
-			return Colour{(C + m) * 255, m * 255, (X + m) * 255};
+			return Colour{static_cast<uint8_t>((C + m) * 255), static_cast<uint8_t>(m * 255), static_cast<uint8_t>((X + m) * 255)};
 	}
 
 	//-------------------------------------------------------------------------------------

@@ -4,67 +4,95 @@
 #include <variant>
 #include <unordered_map>
 
+#include "Resources/ShaderProgram.hpp"
+#include "Resources/BufferTexture.hpp"
 #include "Resources/TextureAtlas.hpp"
 #include "Resources/Texture.hpp"
+#include "../Utility/String.hpp"
 
 namespace cbn
 {
-	using TextureEntry = std::variant<Texture, TextureAtlas>;
+	using TexturePackReference = std::variant<std::monostate, SRes<Texture>, SRes<TextureAtlas>>;
+	
+	struct TexturePackEntry
+	{
+		Name texture_name;
+		TexturePackReference texture;
+	};
 
 	class TexturePack
 	{
+	public:
+
+		static constexpr uint64_t SupportedTextureCount = 15;
+
 	private:
 
-		std::vector<SRes<Texture>> m_Textures; // Contains textures and backend texture atlas textures
-		std::vector<SRes<TextureAtlas>> m_TextureAtlases; // Contains texture atlases
+#pragma pack(push, 1)
+
+		struct DataLayout
+		{
+			glm::vec3 uv_data_1;
+			glm::vec3 uv_data_2;
+			glm::vec3 uv_data_3;
+			glm::vec3 uv_data_4;
+		};
+
+#pragma pack(pop)
+
+		bool m_Empty;
+		Version m_OpenGLVersion;
+		SRes<BufferTexture> m_BufferTexture;
+
+		std::vector<Name> m_TextureNames;
+		std::vector<SRes<Texture>> m_Textures;
+		std::vector<TextureUVMap> m_TextureUVs;
 		
-		std::unordered_map<Name, int> m_TextureMap;
-		std::unordered_map<Name, int> m_TextureAtlasMap;
-		std::unordered_map<Name, Name> m_SubTextureMap;
+		std::unordered_map<Name, uint32_t> m_UVLookupMap;
+		std::unordered_map<Name, uint32_t> m_TextureLookupMap;
+		std::unordered_map<Name, uint32_t> m_DataIndexLookupMap;
+
+		DataLayout pack_data(const TextureUVMap& uvs, const uint64_t texture_index);
+
+		void initialize(const std::array<TexturePackEntry, SupportedTextureCount>& textures);
 
 	public:
 
-		TexturePack() = default;
+		TexturePack(const Version& opengl_version);
 
-		TexturePack(const std::unordered_map<Name, TextureEntry>& textures);
+		TexturePack(const TexturePack& other);
+
+		TexturePack(const std::array<TexturePackEntry, SupportedTextureCount>& textures, const Version& opengl_version);
 		
-		void add(const std::unordered_map<Name, TextureEntry>& textures);
+		void operator=(const std::array<TexturePackEntry, SupportedTextureCount>& textures);
 
-		void add(const Name& texture_name, const SRes<Texture>& texture);
-
-		void add(const Name& atlas_name, const SRes<TextureAtlas>& atlas);
-
-		void remove(const Name& texture_name);
-
-		TextureUVMap get_uvs(const Name& texture_name) const;
-
-		SubTexture get_subtexture(const Name& texture_name) const;
-
-		SRes<Texture> get_texture(const Name& texture_name) const;
-
-		SRes<TextureAtlas> get_texture_atlas(const Name& texture_name) const;
+		void operator=(const TexturePack& other);
 		
-		Name resolve_texture_atlas(const Name& subtexture_name) const;
+		const SRes<Texture> texture_of(const Name& texture_name) const;
+
+		const TextureUVMap uvs_of(const Name& texture_name) const;
+
+		unsigned position_of(const Name& texture_name) const;
+
+		const std::vector<SRes<Texture>> textures() const;
+
+		const std::vector<Name> texture_names() const;
+		
+		const std::vector<TextureUVMap>& uvs() const;
 
 		bool contains(const Name& texture_name) const;
 
-		bool is_texture(const Name& texture_name) const;
-
-		bool is_subtexture(const Name& texture_name) const;
-
-		bool is_texture_atlas(const Name& texture_name) const;
-
-		const std::vector<SRes<Texture>>& textures() const;
-		
-		const std::vector<SRes<TextureAtlas>>& texture_atlases() const;
-
-		const std::vector<SubTexture>& subtextures(const Name& atlas_name) const;
-
-		int subtexture_count() const;
+		int texture_resource_count() const;
 
 		int texture_count() const;
 		
+		bool is_empty() const;
+
+		bool is_bound() const;
+
+		void unbind() const;
+
+		void bind() const;
+
 	};
-
-
 }

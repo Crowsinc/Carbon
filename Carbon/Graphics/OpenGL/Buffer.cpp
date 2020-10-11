@@ -4,11 +4,11 @@ namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
-	std::unordered_map<Buffer::Target, GLint> m_BoundBuffers;
+	std::unordered_map<BufferTarget, GLint> Buffer::s_BoundBuffers;
 
 	//-------------------------------------------------------------------------------------
 
-	Buffer::Buffer(const Target target)
+	Buffer::Buffer(const BufferTarget target)
 		: m_Target(target)
 	{
 		glGenBuffers(1, &m_BufferID);
@@ -27,10 +27,7 @@ namespace cbn
 	void Buffer::bind()
 	{
 		if(!is_bound())
-		{
-			m_BoundBuffers[m_Target] = m_BufferID;
-			glBindBuffer(static_cast<GLenum>(m_Target), m_BufferID);
-		}
+			force_bind();
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -39,21 +36,29 @@ namespace cbn
 	{
 		if(is_bound())
 		{
-			m_BoundBuffers[m_Target] = 0;
+			s_BoundBuffers[m_Target] = 0;
 			glBindBuffer(static_cast<GLenum>(m_Target), 0);
 		}
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	bool Buffer::is_bound() const
+	void Buffer::force_bind()
 	{
-		return m_BoundBuffers[m_Target] == m_BufferID;
+		s_BoundBuffers[m_Target] = m_BufferID;
+		glBindBuffer(static_cast<GLenum>(m_Target), m_BufferID);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	Buffer::Target Buffer::get_target() const
+	bool Buffer::is_bound() const
+	{
+		return s_BoundBuffers[m_Target] == m_BufferID;
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	BufferTarget Buffer::get_target() const
 	{
 		return m_Target;
 	}

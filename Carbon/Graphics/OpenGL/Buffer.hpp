@@ -7,27 +7,25 @@
 namespace cbn
 {
 
+	enum class BufferTarget
+	{
+		ELEMENT_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
+		UNIFORM_BUFFER = GL_UNIFORM_BUFFER,
+		VERTEX_BUFFER = GL_ARRAY_BUFFER,
+	};
+
 	class Buffer
 	{
-	public:
-
-		enum class Target
-		{
-			ELEMENT_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
-			UNIFORM_BUFFER = GL_UNIFORM_BUFFER,
-			VERTEX_BUFFER = GL_ARRAY_BUFFER,
-		};
-
 	private:
 
-		static std::unordered_map<Target, GLint> m_BoundBuffers;
+		static std::unordered_map<BufferTarget, GLint> s_BoundBuffers;
 
-		const Target m_Target;
+		const BufferTarget m_Target;
 		GLuint m_BufferID;
 
 	public:
 
-		Buffer(const Target target);
+		Buffer(const BufferTarget target);
 
 		~Buffer();
 
@@ -35,9 +33,11 @@ namespace cbn
 
 		void unbind();
 
+		void force_bind();
+
 		bool is_bound() const;
 
-		Target get_target() const;
+		BufferTarget get_target() const;
 
 	};
 
