@@ -36,9 +36,6 @@
     <ClCompile Include="Maths\Maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\String.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\Resources\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,6 +96,18 @@
     <ClCompile Include="Graphics\Resources\BufferTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Data\String.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Identity\Identifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Identity\Identifiable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\Identity\Identified.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utility\Event.hpp">
@@ -128,9 +137,6 @@
     <ClInclude Include="Graphics\OpenGL\OpenGL.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\String.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Resources\Image.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -158,16 +164,10 @@
     <ClInclude Include="Graphics\Resources\TextureAtlas.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Memory\Resource.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\VectorExtensions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Algorithms\BinPacking.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\CachedKey.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Resources\StaticBuffer.hpp">
@@ -200,11 +200,26 @@
     <ClInclude Include="Graphics\Resources\BufferTexture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Data\String.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\Resource.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Identity\Identifier.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Identity\Identifiable.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Identity\Identified.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\Event.tpp" />
-    <None Include="Memory\Resource.tpp" />
     <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Maths\Shapes.hpp" />
+    <None Include="Memory\Resource.tpp" />
   </ItemGroup>
 </Project>

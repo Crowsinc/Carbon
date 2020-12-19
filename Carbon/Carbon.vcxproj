@@ -158,6 +158,9 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
+    <ClCompile Include="Data\Identity\Identifiable.cpp" />
+    <ClCompile Include="Data\Identity\Identified.cpp" />
+    <ClCompile Include="Data\Identity\Identifier.cpp" />
     <ClCompile Include="Graphics\Animation\Animator.cpp" />
     <ClCompile Include="Graphics\Animation\Animation.cpp" />
     <ClCompile Include="Graphics\Animation\AnimationNode.cpp" />
@@ -181,12 +184,15 @@
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
     <ClCompile Include="Graphics\Resources\Image.cpp" />
     <ClCompile Include="Utility\Colour.cpp" />
-    <ClCompile Include="Utility\String.cpp" />
+    <ClCompile Include="Data\String.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
+    <ClInclude Include="Data\Identity\Identifiable.hpp" />
+    <ClInclude Include="Data\Identity\Identified.hpp" />
+    <ClInclude Include="Data\Identity\Identifier.hpp" />
     <ClInclude Include="Graphics\Animation\Animator.hpp" />
     <ClInclude Include="Graphics\Animation\Animation.hpp" />
     <ClInclude Include="Graphics\Animation\AnimationNode.hpp" />
@@ -208,7 +214,6 @@
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
-    <ClInclude Include="Utility\CachedKey.hpp" />
     <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
@@ -216,7 +221,7 @@
     <ClInclude Include="Diagnostics\Stopwatch.hpp" />
     <ClInclude Include="Graphics\Resources\Image.hpp" />
     <ClInclude Include="Memory\Resource.hpp" />
-    <ClInclude Include="Utility\String.hpp" />
+    <ClInclude Include="Data\String.hpp" />
     <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>

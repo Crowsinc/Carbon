@@ -5,36 +5,36 @@
 namespace cbn
 {
 
-	class Animation
-	{
-	private:
+	//class Animation
+	//{
+	//private:
 
-		AnimationNode m_StartingNode;
-		AnimationNode m_CurrentNode;
+	//	AnimationNode m_StartingNode;
+	//	AnimationNode m_CurrentNode;
 
-	public:
+	//public:
 
-		Animation(const AnimationNode&& start_node);
+	//	Animation(const AnimationNode&& start_node);
 
-		Animation(const AnimationNode& start_node);
+	//	Animation(const AnimationNode& start_node);
 
-		Animation(const Animation&& animation);
-		
-		Animation(const Animation& animation);
+	//	Animation(const Animation&& animation);
+	//	
+	//	Animation(const Animation& animation);
 
-		void operator=(const Animation& animation);
+	//	void operator=(const Animation& animation);
 
-		void advance();
+	//	void advance();
 
-		void reset();
+	//	void reset();
 
-		bool can_advance() const;
+	//	bool can_advance() const;
 
-		const Name& current_texture() const;
+	//	const Name& current_texture() const;
 
-		const AnimationNode& current() const;
+	//	const AnimationNode& current() const;
 
-	};
+	//};
 
 
 }

@@ -9,7 +9,7 @@ namespace cbn
 	{
 		const auto index_buffer_indices = m_SpritesPerStreamBuffer * c_IndicesPerSprite;
 
-		// Create batch indices for the entire stream buffer+
+		// Create batch indices for the entire stream buffer. 
 		std::vector<uint32_t> batch_indices;
 		batch_indices.reserve(index_buffer_indices);
 		for(auto index = 0, base_sprite_index = 0; index < index_buffer_indices; index += c_IndicesPerSprite, base_sprite_index += c_VerticesPerSprite)
@@ -26,7 +26,8 @@ namespace cbn
 		m_IndexBuffer = StaticBuffer::Allocate(reinterpret_cast<uint8_t*>(batch_indices.data()), batch_indices.size() * sizeof(uint32_t), BufferTarget::ELEMENT_BUFFER, opengl_version);
 		CBN_Assert(m_IndexBuffer != nullptr, "Index buffer creation failed");
 
-		// Allocate the stream buffer which will stream the sprite data to the shaders
+		// Allocate the stream buffer which will stream the sprite data to the shaders.
+		// The stream buffer is big enough to store 'stream_buffer_bias' amounts of the 'sprites_per_batch'.
 		m_StreamBuffer = StreamBuffer::Allocate(BufferTarget::VERTEX_BUFFER, m_SpritesPerStreamBuffer * sizeof(SpriteLayout), false, opengl_version);
 		CBN_Assert(m_StreamBuffer != nullptr, "Stream buffer creation failed");
 
@@ -151,9 +152,11 @@ namespace cbn
 		m_ViewProjectionMatrix = camera.to_view_projection_matrix();
 		//TODO: m_CameraBoundingBox = camera.get_view_bounding_box();
 
-
 		// If there is no space at the end of the buffer for another batch, 
-		// then we should wrap back around to the start of the buffer
+		// then we should wrap back around to the start of the buffer. Otherwise 
+		// we just continue where we last left off on the buffer for the last batch.
+		// This will ensure that we maximise the amount of buffer space used before we
+		// re-allocate it. 
 		if(m_BatchStartPosition + m_Properties.sprites_per_batch >= m_SpritesPerStreamBuffer)
 		{
 			m_StreamBuffer->reallocate();
@@ -187,42 +190,81 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1)
 	{
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), 0, 0, 0, vertex_data);
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
+	}
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3)
 	{
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), 0, 0, vertex_data);
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4)
+	{
+		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+			return;
+
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data)
 	{
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), m_TexturePack.position_of(texture_name_3), 0, vertex_data);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const Name& texture_name_4, const glm::uvec4& vertex_data)
-	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_name_1), m_TexturePack.position_of(texture_name_2), m_TexturePack.position_of(texture_name_3), m_TexturePack.position_of(texture_name_4), vertex_data);
+		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------

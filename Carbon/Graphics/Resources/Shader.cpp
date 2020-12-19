@@ -3,14 +3,14 @@
 #include <sstream>
 #include <fstream>
 
-#include "../../Utility/String.hpp"
+#include "../../Data/String.hpp"
 
 namespace cbn
 {
 	
 	//-------------------------------------------------------------------------------------
 
-	SRes<Shader> Shader::Open(const std::filesystem::path& shader_path, const Stage pipeline_stage, std::string& error_log)
+	std::tuple<SRes<Shader>, String> Shader::Open(const std::filesystem::path& shader_path, const Stage pipeline_stage)
 	{
 		std::ifstream file_stream;
 
@@ -21,14 +21,14 @@ namespace cbn
 			std::stringstream shader_source;
 			shader_source << file_stream.rdbuf();
 
-			return Shader::Compile(shader_source.str(), pipeline_stage, error_log);
+			return Shader::Compile(shader_source.str(), pipeline_stage);
 		}
-		return nullptr;
+		return {nullptr, "Could not load file"};
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	SRes<Shader> Shader::Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log)
+	std::tuple<SRes<Shader>, String> Shader::Compile(const std::string_view& shader_source, const Stage pipeline_stage)
 	{
 		// Create a shader of the given pipeline stage
 		SRes<Shader> shader = Resource::WrapShared(new Shader(pipeline_stage));
@@ -54,8 +54,7 @@ namespace cbn
 			// Set the given error log to the compilation error log 
 			// and return nullptr. The shader destructor will handle
 			// the deletion of the shader
-			error_log = std::string(compilation_log.data());
-			return nullptr;
+			return {nullptr, compilation_log.data()};
 		}
 
 		// If we are here, then the shader compiled successfully. 
@@ -64,7 +63,7 @@ namespace cbn
 		shader->find_uniform_names(shader_source);
 
 		// The shader was successfully created so return it
-		return shader;
+		return {shader,""};
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -73,7 +72,7 @@ namespace cbn
 	{
 		// Clear existing uniform names just in case the shader 
 		// initialization process is changed in the future
-		m_UniformNames.clear();
+		m_Uniforms.clear();
 
 		// Go through each line of the source one by one
 		std::istringstream source_stream(shader_source.data());
@@ -108,9 +107,10 @@ namespace cbn
 						for(int i = 0; i < array_size; i++)
 						{
 							const String ending = "[" + std::to_string(i) + "]";
-							m_UniformNames.emplace_back(name_only + ending);
+							m_Uniforms.emplace_back(name_only + ending);
 						}
-					} else m_UniformNames.emplace_back(name);
+					}
+					else m_Uniforms.emplace_back(name);
 				}
 			}
 		}
@@ -138,9 +138,9 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	const std::vector<std::string>& Shader::get_uniform_names() const
+	const std::vector<Identifier>& Shader::get_uniforms() const
 	{
-		return m_UniformNames;
+		return m_Uniforms;
 	}
 
 	//-------------------------------------------------------------------------------------

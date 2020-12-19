@@ -15,6 +15,8 @@
 #include <Graphics/Resources/ShaderProgram.hpp>
 #include <Graphics/OpenGL/VertexArrayObject.hpp>
 
+#include <Data/Identity/Identifier.hpp>
+
 #include <Graphics/Resources/Texture.hpp>
 #include <Graphics/Resources/TextureAtlas.hpp>
 
@@ -27,7 +29,7 @@ SRes<TextureAtlas> build_atlas()
 {
 	const std::filesystem::path path = "res/";
 
-	std::unordered_map<CKey<std::string>, SRes<Image>> images;
+	IdentityMap<SRes<Image>> images;
 
 	for(const auto& entry : std::filesystem::directory_iterator(path))
 	{
@@ -40,7 +42,7 @@ SRes<TextureAtlas> build_atlas()
 			continue;
 		}
 
-		images.insert({{entry.path().filename().string()}, std::move(img)});
+		images.emplace(entry.path().filename().string(), std::move(img));
 	}
 
 	std::cout << "Packing... " << images.size() << " textures" << std::endl;
@@ -101,24 +103,23 @@ int main()
 	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &i);
 	std::cout << "Max TBO Texels: " << std::to_string(i) << std::endl;
 
-	std::string error_log;
-
-	const auto vertex_sh = cbn::Shader::Open("res/VertexShader.glsl", cbn::Shader::Stage::VERTEX, error_log);
+	auto [vertex_sh, error_log1] = cbn::Shader::Open("res/VertexShader.glsl", cbn::Shader::Stage::VERTEX);
 	if(!vertex_sh)
 	{
-		std::cout << error_log << std::endl;
+		std::cout << error_log1 << std::endl;
 	}
 
-	const auto frag_sh = cbn::Shader::Open("res/FragmentShader.glsl", cbn::Shader::Stage::FRAGMENT, error_log);
+	auto [frag_sh, error_log2] = cbn::Shader::Open("res/FragmentShader.glsl", cbn::Shader::Stage::FRAGMENT);
 	if(!frag_sh)
 	{
-		std::cout << error_log << std::endl;
+		std::cout << error_log2 << std::endl;
 	}
 
-	auto program = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh, error_log);
+	auto [program, error_log3] = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh);
+	
 	if(!program)
 	{
-		std::cout << error_log << std::endl;
+		std::cout << error_log3 << std::endl;
 	}
 	CBN_Assert(program != nullptr, "Failed shader creation");
 
@@ -126,7 +127,7 @@ int main()
 	program->bind();
 	if(program->has_uniform({"samplers[0]"}))
 		for(int i = 0; i < 15; i++)
-			program->set_uniform(Name{"samplers[" + std::to_string(i) + "]"}, i + 1);
+			program->set_uniform("samplers[" + String{std::to_string(i)} + "]", i + 1);
 
 
 	cbn::SpriteRendererProperties prop;
@@ -145,8 +146,8 @@ int main()
 	CBN_Assert(rock_texture != nullptr && ground_texture != nullptr, "Big fail");
 
 	texture_pack = {
-		TexturePackEntry{Name{"rock"}, rock_texture},
-		TexturePackEntry{Name{"ground"}, ground_texture}
+		TexturePackEntry{"rock", rock_texture},
+		TexturePackEntry{"ground", ground_texture}
 	};
 
 	renderer.set_texture_pack(texture_pack);
@@ -157,8 +158,10 @@ int main()
 	//const glm::vec2 size = {32,32};
 	const glm::vec2 padding = {1,1};
 
+	const int max_sprites = 100000;
+
 	std::vector<BoundingBox> sprites;
-	std::vector<Name> textures;
+	std::vector<Identifier> textures;
 	for(float x = size.x / 2; x < 1920; x += size.x + padding.x)
 	{
 		for(float y = size.y / 2; y < 1080; y += size.y + padding.y)
@@ -167,12 +170,12 @@ int main()
 			sprite.size = size;
 			sprite.transform.translate_to({x,y});
 
-			textures.push_back(rand() % 2 == 0 ? Name{"rock"} : Name{"ground"});
+			textures.push_back(rand() % 2 == 0 ? "rock" : "ground");
 
-			if(sprites.size() == 500000)
+			if(sprites.size() == max_sprites)
 				break;
 		}
-		if(sprites.size() == 500000)
+		if(sprites.size() == max_sprites)
 			break;
 	}
 

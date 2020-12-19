@@ -4,11 +4,12 @@
 #include <variant>
 #include <unordered_map>
 
+#include "../Data/Identity/Identifier.hpp"
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/BufferTexture.hpp"
 #include "Resources/TextureAtlas.hpp"
 #include "Resources/Texture.hpp"
-#include "../Utility/String.hpp"
+#include "../Data/String.hpp"
 
 namespace cbn
 {
@@ -16,7 +17,7 @@ namespace cbn
 	
 	struct TexturePackEntry
 	{
-		Name texture_name;
+		Identifier identifier;
 		TexturePackReference texture;
 	};
 
@@ -44,13 +45,13 @@ namespace cbn
 		Version m_OpenGLVersion;
 		SRes<BufferTexture> m_BufferTexture;
 
-		std::vector<Name> m_TextureNames;
+		std::vector<String> m_TextureNames;
 		std::vector<SRes<Texture>> m_Textures;
 		std::vector<TextureUVMap> m_TextureUVs;
 		
-		std::unordered_map<Name, uint32_t> m_UVLookupMap;
-		std::unordered_map<Name, uint32_t> m_TextureLookupMap;
-		std::unordered_map<Name, uint32_t> m_DataIndexLookupMap;
+		std::unordered_map<Identifier, uint32_t> m_UVLookupMap;
+		std::unordered_map<Identifier, uint32_t> m_TextureLookupMap;
+		std::unordered_map<Identifier, uint32_t> m_DataIndexLookupMap;
 
 		DataLayout pack_data(const TextureUVMap& uvs, const uint64_t texture_index);
 
@@ -68,20 +69,20 @@ namespace cbn
 
 		void operator=(const TexturePack& other);
 		
-		const SRes<Texture> texture_of(const Name& texture_name) const;
+		const SRes<Texture> texture_of(const Identifier& texture_identifier) const;
 
-		const TextureUVMap uvs_of(const Name& texture_name) const;
+		const TextureUVMap uvs_of(const Identifier& texture_identifier) const;
 
-		unsigned position_of(const Name& texture_name) const;
+		unsigned position_of(const Identifier& texture_identifier) const;
+
+		bool contains(const Identifier& texture_identifier) const;
 
 		const std::vector<SRes<Texture>> textures() const;
 
-		const std::vector<Name> texture_names() const;
+		const std::vector<String> texture_names() const;
 		
 		const std::vector<TextureUVMap>& uvs() const;
-
-		bool contains(const Name& texture_name) const;
-
+		
 		int texture_resource_count() const;
 
 		int texture_count() const;

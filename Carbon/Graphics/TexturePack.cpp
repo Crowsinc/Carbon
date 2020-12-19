@@ -46,7 +46,7 @@ namespace cbn
             texture_index
         };
 
-        return {texture_data_1,texture_data_2,texture_data_3,texture_data_4};
+        return {texture_data_1, texture_data_2, texture_data_3, texture_data_4};
     }
     
     //-------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ namespace cbn
         std::vector<DataLayout> buffer_texture_data;
 
         // Record texture data and set up the data for the buffer texture
-        for(const auto [name, entry] : textures)
+        for(const auto& [identity, entry] : textures)
         {
             // If the entry is empty, skip this iteration
             if(std::holds_alternative<std::monostate>(entry))
@@ -78,16 +78,17 @@ namespace cbn
                 const auto& subtextures = atlas->subtextures();
                 for(const auto& subtexture : subtextures)
                 {
-                    CBN_Assert(m_TextureLookupMap.count(subtexture.texture_name) == 0, "Duplicate texture name found");
+                    CBN_Assert(m_TextureLookupMap.count(subtexture.identifier()) == 0, "Duplicate texture identifier found");
 
                     // Add subtexture name and uv data
                     m_TextureUVs.push_back(subtexture.uvs);
-                    m_UVLookupMap[subtexture.texture_name] = uv_index++;
-                    m_TextureLookupMap[subtexture.texture_name] = texture_index;
+                    m_TextureNames.push_back(subtexture.identifier().alias());
+                    m_UVLookupMap[subtexture.identifier()] = uv_index++;
+                    m_TextureLookupMap[subtexture.identifier()] = texture_index;
 
                     // Add subtexture data to the buffer texture data
                     buffer_texture_data.push_back(pack_data(subtexture.uvs, texture_index));
-                    m_DataIndexLookupMap[subtexture.texture_name] = 4 * data_index;
+                    m_DataIndexLookupMap[subtexture.identifier()] = 4 * data_index;
                     data_index++;
 
                     // Set the backing texture
@@ -96,19 +97,20 @@ namespace cbn
             }
             else texture = std::get<SRes<Texture>>(entry);
 
-            CBN_Assert(m_TextureLookupMap.count(name) == 0, "Duplicate texture name found");
+            CBN_Assert(m_TextureLookupMap.count(identifier()) == 0, "Duplicate texture identifier found");
 
             // Add the normal texture name and uv data
             const auto texture_uvs = texture->uvs();
             m_TextureUVs.push_back(texture_uvs);
-            m_UVLookupMap[name] = uv_index;
+            m_TextureNames.push_back(identity.alias());
+            m_UVLookupMap[identity] = uv_index;
 
             m_Textures.push_back(texture);
-            m_TextureLookupMap[name] = texture_index;
+            m_TextureLookupMap[identity] = texture_index;
 
             // Add texture data to the buffer texture data
             buffer_texture_data.push_back(pack_data(texture_uvs, texture_index));
-            m_DataIndexLookupMap[name] = 4 * data_index;
+            m_DataIndexLookupMap[identity] = 4 * data_index;
             data_index++;
         }
 
@@ -182,29 +184,29 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    const SRes<Texture> TexturePack::texture_of(const Name& texture_name) const
+    const SRes<Texture> TexturePack::texture_of(const Identifier& texture_identifier) const
     {
-        CBN_Assert(contains(texture_name), "No texture with the given name exists");
+        CBN_Assert(contains(texture_identifier), "No texture with the given identity exists");
 
-        return m_Textures[m_TextureLookupMap.at(texture_name)];
+        return m_Textures[m_TextureLookupMap.at(texture_identifier)];
     }
     
     //-------------------------------------------------------------------------------------
 
-    const TextureUVMap TexturePack::uvs_of(const Name& texture_name) const
+    const TextureUVMap TexturePack::uvs_of(const Identifier& texture_identifier) const
     {
-        CBN_Assert(contains(texture_name), "No texture with the given name exists");
+        CBN_Assert(contains(texture_identifier), "No texture with the given identity exists");
         
-        return m_TextureUVs[m_TextureLookupMap.at(texture_name)];
+        return m_TextureUVs[m_TextureLookupMap.at(texture_identifier)];
     }
     
     //-------------------------------------------------------------------------------------
 
-    uint32_t TexturePack::position_of(const Name& texture_name) const
+    uint32_t TexturePack::position_of(const Identifier& texture_identifier) const
     {
-        CBN_Assert(contains(texture_name), "No texture with the given name exists");
+        CBN_Assert(contains(texture_identifier), "No texture with the given identity exists");
 
-        return m_DataIndexLookupMap.at(texture_name);
+        return m_DataIndexLookupMap.at(texture_identifier);
     }
     
     //-------------------------------------------------------------------------------------
@@ -216,7 +218,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    const std::vector<Name> TexturePack::texture_names() const
+    const std::vector<String> TexturePack::texture_names() const
     {
         return m_TextureNames;
     }
@@ -230,7 +232,7 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TexturePack::contains(const Name& texture_name) const
+    bool TexturePack::contains(const Identifier& texture_name) const
     {
         return m_TextureLookupMap.count(texture_name);
     }

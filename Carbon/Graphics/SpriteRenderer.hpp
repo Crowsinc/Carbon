@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <variant>
 
+#include "../Data/Identity/Identifier.hpp"
 #include "OpenGL/VertexArrayObject.hpp"
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/StaticBuffer.hpp"
@@ -37,8 +38,8 @@ namespace cbn
 
 	struct SpriteRendererProperties
 	{
-		uint16_t sprites_per_batch = 16384;
-		uint32_t buffer_allocation_bias = 3;
+		uint16_t sprites_per_batch = 4096;
+		uint32_t buffer_allocation_bias = 32;
 	};
 
 	struct SpriteRendererSettings
@@ -104,15 +105,23 @@ namespace cbn
 
 		void submit(const BoundingBox& sprite);
 		
-		void submit(const BoundingBox& sprite, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		void submit(const BoundingBox& sprite, const glm::uvec4& vertex_data);
 		
-		void submit(const BoundingBox& sprite, const Name& texture_name_1, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		void submit(const BoundingBox& sprite, const Identifier& texture_1);
 		
-		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data);
 		
-		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2);
 		
-		void submit(const BoundingBox& sprite, const Name& texture_name_1, const Name& texture_name_2, const Name& texture_name_3, const Name& texture_name_4, const glm::uvec4& vertex_data = c_EmptyVertexData);
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data);
+		
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3);
+		
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data);
+		
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4);
+		
+		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data);
 
 		void end_batch();
 

@@ -9,7 +9,15 @@
 
 namespace cbn
 {
-    
+    //-------------------------------------------------------------------------------------
+
+    SubTexture::SubTexture(const Identifier& identity, const bool rotated, const TextureUVMap& uvs, const Rect<int>& rect)
+        : Identifiable(identity),
+          rotated(rotated),
+          uvs(uvs),
+          position({rect.x, rect.y}),
+          resolution({rect.width, rect.height}) {}
+
     //-------------------------------------------------------------------------------------
 
     TextureUVMap TextureAtlas::calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::vec2& atlas_resolution)
@@ -68,12 +76,12 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
     
-    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const std::unordered_map<Name, SRes<Image>>& images, const TexturePackingSettings settings)
+    SRes<TextureAtlas> TextureAtlas::Pack(const unsigned width, const unsigned height, const IdentityMap<SRes<Image>>& images, const TexturePackingSettings settings)
     {
         // Create rectangles representing the images, these will be used in a rectangle packing algorithm to represent the textures. 
         // The rects in the rectangles vector are in the same order as those in the images unordered map when iterated. 
         std::vector<Rect<int>> rectangles(images.size());
-        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<Name, SRes<Image>>& pair)
+        std::transform(images.begin(), images.end(), rectangles.begin(), [&](const std::pair<Identifier, SRes<Image>>& pair)
         {
             return Rect<int>{0, 0, static_cast<int>(pair.second->width()), static_cast<int>(pair.second->height())};
         });
@@ -101,19 +109,18 @@ namespace cbn
             // and rectangles are in the order of the images map
             int i = 0;
             std::vector<SubTexture> subtextures;
-            for(auto const& [reference_name, image] : images)
+            for(auto const& [identity, image] : images)
             {
                 const auto& rect = rectangles[i++];
                 const bool rotated = is_rotated(rect, image);
 
                 const SubTexture subtexture = {
+                    identity,
                     rotated,
                     calculate_uvs(rect, rotated, atlas_image->resolution()),
-                    {rect.x, rect.y},
-                    {rect.width, rect.height},
-                    reference_name
+                    rect
                 };
-
+                
                 subtextures.push_back(subtexture);
                 atlas_image->insert(rect.x, rect.y, image, rotated);
             }
@@ -141,7 +148,7 @@ namespace cbn
         m_SubTextures(subtextures) 
     {
         for(int i = 0; i < m_SubTextures.size(); i++)
-            m_SubTextureMap[m_SubTextures[i].texture_name] = i;
+            m_SubTextureMap[m_SubTextures[i].identifier()] = i;
     }
     
     //-------------------------------------------------------------------------------------
@@ -194,18 +201,18 @@ namespace cbn
 
     //-------------------------------------------------------------------------------------
 
-    bool TextureAtlas::has_subtexture(const Name& reference_name) const
+    bool TextureAtlas::has_subtexture(const Identifier& subtexture) const
     {
-        return m_SubTextureMap.count(reference_name);
+        return m_SubTextureMap.count(subtexture);
     }
 
     //-------------------------------------------------------------------------------------
 
-    SubTexture TextureAtlas::get_subtexture(const Name& reference_name) const
+    SubTexture TextureAtlas::get_subtexture(const Identifier& subtexture) const
     {
-        CBN_Assert(has_subtexture(reference_name), "Reference name does not belong to a sub-texture in this atlas");
+        CBN_Assert(has_subtexture(subtexture), "Identifier does not belong to a sub-texture in this atlas");
 
-        return m_SubTextures[m_SubTextureMap.at(reference_name)];
+        return m_SubTextures[m_SubTextureMap.at(subtexture)];
     }
 
     //-------------------------------------------------------------------------------------
@@ -238,4 +245,5 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
 
+    
 }

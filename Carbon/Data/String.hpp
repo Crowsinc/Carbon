@@ -2,9 +2,12 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace cbn
 {
+
+	//TODO: make an equivalent to to_string
 
 	class String
 	{
@@ -66,7 +69,9 @@ namespace cbn
 
 		bool is_empty();
 
-		const char* as_array();
+		const char* as_array() const;
+
+		std::string as_std_string() const;
 
 		std::string::iterator begin();
 
@@ -77,6 +82,8 @@ namespace cbn
 		std::string::const_iterator end() const;
 
 		void operator=(const char* other);
+
+		void operator=(const String& other);
 
 		void operator=(const std::string& other);
 
@@ -116,5 +123,33 @@ namespace cbn
 
 	};
 
+}
+
+// global overloads
+
+cbn::String operator+(const char* left, const cbn::String right);
+
+std::ostream& operator<<(std::ostream& stream, const cbn::String str);
+
+namespace std
+{
+
+	template<>
+	struct hash<cbn::String>
+	{
+		std::size_t operator()(const cbn::String& string) const
+		{
+			return std::hash<std::string>{}(string.as_std_string());
+		}
+	};
+
+	template<>
+	struct less<cbn::String>
+	{
+		std::size_t operator()(const cbn::String& left, const cbn::String& right) const
+		{
+			return left < right;
+		}
+	};
 
 }

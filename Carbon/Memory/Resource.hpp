@@ -30,7 +30,6 @@ namespace cbn
 		
 	};
 
-
 }
 
 #include "Resource.tpp"

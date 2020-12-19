@@ -6,8 +6,9 @@
 #include <vector>
 #include <map>
 
+#include "../../Data/Identity/Identifiable.hpp"
+#include "../../Data/Identity/Identifier.hpp"
 #include "../../Algorithms/BinPacking.hpp"
-#include "../../Utility/CachedKey.hpp"
 #include "../../Memory/Resource.hpp"
 #include "Texture.hpp"
 #include "Image.hpp"
@@ -24,11 +25,10 @@ namespace cbn
 		const glm::vec2 resolution;
 	}
 
-	struct SubTexture
+	struct SubTexture : Identifiable
 	{
 		SubImage subimage;
 		const TextureUVMap uvs;
-		const TextureName texture_name;
 	}
 
 */
@@ -40,24 +40,25 @@ namespace cbn
 		bool shrink_to_footprint = true;
 	};
 
-	struct SubTexture
+	struct SubTexture : Identifiable
 	{
 		const bool rotated;
 		const TextureUVMap uvs;
 		const glm::vec2 position;
 		const glm::vec2 resolution;
-		const Name texture_name;
+		
+		SubTexture(const Identifier& identity, const bool rotated, const TextureUVMap& uvs, const Rect<int>& rect);
 	};
 
 	class TextureAtlas
 	{
 	public:
 
-		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const std::unordered_map<Name, SRes<Image>>& images, const TexturePackingSettings settings = {});
+		static SRes<TextureAtlas> Pack(const unsigned width, const unsigned height, const IdentityMap<SRes<Image>>& images, const TexturePackingSettings settings = {});
 
 	private:
 
-		std::unordered_map<Name, int> m_SubTextureMap;
+		std::unordered_map<Identifier, int> m_SubTextureMap;
 		const std::vector<SubTexture> m_SubTextures;
 		SRes<Texture> m_AtlasTexture;
 
@@ -65,7 +66,7 @@ namespace cbn
 
 		static glm::uvec2 determine_footprint(const std::vector<Rect<int>>& rectangles);
 
-		static bool is_rotated(const Rect<int>& rect, const SRes<Image>& image);
+		static bool is_rotated(const Rect<int>& rect, const SRes<Image>& image); // This is kinda crap
 
 		TextureAtlas(const SRes<Texture>& texture, const std::vector<SubTexture>& subtextures);
 		
@@ -85,9 +86,9 @@ namespace cbn
 		
 		glm::uvec2 resolution() const;
 
-		bool has_subtexture(const Name& reference_name) const;
+		bool has_subtexture(const Identifier& subtexture) const;
 
-		SubTexture get_subtexture(const Name& reference_name) const;
+		SubTexture get_subtexture(const Identifier& subtexture) const;
 
 		const std::vector<SubTexture>& subtextures() const;
 

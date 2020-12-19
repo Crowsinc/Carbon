@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <vector>
 
+#include "../../Data/Identity/Identifiable.hpp"
 #include "../../Memory/Resource.hpp"
 #include "../../Utility/Colour.hpp"
 
@@ -11,7 +12,7 @@ namespace cbn
 {
 
 
-	class Image
+	class Image : public Identifiable
 	{
 	public:
 

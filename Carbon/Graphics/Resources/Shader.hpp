@@ -1,11 +1,13 @@
 #pragma once
 
+#include <tuple>
 #include <vector>
 #include <string>
 #include <filesystem>
 
 #include "../OpenGL/OpenGL.hpp"
 #include "../../Memory/Resource.hpp"
+#include "../../Data/Identity/Identifier.hpp"
 
 namespace cbn
 {
@@ -22,15 +24,15 @@ namespace cbn
 			GEOMETRY = GL_GEOMETRY_SHADER,
 		};
 
-		static SRes<Shader> Open(const std::filesystem::path& shader_path, const Stage pipeline_stage, std::string& error_log);
+		static std::tuple<SRes<Shader>, String> Open(const std::filesystem::path& shader_path, const Stage pipeline_stage);
 		
-		static SRes<Shader> Compile(const std::string_view& shader_source, const Stage pipeline_stage, std::string& error_log);
+		static std::tuple<SRes<Shader>, String> Compile(const std::string_view& shader_source, const Stage pipeline_stage);
 
 	private:
 
 		const GLuint m_ShaderID;
 		const Stage m_PipelineStage;
-		std::vector<std::string> m_UniformNames;
+		std::vector<Identifier> m_Uniforms;
 
 		void find_uniform_names(const std::string_view& shader_source);
 
@@ -42,7 +44,7 @@ namespace cbn
 
 		Stage get_pipeline_stage() const;
 
-		const std::vector<std::string>& get_uniform_names() const;
+		const std::vector<Identifier>& get_uniforms() const;
 
 	};
 
