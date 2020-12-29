@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "../Diagnostics/Assert.hpp"
+#include "../Maths/Matrix.hpp"
 #include "../Maths/Maths.hpp"
 
 namespace cbn

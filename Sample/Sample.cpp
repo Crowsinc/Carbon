@@ -1,8 +1,12 @@
 #define CBN_DISABLE_ASSERTS
 
+#include <Windows.h>
+
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
 #include <Diagnostics/Stopwatch.hpp>
+
+#include <glm/gtx/norm.hpp>
 
 #include <Maths/Maths.hpp>
 
@@ -54,6 +58,8 @@ SRes<TextureAtlas> build_atlas()
 int main()
 {
 
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+
 	cbn::Window::Properties props{};
 
 	// Window properties
@@ -65,7 +71,7 @@ int main()
 	props.opengl_version = {3,3,0};
 
 #ifdef _DEBUG
-	props.opengl_debug = true;
+	props.opengl_debug = false;
 	props.vsync = true;
 
 #else
@@ -116,12 +122,13 @@ int main()
 	}
 
 	auto [program, error_log3] = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh);
-	
+
 	if(!program)
 	{
 		std::cout << error_log3 << std::endl;
 	}
-	CBN_Assert(program != nullptr, "Failed shader creation");
+	
+	CBN_Assert(program != nullptr && col_program != nullptr, "Failed shader creation");
 
 	//TODO: find a better way to do this
 	program->bind();
@@ -152,23 +159,21 @@ int main()
 
 	renderer.set_texture_pack(texture_pack);
 
-	//const glm::vec2 size = {1,1};
 	const glm::vec2 size = {3.5f,3.5f};
-	//const glm::vec2 size = {8,8};
-	//const glm::vec2 size = {32,32};
-	const glm::vec2 padding = {1,1};
-
-	const int max_sprites = 100000;
+	const glm::vec2 padding = {1.056f,1.056f};
 
 	std::vector<BoundingBox> sprites;
 	std::vector<Identifier> textures;
+	
+	const int max_sprites = 100000;
+	sprites.reserve(max_sprites);
 	for(float x = size.x / 2; x < 1920; x += size.x + padding.x)
 	{
 		for(float y = size.y / 2; y < 1080; y += size.y + padding.y)
 		{
-			auto& sprite = sprites.emplace_back();
-			sprite.size = size;
-			sprite.transform.translate_to({x,y});
+			auto& a = sprites.emplace_back(size);
+			a.translate_to({x,y});
+			a.TEMP_UPDATE_CACHE();
 
 			textures.push_back(rand() % 2 == 0 ? "rock" : "ground");
 
@@ -185,11 +190,25 @@ int main()
 	cbn::Stopwatch watch;
 	watch.start();
 
-	int frames = 0;
+	uint64_t frames = 0, total_frames = 0, samples =0;
+	glm::dvec2 mouse_pos;
+
+	bool follow = false;
 
 	while(runflag)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glfwGetCursorPos(window->TEMP_HANDLE(), &mouse_pos.x, &mouse_pos.y);
+
+		mouse_pos.y = props.resolution.y - mouse_pos.y;
+
+		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS)
+		{
+			follow = true;
+			total_frames = 0;
+			samples = 0;
+		}
 
 		int i = 0;
 		while(i < sprites.size())
@@ -198,11 +217,31 @@ int main()
 			const int amount = prop.sprites_per_batch < sprites.size() - i ? prop.sprites_per_batch : sprites.size() - i;
 			for(int j = 0; j < amount; j++)
 			{
-				renderer.submit(sprites[i], textures[j]);
+				if(follow)
+				{
+					const float distance = glm::distance2(sprites[i].translation(), {mouse_pos.x, mouse_pos.y});
+
+					if(distance >= 10000)
+					{
+						sprites[i].translate_towards(mouse_pos.x, mouse_pos.y, 2);
+					}
+					else
+					{
+						sprites[i].translate_by(rand() % 3500 - 1500, rand() % 3500 - 1500);
+					}
+
+					sprites[i].TEMP_UPDATE_CACHE();
+					
+					renderer.submit(sprites[i], textures[j]);
+				}
+				else
+					renderer.submit(sprites[i], textures[j]);
+				
 				i++;
 			}
 			renderer.end_batch();
 			renderer.render(program);
+
 		}
 
 		// Update the window
@@ -211,7 +250,9 @@ int main()
 		frames++;
 		if(watch.get_elapsed_time(cbn::Seconds) > 1)
 		{
-			window->set_title("Carbon Sample  |  Sprites: " + std::to_string(sprites.size()) + "  |  " + std::to_string(frames) + " fps  |  " + std::to_string(1 / (float)frames) + "ms");
+			samples++;
+			total_frames += frames;
+			window->set_title("Carbon Sample  |  Sprites: " + std::to_string(sprites.size()) + "  |  " + std::to_string(frames) + " fps  |  avg " + std::to_string(total_frames/samples) + " fps  |  " + std::to_string(1 / (float)frames) + "ms");
 			frames = 0;
 			watch.restart();
 		}

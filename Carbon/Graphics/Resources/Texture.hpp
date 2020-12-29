@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <array>
 
-#include "../../Utility/CachedKey.hpp"
 #include "../../Memory/Resource.hpp"
 #include "../OpenGL/OpenGL.hpp"
 #include "Image.hpp"

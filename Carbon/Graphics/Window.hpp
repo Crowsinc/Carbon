@@ -111,6 +111,8 @@ namespace cbn
 		void set_display_mode(const DisplayMode display_mode);
 		
 		void operator=(Window&& window) noexcept;
+
+		GLFWwindow* TEMP_HANDLE() const { return m_GLFWHandle; }; //-----------------------------------------remove me
 	};
 
 }

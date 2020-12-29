@@ -2,8 +2,6 @@
 
 #include <functional>
 
-#include "../../Utility/CachedKey.hpp"
-
 namespace cbn
 {
 	// AnimationNode set up as a cons list

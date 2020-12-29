@@ -6,7 +6,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 	
 	std::unordered_map<TextureUnit, GLint> Texture::s_BoundTexture2Ds;
-
+	
 	//-------------------------------------------------------------------------------------
 
 	SRes<Texture> Texture::Create(const SRes<Image>& image, const TextureSettings& settings)

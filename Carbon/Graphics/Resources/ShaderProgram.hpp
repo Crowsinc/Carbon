@@ -5,7 +5,6 @@
 
 #include "Shader.hpp"
 #include "../../Memory/Resource.hpp"
-#include "../../Utility/CachedKey.hpp"
 #include "../../Data/Identity/Identifier.hpp"
 
 namespace cbn

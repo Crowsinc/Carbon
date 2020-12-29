@@ -23,25 +23,12 @@ namespace cbn
 	
 	glm::vec2 lerp(const glm::vec2& start, const glm::vec2& end, const float t);
 
-	//TODO: implement properly with rectangle class.  
-	//std::tuple<glm::vec2, glm::vec2> find_rectangle_aabb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4);
+	float round_to_multiple(const float value, const float multiple);
 
-	//std::tuple<glm::vec2, glm::vec2> find_rectangle_circle_bb(const glm::vec2& v1, const glm::vec2& v2, const glm::vec2& v3, const glm::vec2& v4);
+	bool intersects(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& q1, const glm::vec2& q2);
 
-	glm::vec2 transform(const glm::vec2& point, const glm::mat4& transform);
+	bool collinear(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c);
 
-	glm::vec2 rotate(const glm::vec2& point, const float rotation_radians);
-
-	glm::mat4 build_view_matrix(const glm::vec2& translation, const float rotation_radians);
-
-	glm::mat4 build_orthographic_matrix(const float left, const float right, const float bottom, const float top);
-
-	glm::mat4 build_transform_matrix(const glm::vec2& translation, const glm::vec2& scale, const float rotation_radians);
-
-	glm::mat4 build_mvp_matrix(const glm::mat4& transform_matrix, const glm::mat4& view_matrix, const glm::mat4& projection_matrix);
-
-	glm::mat4 build_mvp_matrix(const glm::mat4& vp_matrix, const glm::mat4& transform_matrix);
-
-	glm::mat4 build_vp_matrix(const glm::mat4& view_matrix, const glm::mat4& projection_matrix);
+	bool on_line_segment(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p);
 
 }

@@ -97,7 +97,7 @@ namespace cbn
             }
             else texture = std::get<SRes<Texture>>(entry);
 
-            CBN_Assert(m_TextureLookupMap.count(identifier()) == 0, "Duplicate texture identifier found");
+            CBN_Assert(m_TextureLookupMap.count(identity) == 0, "Duplicate texture identifier found");
 
             // Add the normal texture name and uv data
             const auto texture_uvs = texture->uvs();

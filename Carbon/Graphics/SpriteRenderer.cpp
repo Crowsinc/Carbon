@@ -51,27 +51,17 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t index_1, const uint16_t index_2, const uint16_t index_3, const uint16_t index_4, const glm::uvec4& vertex_data)
+	void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	{
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
 		CBN_Assert(!is_batch_full(), "Batch is full");
 
-		const glm::mat4 mvp_matrix = build_mvp_matrix(m_ViewProjectionMatrix, sprite.transform.to_transform_matrix());
+		const auto& mesh = sprite.vertices();
 
-		// Determine the positions of the sprite's vertices in local space. We want the local
-		// position of the verticies to be such that the origin is in the middle so that
-		// the rotations applied by the transform matrix will be around the middle of the sprite. 
-		// Since the origin is in the middle, we only need to specify the local position of two adjacent
-		// vertices because the opposite position can be obtained from the negative of the position vector.
-		const glm::vec2 half_size = sprite.size / 2.0f;
-		const glm::vec2 vertex_0_local_position = {-half_size.x, half_size.y};
-		const glm::vec2 vertex_1_local_position = {-half_size.x, -half_size.y};
-
-		// Perform the transforms on the local space vertices to get their final positions for OpenGL. 
-		const glm::vec2 vertex_1_position = transform(vertex_0_local_position, mvp_matrix);
-		const glm::vec2 vertex_2_position = transform(vertex_1_local_position, mvp_matrix);
-		const glm::vec2 vertex_3_position = transform(-vertex_0_local_position, mvp_matrix);
-		const glm::vec2 vertex_4_position = transform(-vertex_1_local_position, mvp_matrix);
+		const auto& vertex_1_position = transform(mesh.vertex_1, m_ViewProjectionMatrix);
+		const auto& vertex_2_position = transform(mesh.vertex_2, m_ViewProjectionMatrix);
+		const auto& vertex_3_position = transform(mesh.vertex_3, m_ViewProjectionMatrix);
+		const auto& vertex_4_position = transform(mesh.vertex_4, m_ViewProjectionMatrix);
 
 		// Set top left vertex data
 		m_BufferPtr->vertex_1.position = vertex_1_position;
@@ -292,7 +282,6 @@ namespace cbn
 		shader->bind();
 
 		glDrawElements(GL_TRIANGLES, m_CurrentBatchSize * c_IndicesPerSprite, GL_UNSIGNED_INT, (void*)(m_BatchStartPosition * c_IndicesPerSprite * sizeof(uint32_t)));
-
 	}
 
 	//-------------------------------------------------------------------------------------

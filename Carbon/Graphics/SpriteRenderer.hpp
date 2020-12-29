@@ -4,37 +4,17 @@
 #include <variant>
 
 #include "../Data/Identity/Identifier.hpp"
+#include "../Maths/Bounds/BoundingBox.hpp"
 #include "OpenGL/VertexArrayObject.hpp"
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/StaticBuffer.hpp"
 #include "Resources/StreamBuffer.hpp"
-#include "Animation/Animation.hpp"
-#include "../Maths/Transform.hpp"
 #include "../Utility/Version.hpp"
 #include "TexturePack.hpp"
 #include "Camera.hpp"
 
 namespace cbn
 {
-
-	//TODO: implement properly as standalone class
-	struct BoundingBox
-	{
-		Transform transform = {0,0};
-		glm::vec2 size = {32,32};
-
-		//TODO: 
-		/*
-			- AABB & circle bounding boxes
-			- collision etc.
-			- grabbing of vertices
-			- transforms
-
-			ALSO MAKE A BOUNDING CIRCLE CLASS
-				so for collision we can handle both boxes and circles
-
-		*/
-	};
 
 	struct SpriteRendererProperties
 	{
@@ -88,14 +68,14 @@ namespace cbn
 		const SpriteRendererProperties m_Properties;
 		SpriteRendererSettings m_Settings;
 		glm::mat4 m_ViewProjectionMatrix;
-		BoundingBox m_CameraBoundingBox;
+		//BoundingBox m_CameraBoundingBox;
 		TexturePack m_TexturePack;
 
 		void initialize_renderer(const Version& opengl_version);
 
 		bool is_sprite_visible(const BoundingBox& sprite);
 
-		void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t index_1, const uint16_t index_2, const uint16_t index_3, const uint16_t index_4, const glm::uvec4& vertex_data);
+		void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
 
 	public:
 
