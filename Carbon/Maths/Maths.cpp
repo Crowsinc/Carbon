@@ -68,33 +68,21 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 
-	bool intersects(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& q1, const glm::vec2& q2)
+	bool segments_intersect(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& q1, const glm::vec2& q2)
 	{
-		// Taken from https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+		const float d = ((q2.y - q1.y) * (p2.x - p1.x)) - ((q2.x - q1.x) * (p2.y - p1.y));
+		const float n1 = ((q2.x - q1.x) * (p1.y - q1.y)) - ((q2.y - q1.y) * (p1.x - q1.x));
+		const float n2 = ((p2.x - p1.x) * (p1.y - q1.y)) - ((p2.y - p1.y) * (p1.x - q1.x));
 
-		constexpr auto orientation = [](const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
-		{
-			const float o = (b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - b.y);
+		// If this condition is met, the line seg are parallel and 
+		// not coincident (not the same lines). 
+		if(d == 0.0f && n1 != 0.0f && n2 != 0.0f)
+			return false;
 
-			// Points are collinear
-			if(o == 0)
-				return 0;
-			else if(o > 0)
-				return 1;
-			else
-				return 2;
-		};
+		const float s = n1 / d;
+		const float t = n2 / d;
 
-		const auto o1 = orientation(p1, p2, q1);
-		const auto o2 = orientation(p1, p2, q2);
-		const auto o3 = orientation(q1, q2, p1);
-		const auto o4 = orientation(q1, q2, p2);
-
-		return (o1 != o2 && o3 != o4) 
-			|| (o1 == 0 && on_line_segment(p1, p2, q1))
-			|| (o2 == 0 && on_line_segment(p1, p2, q2))
-			|| (o3 == 0 && on_line_segment(q2, q2, p1))
-			|| (o4 == 0 && on_line_segment(q1, q2, p2));
+		return s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -108,7 +96,22 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool on_line_segment(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p)
+	int signum(const float v)
+	{
+		return (0 < v) - (v < 0);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	int line_side(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
+	{
+		// Return 0 if c is on the line ab, 1 is c is on its right, -1 if its on its left
+		return signum((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool on_segment(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p)
 	{
 		const auto [min_x, max_x] = std::minmax(l1.x, l2.x);
 		const auto [min_y, max_y] = std::minmax(l1.y, l2.y);

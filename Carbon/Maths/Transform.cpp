@@ -9,6 +9,11 @@ namespace cbn
 
 	Transform::Transform()
 		: Transform(0, 0, 0, 1, 1) {}
+
+	//-------------------------------------------------------------------------------------
+
+	Transform::Transform(const Transform& copy)
+		: Transform(copy.translation(), copy.rotation_degrees(), copy.scale()) {}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -32,7 +37,8 @@ namespace cbn
 
 	glm::vec2 Transform::apply(const glm::vec2& point) const
 	{
-		return transform(point, build_transform_matrix(translation(), scale(), rotation_radians()));
+		// Skip building a transform matrix and just directly apply the transform, should be a minor optimisation.
+		return transform(point, translation(), scale(), rotation_radians());
 	}
 	
 	//-------------------------------------------------------------------------------------

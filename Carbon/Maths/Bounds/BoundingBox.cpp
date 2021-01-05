@@ -13,142 +13,138 @@ namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
-	void BoundingBox::generate_local_mesh()
+	void BoundingBox::update_min_max_coords()
 	{
-		// The mesh is generated with (0,0) in its centre, and then offset by the local origin
-		// That means if the local origin is (0,0), then the local origin will be in the centre
-		// of the box, hence any rotation transforms will be about the centre of the box. While 
-		// for example, if the origin was (-width/2, height/2), then the local origin would be 
-		// the top left of the the box, hence rotations would go about the top left vertex. 
-		// Similarly, the local centre of the box would now be (width/2, -height/2). 
+		// To find the minimum and maximum x and y coords, we can just make use of the 
+		// rotation of the bounding box along with the properties of a rectangle. Depending on which 
+		// quadrant the box is facing towards, we can instantly determine which vertex of the box 
+		// will be the topmost, leftmost, rightmost and bottommost. This is possible because the
+		// sides of the rectangle are either perpendicular or parallel to each other. 
 
-		const auto half_size = m_Size * 0.5f;
+		const auto rotation = m_Transform.rotation_degrees();
 
-		// Top left vertex
-		m_LocalVertices.vertex_1.x = -half_size.x - m_LocalOrigin.x;
-		m_LocalVertices.vertex_1.y =  half_size.y - m_LocalOrigin.y;
-	
-		// Bottom left vertex
-		m_LocalVertices.vertex_2.x = -half_size.x - m_LocalOrigin.x;
-		m_LocalVertices.vertex_2.y = -half_size.y - m_LocalOrigin.y;
+		float min_x, max_x, min_y, max_y;
 
-		// Bottom right vertex
-		m_LocalVertices.vertex_3.x =  half_size.x - m_LocalOrigin.x;
-		m_LocalVertices.vertex_3.y = -half_size.y - m_LocalOrigin.y;
+		if(rotation >= 0 && rotation < 90)
+		{
+			// vertex 1 is top, vertex 2 is left, vertex 3 is bottom, vertex 4 is right
+			max_x = m_Mesh.vertex_4.x;
+			min_x = m_Mesh.vertex_2.x;
+			max_y = m_Mesh.vertex_1.y;
+			min_y = m_Mesh.vertex_3.y;
+		}
+		else if(rotation >= 90 && rotation < 180)
+		{
+			// vertex 1 is right, vertex 2 is top, vertex 3 is left, vertex 4 is bottom
+			max_x = m_Mesh.vertex_1.x;
+			min_x = m_Mesh.vertex_3.x;
+			max_y = m_Mesh.vertex_2.y;
+			min_y = m_Mesh.vertex_4.y;
+		}
+		else if(rotation >= 180 && rotation < 270)
+		{
+			// vertex 1 is bottom, vertex 2 is right, vertex 3 is top, vertex 4 is left
+			max_x = m_Mesh.vertex_2.x;
+			min_x = m_Mesh.vertex_4.x;
+			max_y = m_Mesh.vertex_3.y;
+			min_y = m_Mesh.vertex_1.y;
+		}
+		else if(rotation >= 270 && rotation < 360)
+		{
+			// vertex 1 is left, vertex 2 is bottom, vertex 3 is right, vertex 4 is top
+			max_x = m_Mesh.vertex_3.x;
+			min_x = m_Mesh.vertex_1.x;
+			max_y = m_Mesh.vertex_4.y;
+			min_y = m_Mesh.vertex_2.y;
+		}
+		else CBN_Assert(false, "The rotation is not wrapping between 0 and 360 as expected");
 
-		// Top right vertex
-		m_LocalVertices.vertex_4.x =  half_size.x - m_LocalOrigin.x;
-		m_LocalVertices.vertex_4.y =  half_size.y - m_LocalOrigin.y;
-	
-		// Set the local centre
-		m_LocalCentre = m_LocalOrigin;
+		m_MinMaxCoords = {{min_x, min_y}, {max_x, max_y}};
 	}
+	
+	//-------------------------------------------------------------------------------------
+
+	glm::vec2 BoundingBox::transform_to_local_space(const glm::vec2& point) const
+	{
+		// Transform a point to be in the local coordinate system of the box, where the box is AABB.
+		// This works because the point has no orientation, hence we can effectly transform the coordinate 
+		// system to allign it with the rotated box and treat it as AABB. However, in this case we do the 
+		// opposite and transform the point as if it were the boxes' local coordinate system. 
+		
+		// To do this, find the vector between the box origin and point and project it
+		// across two perpendicular normals of the box. This will give us the offset from 
+		// the boxes' origin to the point along these normals. The normals are alligned
+		// with the boxes edges so, if we get the offset along the normals we get the
+		// offset along the coordinate system whose axes are alligned with the boxes.
+		// We can then use this to transform the point to be in the boxes local 
+		// coordinate system where the box is AABB.
+
+		const auto& mesh = this->mesh();
+		const glm::vec2 origin_to_point = point - origin();
+
+		// Get the scalar projection of the origin to point vector across two
+		// perpendicular normals. Since the normals are unit vectors, we can
+		// simplify the projection to a dot product, avoiding any square roots.
+		return {glm::dot(mesh.normal_3, origin_to_point), glm::dot(mesh.normal_4, origin_to_point)};
+	} 
 
 	//-------------------------------------------------------------------------------------
 
 	BoundingBox::BoundingBox(const glm::vec2& size, const glm::vec2& local_origin)
 	{
-		resize(size, local_origin);
+		reshape(size, local_origin);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingBox::BoundingBox(const cbn::Transform& transform, const glm::vec2& size, const glm::vec2& local_origin)
-		: Transformable(transform)
+	BoundingBox::BoundingBox(const Transform& transform, const glm::vec2& size, const glm::vec2& local_origin)
+		: m_Transform(transform)
 	{
-		resize(size, local_origin);
+		// Any scaling on the transform should be absorbed by the size, so remove it and apply it manually
+		// to the size. Note that when we initialize the local mesh, the m_Transform transform is automatically
+		// applied to the mesh as the reshape method is called.
+		m_Transform.scale_to(1);
+		reshape(transform.scale() * size, local_origin);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	bool BoundingBox::overlaps(const BoundingArea& area) const
+	bool BoundingBox::overlaps(const BoundingBox& box, const float axis_snap_threshold) const
 	{
-		return area.overlaps(*this);
-	}
-	
-	//-------------------------------------------------------------------------------------
+		// If both boxes are axis alligned, or are within the threshold to be 
+		// snapped to the axes, then perform a quick AABB overlap calcuation.
+		// Otherwise, we need to do SAT which is slower. 
 
-	bool BoundingBox::overlaps(const BoundingBox& box) const
-	{
-		// If both boxes are very close to being axis alligned, then 
-		// treat them as axis alligned bounding boxes to speed up
-		// the calculation.
-		const auto allignment_2 = std::fmodf(box.rotation_degrees(), 90);
+		const float allignment_error_1 = std::fabsf(std::fmodf(m_Transform.rotation_degrees(), 90.0f));
+		const float allignment_error_2 = std::fabsf(std::fmodf(box.m_Transform.rotation_degrees(), 90.0f));
 
-		if(is_axis_alligned() && box.is_axis_alligned())
+		if((is_axis_alligned() || allignment_error_1 <= axis_snap_threshold) && (box.is_axis_alligned() || allignment_error_2 <= axis_snap_threshold))
 		{
-			// As both boxes are (or are close to) being axis alligned, we can just
-			// find their minimum and maximum coords and use that for the calculation.
-			// This method is by far faster than performing SAT. 
-			const auto [min_x_1, max_x_1, min_y_1, max_y_1] = find_min_max_coords();
-			const auto [min_x_2, max_x_2, min_y_2, max_y_2] = box.find_min_max_coords();
+			// If we are here, we can treat both boxes as AABB
 
-			const bool x_axis_overlap = (max_x_1 >= min_x_2) && (min_x_1 <= max_x_2);
-			const bool y_axis_overlap = (max_y_1 >= min_y_2) && (min_y_1 <= max_y_2);
+			const auto& [min_1, max_1] = min_max_coords();
+			const auto& [min_2, max_2] = box.min_max_coords();
 
-			return x_axis_overlap && y_axis_overlap;
+			// The boxes overlap if their min/max coords overlap on both axes. 
+			return (max_1.x >= min_2.x) && (min_1.x <= max_2.x)
+				&& (max_1.y >= min_2.y) && (min_1.y <= max_2.y);
 		}
 		else
 		{
-			// If we cannot do an axis alligned collision check, then we have to use separating axis theorem
-			// Since we are checking for overlap on boxes, which have two edges that are parallel. We can skip
-			// duplicate parallel edges, meaning out of the 8 total edges we only need to check 4. 
+			// If we are here, we have to use the separating axis theorem on both boxes
+			// Note that since boxes have two parallel sides, we only have to check 2 axes. 
+			// Which should be a lot faster than the normal SAT which would check 4. 
 
-			// Based on: https://jcharry.com/blog/physengine10
+			const auto& mesh_1 = mesh();
+			const auto& mesh_2 = box.mesh();
 
-			const auto box_1_mesh = vertices();
-			const auto box_2_mesh = box.vertices();
-
-			// Find the two non-parallel edges of each box
-			const glm::vec2 box_1_edge_1 = box_1_mesh.vertex_2 - box_1_mesh.vertex_1;
-			const glm::vec2 box_1_edge_2 = box_1_mesh.vertex_4 - box_1_mesh.vertex_1;
-
-			const glm::vec2 box_2_edge_1 = box_2_mesh.vertex_2 - box_2_mesh.vertex_1;
-			const glm::vec2 box_2_edge_2 = box_2_mesh.vertex_4 - box_2_mesh.vertex_1;
-
-			// Get the counter-clockwise normals to each of these edges and store them in an array.
-			// We also want to make them unit vectors in order to speed up some calculations later. 
+			// Get the axes of the boxes by just using two of their differing normals. 
 			const std::array<glm::vec2, 4> axes = {
-				glm::normalize(glm::vec2{-box_1_edge_1.y, box_1_edge_1.x}),
-				glm::normalize(glm::vec2{-box_1_edge_2.y, box_1_edge_2.x}),
-				glm::normalize(glm::vec2{-box_2_edge_1.y, box_2_edge_1.x}),
-				glm::normalize(glm::vec2{-box_2_edge_2.y, box_2_edge_2.x})
+				mesh_1.normal_3, mesh_1.normal_4,
+				mesh_2.normal_3, mesh_2.normal_4,
 			};
-			
-			const auto box_1_verts = box_1_mesh.as_array();
-			const auto box_2_verts = box_2_mesh.as_array();
-			std::array<float, 4> box_1_projections;
-			std::array<float, 4> box_2_projections;
 
-			// Perform intersection tests on all normal axes
-			for(const auto axis : axes)
-			{
-				// Find the scalar projections of each box vertex to each axis.
-				// Note that since we normalized the axes, we can simplify the scalar projection to a dot product. 
-				
-				std::transform(box_1_verts.begin(), box_1_verts.end(), box_1_projections.begin(), [&](const glm::vec2& v){
-					return glm::dot(v, axis);
-				});
-
-				std::transform(box_2_verts.begin(), box_2_verts.end(), box_2_projections.begin(), [&](const glm::vec2& v)
-				{
-					return glm::dot(v, axis);
-				});
-
-				const auto [min_1, max_1] = std::minmax_element(box_1_projections.begin(), box_1_projections.end());
-				const auto [min_2, max_2] = std::minmax_element(box_2_projections.begin(), box_2_projections.end());
-
-				// Check if there is any overlap between the box edges on this axis
-				const float overlap = std::fminf(*max_1, *max_2) - std::fmaxf(*min_1, *min_2);
-
-				// If there is no or negative overlap, then the boxes cannot be overlapping so return false early
-				if(overlap <= 0)
-					return false;
-
-			}
-
-			// If we made it this far, then there was overlap on all axes, so return true
-			return true;
+			return sat_test<4, 4, 4>(axes, mesh_1.vertices, mesh_2.vertices);
 		}
 	}
 	
@@ -156,315 +152,322 @@ namespace cbn
 
 	bool BoundingBox::overlaps(const BoundingCircle& circle) const
 	{
-		return circle.overlaps(*this);
+		// The circle has no orientation, so we can transform its centre to be
+		// in the local mesh space, and then treat this as an AABB to circle 
+		// collision. We need to do this in the box class as we don't have
+		// access to the local mesh from the circle class. 
+
+		const glm::vec2 local_circle_centre = transform_to_local_space(circle.centre());
+
+		// The circle to AABB collision test is done by finding the closest point in
+		// the box to the circle and seeing if the distance between that point and
+		// the circle's centre is less than its radius. We find the closest point by
+		// getting a vector from the box centre to the circle centre and clamping
+		// its length by the half extent of the box. This effectively clamps the 
+		// vector so that it ends within the rectangle, hence is the closest point
+		// that is still inside the rectangle. 
+
+		const float radius = circle.radius();
+		const glm::vec2 box_half_size = size() * 0.5f;
+		const glm::vec2 closest_box_point = m_LocalCentre + glm::clamp(m_LocalCentre - local_circle_centre, -box_half_size, box_half_size);
+
+		return glm::distance2(local_circle_centre, closest_box_point) <= radius * radius;
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool BoundingBox::overlaps(const BoundingTriangle& triangle) const
+	{
+		// This uses more triangle maths, so do it from the triangle's side
+		return triangle.overlaps(*this);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingBox::encloses(const BoundingBox& box) const
 	{
-		// This bounding box encloses the other if all its vertices are within this one
-		const auto verts = box.vertices();
-		return contains_point(verts.vertex_1) && contains_point(verts.vertex_2) 
-			&& contains_point(verts.vertex_3) && contains_point(verts.vertex_4);
+		// The box is enclosed if all its points are within this box
+		const auto& mesh = box.mesh();
+		return contains_point(mesh.vertex_1) 
+			&& contains_point(mesh.vertex_2) 
+			&& contains_point(mesh.vertex_3)
+			&& contains_point(mesh.vertex_4);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingBox::encloses(const BoundingCircle& circle) const
 	{
-		// This bounding box encloses the circle if they overlap and the 
-		// circle is not intersected by any of the box's faces
-		
-		const auto verts = vertices();
+		// The box encloses the circle if the circle's centre is inside the box, 
+		// and the circle is not intersected by any of the box's edges. 
 
-		// This may not be very fast, but its simple
-		return circle.overlaps(*this) 
-			&& !circle.is_intersected_by_line(verts.vertex_1, verts.vertex_2)
-		    && !circle.is_intersected_by_line(verts.vertex_2, verts.vertex_3)
-		    && !circle.is_intersected_by_line(verts.vertex_3, verts.vertex_4)
-		    && !circle.is_intersected_by_line(verts.vertex_4, verts.vertex_1);
+		// Note: This can probably be optimised mathematically if it becomes a problem.
+		const auto& mesh = this->mesh();
+		return contains_point(circle.centre())
+			&& !circle.is_intersected_by_line_segment(mesh.vertex_1, mesh.vertex_2)
+			&& !circle.is_intersected_by_line_segment(mesh.vertex_2, mesh.vertex_3)
+			&& !circle.is_intersected_by_line_segment(mesh.vertex_3, mesh.vertex_4)
+			&& !circle.is_intersected_by_line_segment(mesh.vertex_4, mesh.vertex_1);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
-	
+
+	bool BoundingBox::encloses(const BoundingTriangle& triangle) const
+	{
+		// The box encloses the triangle if all its vertices are inside the box
+		const auto& mesh = triangle.mesh();
+		return contains_point(mesh.vertex_1) 
+			&& contains_point(mesh.vertex_2)
+			&& contains_point(mesh.vertex_3);
+	}
+
+	//-------------------------------------------------------------------------------------
+
 	bool BoundingBox::contains_point(const glm::vec2& point) const
 	{
-		// Solution taken from: https://math.stackexchange.com/a/190373
-		// It basically involves using dot products between vectors from
-		// vertices to the point, and vectors forming the edges of the rectangle
-		// to check that the angle between the vectors is such that the point is inside
-		// the rectangle. Remember, if the dot product is 0 it means that vectors are normal,
-		// if its >0, then they point in roughly the same direction, and if its <0 they point
-		// in roughly opposite directions. 
+		const auto local_point = transform_to_local_space(point);
 
-		const auto verts = vertices();
-
-		// Since we can't name the vectors with numbers, 
-		// P will be the point, then the vertices are A-D from v1-v4
-
-		const glm::vec2 AP = point - verts.vertex_1;
-		const glm::vec2 AD = verts.vertex_4 - verts.vertex_1;
-		const glm::vec2 DP = point - verts.vertex_4;
-		const glm::vec2 AB = verts.vertex_2 - verts.vertex_1;
-
-		return glm::dot(AP, AD) > 0 && glm::dot(DP, AD) < 0 && glm::dot(AP, AD) > 0 
-			&& glm::dot(AD,AD) > glm::dot(AP, AD);
+		// We can now do a simple aabb check.
+		return local_point.x >= m_LocalVertex1.x
+			&& local_point.x <= m_LocalVertex4.x
+			&& local_point.y <= m_LocalVertex1.y
+			&& local_point.y >= m_LocalVertex2.y;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingBox::is_intersected_by_line(const glm::vec2& p1, const glm::vec2& p2) const
 	{
-		// Simply check if the end points are in the box, or the line intersects any of the sides of the box
+		// The box is intersected by the line if not all vertices lie on the same side of the line
+		// Or one of the vertices is directly intersected by the line. 
 
-		if(contains_point(p1) || contains_point(p2))
-			return true;
+		const auto& mesh = this->mesh();
 
-		const auto verts = vertices();
+		// The line side function returns +1 if the vertex is right of the line, -1 if its on 
+		// its left and 0 if its on the line. So for the box to be intersected, at least one
+		// vertex has to be left of the line, and at least one must be on its right. Or one
+		const auto s1 = line_side(p1, p2, mesh.vertex_1);
+		const auto s2 = line_side(p1, p2, mesh.vertex_2);
+		const auto s3 = line_side(p1, p2, mesh.vertex_3);
+		const auto s4 = line_side(p1, p2, mesh.vertex_4);
 
-		return intersects(verts.vertex_1, verts.vertex_2, p1, p2)
-			|| intersects(verts.vertex_2, verts.vertex_3, p1, p2)
-			|| intersects(verts.vertex_3, verts.vertex_4, p1, p2)
-			|| intersects(verts.vertex_4, verts.vertex_1, p1, p2);
+		return (s1 >= 0 || s2 >= 0 || s3 >= 0 || s4 >= 0) && (s1 <= 0 || s2 <= 0 || s3 <= 0 || s4 <= 0);
 	}
+
+	//-------------------------------------------------------------------------------------
+
+	bool BoundingBox::is_intersected_by_line_segment(const glm::vec2& p1, const glm::vec2& p2) const
+	{
+		// First check if the infinite line formed by p1 and p2 intersects the box. If the infinite 
+		// line doesn't intersect, then the segment definitely doesn't. If it does intersect, we need
+		// to ensure that the intersection point lies on the segment. We do this by checking if the
+		// line overlaps both axes of the box. Since it has to overlap the axes of the both, we 
+		// transform the line to be in the boxes local space where the box is AABB in order to 
+		// make the calculation easier. 
+
+		const auto local_p1 = transform_to_local_space(p1);
+		const auto local_p2 = transform_to_local_space(p2);
+
+		const auto [min_x, max_x] = std::minmax(local_p1.x, local_p2.x);
+		const auto [min_y, max_y] = std::minmax(local_p1.y, local_p2.y);
 	
+		return is_intersected_by_line(p1, p2)
+			&& (max_x >= m_LocalVertex1.x)
+			&& (min_x <= m_LocalVertex4.x)
+			&& (max_y >= m_LocalVertex2.y)
+			&& (min_y <= m_LocalVertex1.y);
+	}
+
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingBox::is_intersected_by_ray(const glm::vec2& origin, const glm::vec2& towards) const
 	{
-		// The ray intersects the box if the origin is in the box, or the direction of the ray 
-		// falls in line between the direction from the origin to the box. 
+		// To test this we first transform the ray to bein local coordinates so that the box is AABB.
+		// Then we perform the simple branchless slab test. 
 
-		// If the box contains the origin, exit early with true
-		if(contains_point(origin))
-			return true;
+		const auto local_ray_origin = transform_to_local_space(origin);
+		const auto local_ray_dir = glm::normalize(transform_to_local_space(towards) - local_ray_origin);
 
-		// Otherwise, we need to determine the angles between each of the vertices of 
-		// the box and the origin as well as the angle of the direction. 
+		const float inverse_dir_x = 1.0f / local_ray_dir.x;
+		const float inverse_dir_y = 1.0f / local_ray_dir.y;
 
-		const auto verts = vertices();
+		// To do the slab test, we want to use the minimum and maximum coordinates
+		// of the AABB. For the local box, this is vertex 2 and 4 respectively. 
 
-		const auto dir_angle = std::atan2f(towards.y - origin.y, towards.x - origin.x);
-		const auto v1_angle = std::atan2f(verts.vertex_1.y - origin.y, verts.vertex_1.x - origin.x);
-		const auto v2_angle = std::atan2f(verts.vertex_2.y - origin.y, verts.vertex_2.x - origin.x);
-		const auto v3_angle = std::atan2f(verts.vertex_3.y - origin.y, verts.vertex_3.x - origin.x);
-		const auto v4_angle = std::atan2f(verts.vertex_4.y - origin.y, verts.vertex_4.x - origin.x);
+		float t_x1 = (m_LocalVertex2.x - local_ray_origin.x) * inverse_dir_x;
+		float t_x2 = (m_LocalVertex4.x - local_ray_origin.x) * inverse_dir_x;
 
-		const auto max_angle = std::fmaxf(v1_angle, std::fmaxf(v2_angle, std::fmaxf(v3_angle, v4_angle)));
-		const auto min_angle = std::fminf(v1_angle, std::fminf(v2_angle, std::fminf(v3_angle, v4_angle)));
+		float t_y1 = (m_LocalVertex2.y - local_ray_origin.y) * inverse_dir_y;
+		float t_y2 = (m_LocalVertex4.y - local_ray_origin.y) * inverse_dir_y;
 
-		return dir_angle <= max_angle && dir_angle >= min_angle;
+		const auto [min_x, max_x] = std::minmax(t_x1, t_x2);
+		const auto [min_y, max_y] = std::minmax(t_y1, t_y2);
+
+		return std::min(max_x, max_y) >= std::max(min_x, min_y);
+
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	BoundingCircle BoundingBox::wrap_as_bounding_circle() const
+	void BoundingBox::reshape(const glm::vec2& size, const glm::vec2& local_origin)
 	{
-		// Place the circle in the center of the bounding box and make its diameter be the
-		// length of the diagonal of the bounding box. This will ensure that the 
-		// box is inscribed within the circle. 
-		
-		//TODO: switch to fast flm sqrtf?
-		const float diagonal = std::sqrtf(m_Size.x * m_Size.x + m_Size.y * m_Size.y);
-
-		return {{}, diagonal / 2}; //TODO: {as_transform(), diagonal / 2}; -------------------------------------------------------------------------
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	BoundingBox BoundingBox::wrap_as_bounding_box() const
-	{
-		return *this;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void BoundingBox::set_local_origin(const glm::vec2& local_origin)
-	{
-		m_LocalOrigin = local_origin;
-
-		generate_local_mesh();
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	std::tuple<float, float, float, float> BoundingBox::find_min_max_coords() const
-	{
-		// To find the minimum and maximum x and y coords, we can just make use of the 
-		// rotation of the bounding box along with the properties of a rectangle. Depending on which 
-		// quadrant the box is facing towards, we can instantly determine which vertex of the box 
-		// will be the topmost, leftmost, rightmost and bottommost. We then use these coords to build 
-		// an axis alligned box mesh where vertex 1 is top left, vertex 2 is bottom left, vertex 3 is 
-		// bottom right, and vertex 4 is top right
-
-		const auto verts = vertices();
-		const auto rotation = rotation_degrees();
-
-		float min_x, max_x, min_y, max_y;
-
-		if(rotation >= 0 && rotation < 90)
-		{
-			// vertex 1 is top, vertex 2 is left, vertex 3 is bottom, vertex 4 is right
-			max_x = verts.vertex_4.x;
-			min_x = verts.vertex_2.x;
-			max_y = verts.vertex_1.y;
-			min_y = verts.vertex_3.y;
-		}
-		else if(rotation >= 90 && rotation < 180)
-		{
-			// vertex 1 is right, vertex 2 is top, vertex 3 is left, vertex 4 is bottom
-			max_x = verts.vertex_1.x;
-			min_x = verts.vertex_3.x;
-			max_y = verts.vertex_2.y;
-			min_y = verts.vertex_4.y;
-		}
-		else if(rotation >= 180 && rotation < 270)
-		{
-			// vertex 1 is bottom, vertex 2 is right, vertex 3 is top, vertex 4 is left
-			max_x = verts.vertex_2.x;
-			min_x = verts.vertex_4.x;
-			max_y = verts.vertex_3.y;
-			min_y = verts.vertex_1.y;
-		}
-		else if(rotation >= 270 && rotation < 360)
-		{
-			// vertex 1 is left, vertex 2 is bottom, vertex 3 is right, vertex 4 is top
-			max_x = verts.vertex_3.x;
-			min_x = verts.vertex_1.x;
-			max_y = verts.vertex_4.y;
-			min_y = verts.vertex_2.y;
-		}
-		else CBN_Assert(false, "The rotation is not wrapping between 0 and 360 as expected");
-
-		return {min_x, max_x, min_y, max_y};
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	BoundingBox BoundingBox::wrap_as_axis_alligned() const
-	{
-		// To wrap the box in another axis alligned box, we first need to find its min/max x and y coords.
-		const auto [min_x, max_x, min_y, max_y] = find_min_max_coords();
-
-		// The size will now simply be the different between the min and max coords
-		const glm::vec2 aabb_size = {max_x - min_x, max_y - max_y};
-
-		// The transform will have the same translation as this one, but with no rotation or scaling
-		Transform aabb_transform{translation()};
-
-		// The aabb should have the same origin, we can re-use it because the origin is independent
-		// from the size of the box, hence it doesnt matter that the aabb is a different size. 
-		return {aabb_transform, aabb_size, m_LocalOrigin};
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	bool BoundingBox::is_axis_alligned(const float threshold) const
-	{
-		CBN_Assert(threshold >= 0, "Threshold cannot be negative");
-		
-		// It is axis alligned if the rotation is a multiple of 90 degrees. 
-		// Since we are using floats, we provide a threshold to where the rotation
-		// can be 'close enough' to axis alligned. 
-		return std::fabsf(std::fmodf(rotation_degrees(), 90)) <= threshold;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void BoundingBox::resize(const glm::vec2& size, const glm::vec2& local_origin)
-	{
-		CBN_Assert(size.x > 0 && size.y > 0, "Size cannot be negative or 0");
-
+		m_LocalOriginOffset = local_origin;
 		m_Size = size;
-		m_LocalOrigin = local_origin;
 
-		generate_local_mesh();
+		// Re-create the local mesh to match the new shape. The local origin is
+		// an from the centre of the local box which specifies the box's origin.
+		// The coordinate (0,0) of the local mesh is the origin of the box, so we 
+		// need to offset all the vertices so the origin of the box has the given 
+		// offset from the centre while still being at (0,0).
+		
+		const glm::vec2 half_size = size * 0.5f;
+
+		// Top left vertex
+		m_LocalVertex1.x = -half_size.x - local_origin.x;
+		m_LocalVertex1.y =  half_size.y - local_origin.y;
+		
+		// Bottom left vertex
+		m_LocalVertex2.x = -half_size.x - local_origin.x;
+		m_LocalVertex2.y = -half_size.y - local_origin.y;
+
+		// Bottom right vertex
+		m_LocalVertex3.x =  half_size.x - local_origin.x;
+		m_LocalVertex3.y = -half_size.y - local_origin.y;
+
+		// Top right vertex
+		m_LocalVertex4.x =  half_size.x - local_origin.x;
+		m_LocalVertex4.y =  half_size.y - local_origin.y;
+	
+		// If the local origin is specified by an offset form the centre of the box, then 
+		// the centre of the box will have the opposite offset from the new origin.
+		m_LocalCentre = -local_origin;
+
+		// With the local mesh changed, we need to update the transformed mesh.
+		// Note: the transform method depends on this being called here, so think 
+		// twice before removing it. 
+		transform_to(m_Transform);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	void BoundingBox::transform_to(const Transform& transform)
+	{
+		// Update the transform, and forcefully remove any scaling
+		m_Transform = transform;
+		m_Transform.scale_to(1);
+
+		// If the transform had scaling applied to it, then the scaling is absorbed by 
+		// the size of the box, meaning that the box has to be reshaped. Note that it
+		// MUST be reshaped otherwise the local mesh would be outdated and some overlap
+		// methods may fail. 
+		constexpr glm::vec2 no_scale = {1,1};
+		if(transform.scale() != no_scale)
+		{
+			// Apply the scaling manually to the size and reshape. 
+			const auto new_size = transform.scale() * m_Size;
+			reshape(new_size, m_LocalOriginOffset);
+
+			// Here we simply return as the reshape method will call transform 
+			// with m_Transform for us. Since we removed the scaling, this 
+			// if statement will not run again next time. 
+			return;
+		}
+
+		// Apply the transform to the local mesh, and local centre 
+		m_Mesh.vertex_1 = m_Transform.apply(m_LocalVertex1);
+		m_Mesh.vertex_2 = m_Transform.apply(m_LocalVertex2);
+		m_Mesh.vertex_3 = m_Transform.apply(m_LocalVertex3);
+		m_Mesh.vertex_4 = m_Transform.apply(m_LocalVertex4);
+		m_Centre = m_Transform.apply(m_LocalCentre);
+
+		// Update the normals of the mesh, its simply a counter clockwise 90 degree rotation of each edge
+		// Since edges 3 and 4 are parallel to edges 1 and 2 respectively, we can get their normals just by 
+		// inverting normals 1 and 2. 
+
+		const auto unit_edge_1 = glm::normalize(m_Mesh.vertex_1 - m_Mesh.vertex_2);
+		m_Mesh.normal_1.x = -unit_edge_1.y;
+		m_Mesh.normal_1.y =  unit_edge_1.x;
+
+		m_Mesh.normal_3 = -m_Mesh.normal_1;
+		
+		const auto unit_edge_2 = glm::normalize(m_Mesh.vertex_4 - m_Mesh.vertex_1);
+		m_Mesh.normal_2.x = -unit_edge_2.y;
+		m_Mesh.normal_2.y =  unit_edge_2.x;
+
+		m_Mesh.normal_4 = -m_Mesh.normal_2;
+
+		// Determine if the box is axis alligned or not. This is done by seeing
+		// if the rotation of the box is a multiple of 90 degrees, which would 
+		// make it alligned to the axes. 
+		m_AxisAlligned = std::fabsf(std::fmodf(m_Transform.rotation_degrees(), 90.0f)) <= std::numeric_limits<float>::epsilon();
+
+		// Update the min max coords as the mesh and position of 
+		// the vertices have probably changed. 
+		update_min_max_coords();
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void BoundingBox::allign_to_axis() 
+	void BoundingBox::transform_by(const Transform& transform)
 	{
-		// To allign the vertices to the cartesian axes, we just round the rotation 
-	    // of the bounding box to the nearest multiple of 90 degrees. 
-		rotate_to(round_to_multiple(rotation_degrees(), 90));
+		transform_to(transform.apply(m_Transform));
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	const BoxMesh& BoundingBox::local_vertices() const
+	const glm::vec2& BoundingBox::centre() const
 	{
-		return m_LocalVertices;
+		return m_Centre;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 BoundingBox::local_centre() const
+	const glm::vec2& BoundingBox::origin() const
 	{
-		// Centre relative to a mesh which where its origin is at (0,0)
-		return m_LocalCentre;
+		// The translation is applied to the origin, so the origin is just the translation
+		return m_Transform.translation();
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 BoundingBox::local_origin() const
-	{
-		// Origin relative to a mesh which is centered at (0,0)
-		return m_LocalOrigin;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void BoundingBox::TEMP_UPDATE_CACHE() const
-	{
-		const auto& matrix = transform_matrix();
-
-		m_CachedVertices = {
-			transform(m_LocalVertices.vertex_1, matrix),
-			transform(m_LocalVertices.vertex_2, matrix),
-			transform(m_LocalVertices.vertex_3, matrix),
-			transform(m_LocalVertices.vertex_4, matrix)
-		};
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	const BoxMesh& BoundingBox::vertices() const
-	{
-		return m_CachedVertices;
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	glm::vec2 BoundingBox::centre() const
-	{
-		const auto& matrix = transform_matrix();
-
-		return transform(m_LocalCentre, matrix);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	glm::vec2 BoundingBox::size() const
+	const glm::vec2& BoundingBox::size() const
 	{
 		return m_Size;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 BoundingBox::scaled_size() const
+	const cbn::BoxMesh& BoundingBox::mesh() const
 	{
-		return m_Size * scale();
+		return m_Mesh;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	std::array<glm::vec2, 4> BoxMesh::as_array() const
+	bool BoundingBox::is_axis_alligned() const
 	{
-		return {vertex_1, vertex_2, vertex_3, vertex_4};
+		return m_AxisAlligned;
 	}
 	
+	//-------------------------------------------------------------------------------------
+
+	BoundingBox BoundingBox::wrap_axis_alligned() const
+	{
+		// Simply get the min max coords of the box, and use them to define the size 
+		// of the axis alligned box. The new box will be translated to the centre of the
+		// current box. The AABB won't preserve the origin, as the shape is now different.
+
+		const auto& [min, max] = min_max_coords();
+		return {Transform{centre()}, max - min};
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	const std::tuple<glm::vec2, glm::vec2>& BoundingBox::min_max_coords() const
+	{
+		return m_MinMaxCoords;
+	}
+
 	//-------------------------------------------------------------------------------------
 
 }

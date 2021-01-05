@@ -15,6 +15,8 @@
 
 namespace cbn
 {
+	// TODO: clean this up + caching
+
 	class Transform;
 
 	struct NullTransform {};
@@ -77,7 +79,7 @@ namespace cbn
 
 		Transform();
 		
-		Transform(const Transform& copy) = default;
+		Transform(const Transform& copy);
 
 		Transform(const float x, const float y, const float rotation_degrees = 0, const float scale_x = 1, const float scale_y = 1);
 

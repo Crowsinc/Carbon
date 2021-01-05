@@ -10,115 +10,107 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	BoundingCircle::BoundingCircle(const float radius)
-		: m_Radius(radius) {}
-	
-	//-------------------------------------------------------------------------------------
-
-	BoundingCircle::BoundingCircle(const Transform& transform, const float radius)
-		: m_Radius(0),
-		Transformable(transform) {}
-	
-	//-------------------------------------------------------------------------------------
-
-	bool BoundingCircle::overlaps(const BoundingArea& area) const
+	void BoundingCircle::update_min_max_coords()
 	{
-		return area.overlaps(*this);
+		// The minimum and maximum coords are just the coords which are one radius away 
+		// in each cardinal direction. 
+		
+		const glm::vec2 xy_radius = {radius(), radius()};
+	
+		m_MinMaxCoords = {centre() - xy_radius, centre() + xy_radius};
 	}
+	
+	//-------------------------------------------------------------------------------------
 
+	BoundingCircle::BoundingCircle(const float radius, const glm::vec2& local_origin)
+	{
+		reshape(radius, local_origin);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	BoundingCircle::BoundingCircle(const Transform& transform, const float radius, const glm::vec2& local_origin)
+		: m_Transform(transform)
+	{
+		// Remove any scaling from the transform, and apply it directly to the radius.
+		// Note that the reshape function will transform the circle to m_Transform so we 
+		// don't need to do it manually here. 
+		m_Transform.scale_to(1);
+		reshape(radius * transform.scale().x, local_origin);
+	}
+	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::overlaps(const BoundingBox& box) const
 	{
-		// If the box is axis alligned, then the overlap check is easy. Just check if the closest point
-		// to the circle from the perimeter of the box is less than 1 radius away from the circle. 
-		// This idea was taken from: https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-detection
-
-		glm::vec2 circle_centre = centre(), box_centre = box.centre();
-
-		// Before that however, we can skip all the calculations if the circle's centre is within the box
-		if(box.contains_point(centre()))
-			return true;
-
-		// If the box is not axis alligned. Since the circle collision is independent of its
-		// orientation, we can rotate the coordinate system about the origin so that the vertical axis
-		// now lines up with one of the box's edges, thus making it axis alligned in the new coordinate
-		// system. We can then perform the collision which the centres in the new coordinate system,
-		// as if the box were always axis alligned. 
-		if(!box.is_axis_alligned())
-		{
-			// We first get a unit vector in the direction of one of the box's edges and find its
-			// angle with the normal vertical axis. Note that we only need to look at one of the edges because
-			// the two edges we care about are perpendicular just like the axes, so as long as one of the axes
-			// lines up the other will too.
-
-			const auto& box_vertices = box.vertices();
-			const glm::vec2 unit_edge = glm::normalize(box_vertices.vertex_1 - box_vertices.vertex_2);
-
-			// Use the dot product to find the angle between the unit edge vector and the unit j vector.
-			// Note that we don't need to include the lengths of the vectors because they are unit vectors. 
-			const float angle = std::acosf(glm::dot(unit_edge, {0, 1}));
-
-			// We now want to define a new coordinate system which is simply the normal cartesian coordinate system
-			// but rotated by this angle so that the axes are alligned with the box edges. Then convert the coordinates
-			// of the box and circle to use this new coordinate system. 
-
-			//CHECKKK MMMMMMMMEEEEEEEEEEEEE: its possible we are applying the angle in the wrong direction (i.e. counter clockwise instead of clockwise) _____________________________________
-			Transform system(0, 0, angle);
-			circle_centre = system.apply(circle_centre);
-			box_centre = system.apply(box_centre);
-		}
-
-		// Now perform the normal aabb collision test. 
-		const float radius = scaled_radius();
-		const glm::vec2 box_half_size = box.scaled_size() * 0.5f;
-		const glm::vec2 closest_box_point = box_centre + glm::clamp(box_centre - circle_centre, -box_half_size, box_half_size);
-
-		return glm::distance2(circle_centre, closest_box_point) <= radius * radius;
+		// Complete the calculation from the boxes side its implementation is faster
+		// than what can be implemented from the circle's side. 
+		return box.overlaps(*this);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::overlaps(const BoundingCircle& circle) const
 	{
-		// This is quite simple, just check if the distance between the two centres is less than the sum of both radii
-		const float radius_1 = scaled_radius();
-		const float radius_2 = circle.scaled_radius();
+		// Two circles overlap if the distance between their centres 
+		// is less than the sum of their radii. 
+		const float radius_1 = radius(), radius_2 = circle.radius();
 		return glm::distance2(centre(), circle.centre()) <= (radius_1 + radius_2) * (radius_1 + radius_2);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool BoundingCircle::overlaps(const BoundingTriangle& triangle) const
+	{
+		// Do this from the triangle side as its implementation is faster. 
+		return triangle.overlaps(*this);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::encloses(const BoundingBox& box) const
 	{
-		// If the box is contained within the circle, simply check 
-		// that all vertices of the box are within the circle
-		const auto& verts = box.vertices();
-
-		return contains_point(verts.vertex_1) 
-			&& contains_point(verts.vertex_2)
-			&& contains_point(verts.vertex_3)
-			&& contains_point(verts.vertex_4);
+		// A circle encloes a box, if all its vertices are within the circle
+		const auto& mesh = box.mesh();
+		return contains_point(mesh.vertex_1)
+			&& contains_point(mesh.vertex_2)
+			&& contains_point(mesh.vertex_3)
+			&& contains_point(mesh.vertex_4);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::encloses(const BoundingCircle& circle) const
 	{
-		// If the circle is enclosed by this one, then the distance between the centre of this circle
-		// and the centre of the other plus its radius should be less than the radius of this circle.
-		// That is, the furthest point of the circle is no further than the circumference of this circle. 
-		const float enclosed_radius = circle.scaled_radius();
-		const float enclosing_radius = circle.scaled_radius();
-		return glm::distance2(centre(), circle.centre()) <= (enclosing_radius - enclosed_radius) * (enclosing_radius - enclosed_radius);
+		// If this circle encloses the given circle, then the distance to
+		// the centre of the circle plus the circles radius should be less 
+		// than the radius of this circle. That is, the circles furthest point
+		// should be within this circle. 
+		const float max_distance = radius();
+		const float radius = circle.radius();
+		return glm::distance2(centre(), circle.centre()) <= (max_distance - radius) * (max_distance - radius);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	bool BoundingCircle::encloses(const BoundingTriangle& triangle) const
+	{
+		// The circle encloes the triangle if all its vertices are within
+		// the circle
+		const auto& mesh = triangle.mesh();
+		return contains_point(mesh.vertex_1)
+			&& contains_point(mesh.vertex_2)
+			&& contains_point(mesh.vertex_3);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::contains_point(const glm::vec2& point) const
 	{
-		// Simply check that the distance to the point is less than the radius
-		const auto radius = scaled_radius();
+		// The point is within the circle if its distance from the circle
+		// centre is less than the circle's radius.
+		
+		const float radius = this->radius();
 		return glm::distance2(centre(), point) <= radius * radius;
 	}
 	
@@ -126,110 +118,133 @@ namespace cbn
 
 	bool BoundingCircle::is_intersected_by_line(const glm::vec2& p1, const glm::vec2& p2) const
 	{
-		// Simply obtain the projection of the vector from p1 to the circle centre
-		// onto the vector p1p2. This will give a point on the same infinite line as p1p2 which 
-		// has the smallest distance from the circle to the line segment. If the distance of this
-		// line is less than theradius, ther is an intersection. Note however that the projection
-		// is not guaranteed to be within the segment, only on the same line so we need to check
-		// that the closest point is on the segment too. Doing it this way avoids square roots making it fast. 
+		// If we set the equation of the line equal to the circle's equation, we form a quadratic
+		// equation whose solutions are the intersection coordinates. We only care about whether the
+		// line intersects or not, so we can skip the calculation of the quadratic and simply 
+		// check whether it has any solutions by checking whether the determinant is >= 0
+		// Maths from: https://mathworld.wolfram.com/Circle-LineIntersection.html
+		
+		const float radius = this->radius();
+		return radius * radius * glm::distance2(p1, p2) - (p1.x * p2.y - p2.x * p1.y) >= 0;
+	}
+	
+	//-------------------------------------------------------------------------------------
 
-		const float radius = scaled_radius();
+	bool BoundingCircle::is_intersected_by_line_segment(const glm::vec2& p1, const glm::vec2& p2) const
+	{
+		// Project the vector from p1 to the circle centre onto the line segment. This will give
+		// the closest point to the circle on the infinite line formed by p1 and p2. If this point
+		// lies on the segment, and the distance between the point and circle centre is less than 
+		// the radius of the circle, then the circle and line segment intersect. 
 
-		const glm::vec2 segment = p2 - p1;
-		const glm::vec2 circle_centre = centre();
-		const glm::vec2 segment_to_circle = circle_centre - p1;
-		const glm::vec2 closest_point = glm::proj(segment_to_circle, segment);
+		const float radius = this->radius();
+		const glm::vec2 closest_point = glm::proj(centre() - p1, p2 - p1);
 
-		// Note that we need to ensure that the point is on the segment, because the projection can
-		// be backwards if the circle is in the opposite direction as the segment form p1 to p2. 
-		return on_line_segment(p1, p2, closest_point) && glm::distance2(closest_point, circle_centre) <= radius * radius;
+		return on_segment(p1, p2, closest_point) && glm::distance2(closest_point, centre()) <= radius * radius;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::is_intersected_by_ray(const glm::vec2& origin, const glm::vec2& towards) const
 	{
-		// Treat the ray as an infinite line in the direction between the origin and the towards
-		// vector. Project the vector from the origin to the circle centre onto this line to
-		// find the closest point on this line to the circle. If the ray vector and the vector
-		// from the origin to the closest point are in the same direction, then the point
-		// must be on the ray so just do a collision test using a distance test. 
+		// A ray is simply an infinite line that was cut in half at some point. To check if the ray 
+		// intersects the circle, first treat the ray as an infinite line and see if that intersects
+		// the circle. If it does, then we need to ensure that the part of the line which intersects
+		// is not the half which doesnt exist on the ray. To do this, ensure that the ray and the 
+		// vector from the ray origin to the circle are in the same direction. This is done by 
+		// checking if their dot product is greater than 0, hence the vectors for an acute angle.
+		// It is possible that the the circle centre may be in the opposite direction of the ray, 
+		// but still intersect the ray. This only occurs when the origin is inside the circle. 
+		// Note that his only works because the circle is perfectly symmetrical. If it where 
+		// a box, its possible for the centre to be in the direction of the ray, but the 
+		// intersection point is on the infinite line which is not part of the ray. 
 
-		const float radius = scaled_radius();
-	
-		const glm::vec2 circle_centre = centre();
-		const glm::vec2 ray_direction = towards - origin;
-		const glm::vec2 origin_to_circle = circle_centre - origin;
-		const glm::vec2 closest_point = glm::proj(origin_to_circle, ray_direction);
-
-		return glm::dot(closest_point, ray_direction) > 0 && glm::distance2(closest_point, circle_centre) <= radius * radius;
+		return is_intersected_by_line(origin, towards) && (contains_point(origin) || glm::dot(centre() - origin, towards - origin) >= 0);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingCircle BoundingCircle::wrap_as_bounding_circle() const
+	void BoundingCircle::reshape(const float radius, const glm::vec2& local_origin)
 	{
-		return *this;
+		m_Radius = radius;
+	
+		// The circle's origin is at (0,0) in local space. So we need to offset the
+		// centre of the circle such that the given local origin offset from the 
+		// centre has the origin at (0,0). Since by default the local circle centre is at (0,0),
+		// we can just do this by offseting the centre by the opposite offset of the given origin offset.
+		m_LocalCentre = -local_origin;
+
+		// With the local centre changed, we need to re-transform the circle
+		transform_to(m_Transform);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingBox BoundingCircle::wrap_as_bounding_box() const
+	void BoundingCircle::transform_to(const Transform& transform)
 	{
-		// Wrap the circle in an axis alligned bounding box, then 
-		// rotate it to have the same rotation as the circle
-		auto bounding_box = wrap_as_axis_alligned();
-		bounding_box.rotate_to(rotation_degrees());
-		return bounding_box;
+		// Update the transform and remove any scaling as the
+		// scaling is absorbed by the radius.
+		m_Transform = transform;
+		m_Transform.scale_to(1);
+		m_Radius *= transform.scale().x;
+
+		// We only need to transform the centre for 
+		// the circle as it has no vertices. 
+		m_Centre = transform.apply(m_LocalCentre);
+
+		// Update the min max coords of the circle, 
+		// since the circle has now changed position or size.
+		update_min_max_coords();
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingBox BoundingCircle::wrap_as_axis_alligned() const
+	void BoundingCircle::transform_by(const Transform& transform)
 	{
-		// Clone the transform for the circle for the bounding box, but
-		// remove its rotation to make it axis alligned. 
-		auto transform = as_transform();
-		transform.rotate_to(0);
-
-		// Simply make a bounding box whose size is equal to the diamter of the circle
-		// We don't use scaled diameter as the scaling is preserved in the transform. 
-		return BoundingBox{transform, {diameter(), diameter()}};
+		transform_to(transform.apply(m_Transform));
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	glm::vec2 BoundingCircle::centre() const
+	const glm::vec2& BoundingCircle::centre() const
 	{
-		return translation();
+		return m_Centre;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	float BoundingCircle::radius() const
+	const glm::vec2& BoundingCircle::origin() const
+	{
+		// The origin states where the translation of the circle
+		// is taken from, so its origin is just its translation. 
+		return m_Transform.translation();
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	const float BoundingCircle::radius() const
 	{
 		return m_Radius;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	float BoundingCircle::diameter() const
+	BoundingBox BoundingCircle::wrap_axis_alligned() const
 	{
-		return radius() * 2.0f;
+		// Use the minimum and maximum coords of the circle 
+		// to define the AABBs size. The box would simply be
+		// translated so that its centre matches the centre
+		// of the circle. The circle's origin is not preserved. 
+		
+		const auto& [min, max] = min_max_coords();
+		return {Transform{centre()}, max - min};
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	float BoundingCircle::scaled_radius() const
+	const std::tuple<glm::vec2, glm::vec2>& BoundingCircle::min_max_coords() const
 	{
-		return radius() * scale();
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	float BoundingCircle::scaled_diameter() const
-	{
-		return scaled_radius() * 2.0f;
+		return m_MinMaxCoords;
 	}
 	
 	//-------------------------------------------------------------------------------------

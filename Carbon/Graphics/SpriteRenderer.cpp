@@ -56,12 +56,12 @@ namespace cbn
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
 		CBN_Assert(!is_batch_full(), "Batch is full");
 
-		const auto& mesh = sprite.vertices();
+		const auto& mesh = sprite.mesh();
 
-		const auto& vertex_1_position = transform(mesh.vertex_1, m_ViewProjectionMatrix);
-		const auto& vertex_2_position = transform(mesh.vertex_2, m_ViewProjectionMatrix);
-		const auto& vertex_3_position = transform(mesh.vertex_3, m_ViewProjectionMatrix);
-		const auto& vertex_4_position = transform(mesh.vertex_4, m_ViewProjectionMatrix);
+		const auto vertex_1_position = transform(mesh.vertex_1, m_ViewProjectionMatrix);
+		const auto vertex_2_position = transform(mesh.vertex_2, m_ViewProjectionMatrix);
+		const auto vertex_3_position = transform(mesh.vertex_3, m_ViewProjectionMatrix);
+		const auto vertex_4_position = transform(mesh.vertex_4, m_ViewProjectionMatrix);
 
 		// Set top left vertex data
 		m_BufferPtr->vertex_1.position = vertex_1_position;

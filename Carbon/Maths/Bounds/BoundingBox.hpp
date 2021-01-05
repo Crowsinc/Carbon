@@ -4,94 +4,127 @@
 #include <tuple>
 #include <glm/glm.hpp>
 
-#include "BoundingArea.hpp"
 #include "BoundingCircle.hpp"
+#include "BoundingTriangle.hpp"
 
 #include "../Transform.hpp"
 
 namespace cbn
 {
 
+	class BoundingCirlce;
+	class BoundingTriangle;
+
 	struct BoxMesh
 	{
-		glm::vec2 vertex_1;
-		glm::vec2 vertex_2;
-		glm::vec2 vertex_3;
-		glm::vec2 vertex_4;
+		// Vertices
+		/*
+			Vertices are counter clockwise from top left with no rotation
+				1---------4
+				|         |
+				|         |
+				2---------3
+		*/
+		union
+		{
+			struct
+			{
+				glm::vec2 vertex_1;
+				glm::vec2 vertex_2;
+				glm::vec2 vertex_3;
+				glm::vec2 vertex_4;
+			};
+			glm::vec2 vertices[4];
+		};
 
-		std::array<glm::vec2, 4> as_array() const;
+		// Normals
+		/*
+			Normals are counter clockwise from leftmost edge with no rotation
+					
+					 4
+				*---------*
+				|         |
+			  1 |         | 3
+				|         |
+				*---------*
+				     2
+		*/
+		union
+		{
+			struct
+			{
+				glm::vec2 normal_1;
+				glm::vec2 normal_2;
+				glm::vec2 normal_3;
+				glm::vec2 normal_4;
+			};
+			glm::vec2 normals[4];
+		};
 	};
 
-	class BoundingBox : public Transformable<Translatable2D, Scalable2D, Rotatable2D> 
+	class BoundingBox
 	{
 	private:
 
-		glm::vec2 m_Size;
-		glm::vec2 m_LocalOrigin;
+		glm::vec2 m_LocalVertex1, m_LocalVertex2, m_LocalVertex3, m_LocalVertex4;
+		std::tuple<glm::vec2, glm::vec2> m_MinMaxCoords;
+		glm::vec2 m_LocalOriginOffset;
 		glm::vec2 m_LocalCentre;
-		BoxMesh m_LocalVertices;
+		Transform m_Transform;
+		bool m_AxisAlligned;
+		glm::vec2 m_Centre;
+		glm::vec2 m_Size;
+		BoxMesh m_Mesh;
 
-		mutable bool m_CacheOutdated;
-		mutable BoxMesh m_CachedVertices;
-		mutable glm::vec2 m_CachedCentre;
+		void update_min_max_coords();
 
-		void generate_local_mesh();
+		glm::vec2 transform_to_local_space(const glm::vec2& point) const;
 
 	public:
-		
+
 		BoundingBox(const glm::vec2& size, const glm::vec2& local_origin = {0,0});
-		
+
 		BoundingBox(const Transform& transform, const glm::vec2& size, const glm::vec2& local_origin = {0,0});
 
-		bool overlaps(const BoundingArea& area) const;
-
-		bool overlaps(const BoundingBox& box) const;
+		bool overlaps(const BoundingBox& box, const float axis_snap_threshold = 0.1f) const;
 
 		bool overlaps(const BoundingCircle& circle) const;
+
+		bool overlaps(const BoundingTriangle& triangle) const;
 
 		bool encloses(const BoundingBox& box) const;
 
 		bool encloses(const BoundingCircle& circle) const;
 
+		bool encloses(const BoundingTriangle& triangle) const;
+
 		bool contains_point(const glm::vec2& point) const;
 
 		bool is_intersected_by_line(const glm::vec2& p1, const glm::vec2& p2) const;
 
+		bool is_intersected_by_line_segment(const glm::vec2& p1, const glm::vec2& p2) const;
+
 		bool is_intersected_by_ray(const glm::vec2& origin, const glm::vec2& towards) const;
 
-		std::tuple<float, float, float, float> find_min_max_coords() const;
+		void reshape(const glm::vec2& size, const glm::vec2& local_origin = {0,0});
 
-		void resize(const glm::vec2& size, const glm::vec2& local_origin = {0,0});
+		void transform_to(const Transform& transform);
 
-		void set_local_origin(const glm::vec2& local_origin);
-		
-		BoundingCircle wrap_as_bounding_circle() const; 
+		void transform_by(const Transform& transform);
 
-		BoundingBox wrap_as_bounding_box() const;
+		const glm::vec2& centre() const;
 
-		BoundingBox wrap_as_axis_alligned() const;
+		const glm::vec2& origin() const;
 
-		bool is_axis_alligned(const float threshold = 0.1f) const;
+		const glm::vec2& size() const;
 
-		void allign_to_axis();
+		const BoxMesh& mesh() const;
 
-		const BoxMesh& local_vertices() const;
+		bool is_axis_alligned() const;
 
-		glm::vec2 local_centre() const;
+		BoundingBox wrap_axis_alligned() const;
 
-		glm::vec2 local_origin() const;
-		
-		void TEMP_UPDATE_CACHE() const; /// ---------------------------------------------- remove
-		
-		const BoxMesh& vertices() const;
-
-		glm::vec2 centre() const;
-
-		glm::vec2 size() const;
-
-		glm::vec2 scaled_size() const;
-
+		const std::tuple<glm::vec2, glm::vec2>& min_max_coords() const;
 	};
 
 }
-

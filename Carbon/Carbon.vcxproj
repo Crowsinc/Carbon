@@ -147,6 +147,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -178,11 +179,18 @@
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
     <ClCompile Include="Graphics\TexturePack.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
+    <ClCompile Include="Maths\Bounds\BoundingBox.cpp" />
+    <ClCompile Include="Maths\Bounds\BoundingCircle.cpp" />
+    <ClCompile Include="Maths\Bounds\BoundingTriangle.cpp" />
     <ClCompile Include="Maths\Maths.cpp" />
+    <ClCompile Include="Maths\Matrix.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
     <ClCompile Include="Graphics\Resources\Image.cpp" />
+    <ClCompile Include="Maths\Transforms\Rotatable.cpp" />
+    <ClCompile Include="Maths\Transforms\Scalable.cpp" />
+    <ClCompile Include="Maths\Transforms\Translatable.cpp" />
     <ClCompile Include="Utility\Colour.cpp" />
     <ClCompile Include="Data\String.cpp" />
     <ClCompile Include="Utility\Units.cpp" />
@@ -211,9 +219,16 @@
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
     <ClInclude Include="Graphics\TexturePack.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
+    <ClInclude Include="Maths\Bounds\BoundingBox.hpp" />
+    <ClInclude Include="Maths\Bounds\BoundingCircle.hpp" />
+    <ClInclude Include="Maths\Bounds\BoundingTriangle.hpp" />
     <ClInclude Include="Maths\Maths.hpp" />
+    <ClInclude Include="Maths\Matrix.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
+    <ClInclude Include="Maths\Transforms\Rotatable.hpp" />
+    <ClInclude Include="Maths\Transforms\Scalable.hpp" />
+    <ClInclude Include="Maths\Transforms\Translatable.hpp" />
     <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />

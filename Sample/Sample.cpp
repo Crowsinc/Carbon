@@ -55,6 +55,14 @@ SRes<TextureAtlas> build_atlas()
 	return atlas;
 }
 
+enum class SampleStates
+{
+	CHOOSE_STATE,
+	STATIC_RENDER_STATE,
+	DYNAMIC_RENDER_STATE,
+	BOUNDS_TEST_STATE
+};
+
 int main()
 {
 
@@ -128,7 +136,7 @@ int main()
 		std::cout << error_log3 << std::endl;
 	}
 	
-	CBN_Assert(program != nullptr && col_program != nullptr, "Failed shader creation");
+	CBN_Assert(program != nullptr, "Failed shader creation");
 
 	//TODO: find a better way to do this
 	program->bind();
@@ -160,6 +168,7 @@ int main()
 	renderer.set_texture_pack(texture_pack);
 
 	const glm::vec2 size = {3.5f,3.5f};
+	//const glm::vec2 size = {64.f,64.f};
 	const glm::vec2 padding = {1.056f,1.056f};
 
 	std::vector<BoundingBox> sprites;
@@ -171,9 +180,8 @@ int main()
 	{
 		for(float y = size.y / 2; y < 1080; y += size.y + padding.y)
 		{
-			auto& a = sprites.emplace_back(size);
-			a.translate_to({x,y});
-			a.TEMP_UPDATE_CACHE();
+			Transform t{x, y};
+			auto& a = sprites.emplace_back(t, size);
 
 			textures.push_back(rand() % 2 == 0 ? "rock" : "ground");
 
@@ -190,57 +198,30 @@ int main()
 	cbn::Stopwatch watch;
 	watch.start();
 
-	uint64_t frames = 0, total_frames = 0, samples =0;
-	glm::dvec2 mouse_pos;
+	uint64_t frames = 0;
+	glm::vec2 mouse_pos{};
+
 
 	bool follow = false;
+
+	SampleStates state = SampleStates::CHOOSE_STATE;
 
 	while(runflag)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glfwGetCursorPos(window->TEMP_HANDLE(), &mouse_pos.x, &mouse_pos.y);
-
+		// Get mouse position & left click state
+		double pos_x, pos_y;
+		
+		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
 		mouse_pos.y = props.resolution.y - mouse_pos.y;
+		mouse_pos.x = pos_x;
 
-		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS)
-		{
-			follow = true;
-			total_frames = 0;
-			samples = 0;
-		}
 
 		int i = 0;
 		while(i < sprites.size())
 		{
-			renderer.begin_batch(scene_camera);
-			const int amount = prop.sprites_per_batch < sprites.size() - i ? prop.sprites_per_batch : sprites.size() - i;
-			for(int j = 0; j < amount; j++)
-			{
-				if(follow)
-				{
-					const float distance = glm::distance2(sprites[i].translation(), {mouse_pos.x, mouse_pos.y});
-
-					if(distance >= 10000)
-					{
-						sprites[i].translate_towards(mouse_pos.x, mouse_pos.y, 2);
-					}
-					else
-					{
-						sprites[i].translate_by(rand() % 3500 - 1500, rand() % 3500 - 1500);
-					}
-
-					sprites[i].TEMP_UPDATE_CACHE();
-					
-					renderer.submit(sprites[i], textures[j]);
-				}
-				else
-					renderer.submit(sprites[i], textures[j]);
-				
-				i++;
-			}
-			renderer.end_batch();
-			renderer.render(program);
+		
 
 		}
 
@@ -250,9 +231,7 @@ int main()
 		frames++;
 		if(watch.get_elapsed_time(cbn::Seconds) > 1)
 		{
-			samples++;
-			total_frames += frames;
-			window->set_title("Carbon Sample  |  Sprites: " + std::to_string(sprites.size()) + "  |  " + std::to_string(frames) + " fps  |  avg " + std::to_string(total_frames/samples) + " fps  |  " + std::to_string(1 / (float)frames) + "ms");
+			window->set_title("Carbon Sample  |  Sprites: " + std::to_string(sprites.size()) + "  |  " + std::to_string(frames) + " fps  |  " + std::to_string(1 / (float)frames) + "ms");
 			frames = 0;
 			watch.restart();
 		}
@@ -261,3 +240,39 @@ int main()
 
 	return 0;
 }
+
+
+/*
+
+	renderer.begin_batch(scene_camera);
+			const int amount = prop.sprites_per_batch < sprites.size() - i ? prop.sprites_per_batch : sprites.size() - i;
+			for(int j = 0; j < amount; j++)
+			{
+				if(follow)
+				{
+					const float distance = glm::distance2(sprites[i].origin(), {mouse_pos.x, mouse_pos.y});
+
+					if(distance >= 10000)
+					{
+						Transform t(sprites[i].origin());
+						t.translate_towards(mouse_pos.x, mouse_pos.y, 4);
+						sprites[i].transform_to(t);
+					}
+					else
+					{
+						Transform t;
+						t.translate_by(rand() % 3500 - 1500, rand() % 3500 - 1500);
+						sprites[i].transform_by(t);
+					}
+
+					renderer.submit(sprites[i], textures[j]);
+				}
+				else
+					renderer.submit(sprites[i], textures[j]);
+
+				i++;
+			}
+			renderer.end_batch();
+			renderer.render(program);
+
+*/
