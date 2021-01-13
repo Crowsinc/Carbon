@@ -10,6 +10,6 @@ uniform samplerBuffer tp_data;
 
 void main(void)
 {
-   gl_Position = vec4(position.xy, 0.0, 1.0);
-   tdata = texelFetch(tp_data, int(textures.x)).xyz;
+	gl_Position = vec4(position.xy, 0.0, 1.0);
+	tdata = texelFetch(tp_data, int(textures.x)).xyz;
 }

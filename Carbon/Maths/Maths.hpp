@@ -36,42 +36,45 @@ namespace cbn
 
 	bool on_segment(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p);
 
-	template<unsigned A, unsigned N1, unsigned N2>
-	bool sat_test(const std::array<glm::vec2, A>& unit_axes, const glm::vec2 poly_1[N1], const glm::vec2 poly_2[N2]);
+	glm::vec2 closest_segment_point(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p);
+
+	bool ray_segment_intersection(const glm::vec2& origin, const glm::vec2& towards, const glm::vec2& l1, const glm::vec2& l2);
 	
+
+	// TODO: clean up
+	template<unsigned A, unsigned V1, unsigned V2>
+	bool sat_test(const std::array<glm::vec2, A>& unit_axes, const std::array<glm::vec2, V1>& poly_1, const std::array<glm::vec2, V2>& poly_2);
+
 }
 
 //TODO: clean up and optimise. 
-template<unsigned A, unsigned N1, unsigned N2>
-bool cbn::sat_test(const std::array<glm::vec2, A>& unit_axes, const glm::vec2 poly_1[N1], const glm::vec2 poly_2[N2])
+template<unsigned A, unsigned V1, unsigned V2>
+bool cbn::sat_test(const std::array<glm::vec2, A>& unit_axes, const std::array<glm::vec2, V1>& poly_1, const std::array<glm::vec2, V2>& poly_2)
 {
-	std::array<float, N1> poly_1_projections = {};
-	std::array<float, N2> poly_2_projections = {};
+	std::array<float, V1> poly_1_projections = {};
+	std::array<float, V2> poly_2_projections = {};
 
 	// Perform intersection tests on all unit axes
-	for(const auto& axis : unit_axes)
+	for(auto a = 0; a < A; a++)
 	{
+		const auto axis = unit_axes[a];
 
 		// Find the scalar projections of each polygon vertex to each axis.
 		// Since the axes are unit vectors we can simplify the scalar projection to a dot product
 		// which speeds things up as we do 16 projections but only 4 normalizations. 
 
-		for(auto i = 0; i < N1; i++)
-			poly_1_projections[i] = glm::dot(poly_1[i], axis);
+		for(auto i = 0; i < V1; i++)
+			poly_1_projections[i] = glm::dot(axis, poly_1[i]);
 
-		for(auto i = 0; i < N2; i++)
-			poly_1_projections[i] = glm::dot(poly_2[i], axis);
+		for(auto i = 0; i < V2; i++)
+			poly_2_projections[i] = glm::dot(axis, poly_2[i]);
 
 		const auto [min_1, max_1] = std::minmax_element(poly_1_projections.begin(), poly_1_projections.end());
 		const auto [min_2, max_2] = std::minmax_element(poly_2_projections.begin(), poly_2_projections.end());
 
-		// Check if there is any overlap between the box edges on this axis
-		const float overlap = std::fminf(*max_1, *max_2) - std::fmaxf(*min_1, *min_2);
-
-		// If there is no or negative overlap, then the boxes cannot be overlapping so return early with false
-		if(overlap <= 0)
+		if(*max_1 < *min_2 || *min_1 > *max_2)
 			return false;
 	}
 
-	return false;
+	return true;
 }

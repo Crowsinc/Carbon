@@ -203,10 +203,19 @@ namespace cbn
 	TextureUVMap Texture::uvs() const
 	{
 		// Texture uvs just encompass the entire texture, so we can just hardcode them
-		return {{0.0f, 0.0f},
-			    {0.0f, 1.0f},
-			    {1.0f, 1.0f},
-			    {1.0f, 0.0f}};
+
+		return {
+			{0.0f, 1.0f}, //BL
+			{0.0f, 0.0f}, //TL
+			{1.0f, 0.0f}, //TR
+			{1.0f, 1.0f}  //BR
+		};
+
+		// OLD
+		//return {{0.0f, 0.0f},
+		//	    {0.0f, 1.0f},
+		//	    {1.0f, 1.0f},
+		//	    {1.0f, 0.0f}};
 	}
 
 	//-------------------------------------------------------------------------------------

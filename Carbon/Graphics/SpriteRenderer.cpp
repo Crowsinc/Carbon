@@ -51,20 +51,19 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
+	//void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
+	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	{
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
 		CBN_Assert(!is_batch_full(), "Batch is full");
 
-		const auto& mesh = sprite.mesh();
-
-		const auto vertex_1_position = transform(mesh.vertex_1, m_ViewProjectionMatrix);
-		const auto vertex_2_position = transform(mesh.vertex_2, m_ViewProjectionMatrix);
-		const auto vertex_3_position = transform(mesh.vertex_3, m_ViewProjectionMatrix);
-		const auto vertex_4_position = transform(mesh.vertex_4, m_ViewProjectionMatrix);
+		const auto vertex_1 = transform(mesh.vertex_1, m_ViewProjectionMatrix);
+		const auto vertex_2 = transform(mesh.vertex_2, m_ViewProjectionMatrix);
+		const auto vertex_3 = transform(mesh.vertex_3, m_ViewProjectionMatrix);
+		const auto vertex_4 = transform(mesh.vertex_4, m_ViewProjectionMatrix);
 
 		// Set top left vertex data
-		m_BufferPtr->vertex_1.position = vertex_1_position;
+		m_BufferPtr->vertex_1.position = vertex_1;
 		m_BufferPtr->vertex_1.texture[0] = index_1 + 0;
 		m_BufferPtr->vertex_1.texture[1] = index_2 + 0;
 		m_BufferPtr->vertex_1.texture[2] = index_3 + 0;
@@ -73,7 +72,7 @@ namespace cbn
 
 
 		// Set bottom left vertex data
-		m_BufferPtr->vertex_2.position = vertex_2_position;
+		m_BufferPtr->vertex_2.position = vertex_2;
 		m_BufferPtr->vertex_2.texture[0] = index_1 + 1;
 		m_BufferPtr->vertex_2.texture[1] = index_2 + 1;
 		m_BufferPtr->vertex_2.texture[2] = index_3 + 1;
@@ -82,7 +81,7 @@ namespace cbn
 
 
 		// Set bottom right vertex data
-		m_BufferPtr->vertex_3.position = vertex_3_position;
+		m_BufferPtr->vertex_3.position = vertex_3;
 		m_BufferPtr->vertex_3.texture[0] = index_1 + 2;
 		m_BufferPtr->vertex_3.texture[1] = index_2 + 2;
 		m_BufferPtr->vertex_3.texture[2] = index_3 + 2;
@@ -91,7 +90,7 @@ namespace cbn
 
 
 		// Set top right vertex data
-		m_BufferPtr->vertex_4.position = vertex_4_position;
+		m_BufferPtr->vertex_4.position = vertex_4;
 		m_BufferPtr->vertex_4.texture[0] = index_1 + 3;
 		m_BufferPtr->vertex_4.texture[1] = index_2 + 3;
 		m_BufferPtr->vertex_4.texture[2] = index_3 + 3;
@@ -165,7 +164,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 	
-		push_sprite_to_buffer(sprite, 0, 0, 0, 0, c_EmptyVertexData);
+		push_sprite_to_buffer(sprite.mesh(), 0, 0, 0, 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -175,16 +174,23 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, 0, 0, 0, 0, vertex_data);
+		push_sprite_to_buffer(sprite.mesh(), 0, 0, 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
+	//	if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
+	//		return;
 
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void SpriteRenderer::submit(const QuadMesh& sprite, const Identifier& texture_1)
+	{
 		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
 	}
 
@@ -195,7 +201,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -205,7 +211,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
 	}
 	//-------------------------------------------------------------------------------------
 
@@ -214,7 +220,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -224,7 +230,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -234,7 +240,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -244,7 +250,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -254,7 +260,7 @@ namespace cbn
 		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
 			return;
 
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
+		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------

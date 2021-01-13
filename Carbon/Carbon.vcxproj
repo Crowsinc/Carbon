@@ -138,9 +138,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -148,6 +148,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <ExceptionHandling>false</ExceptionHandling>
       <OmitFramePointers>true</OmitFramePointers>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -179,11 +180,13 @@
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
     <ClCompile Include="Graphics\TexturePack.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
-    <ClCompile Include="Maths\Bounds\BoundingBox.cpp" />
-    <ClCompile Include="Maths\Bounds\BoundingCircle.cpp" />
-    <ClCompile Include="Maths\Bounds\BoundingTriangle.cpp" />
+    <ClCompile Include="Maths\Models\BoundingBox.cpp" />
+    <ClCompile Include="Maths\Models\BoundingCircle.cpp" />
+    <ClCompile Include="Maths\Models\BoundingTriangle.cpp" />
     <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Matrix.cpp" />
+    <ClCompile Include="Maths\Models\Common.cpp" />
+    <ClCompile Include="Maths\Models\Meshes.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
@@ -219,11 +222,14 @@
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
     <ClInclude Include="Graphics\TexturePack.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
-    <ClInclude Include="Maths\Bounds\BoundingBox.hpp" />
-    <ClInclude Include="Maths\Bounds\BoundingCircle.hpp" />
-    <ClInclude Include="Maths\Bounds\BoundingTriangle.hpp" />
+    <ClInclude Include="Maths\Models\BoundingBox.hpp" />
+    <ClInclude Include="Maths\Models\BoundingCircle.hpp" />
+    <ClInclude Include="Maths\Models\BoundingTriangle.hpp" />
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Matrix.hpp" />
+    <ClInclude Include="Maths\Models\Common.hpp" />
+    <ClInclude Include="Maths\Physics\Collider.hpp" />
+    <ClInclude Include="Maths\Models\Meshes.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Maths\Transforms\Rotatable.hpp" />

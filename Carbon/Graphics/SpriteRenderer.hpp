@@ -4,7 +4,7 @@
 #include <variant>
 
 #include "../Data/Identity/Identifier.hpp"
-#include "../Maths/Bounds/BoundingBox.hpp"
+#include "../Maths/Models/BoundingBox.hpp"
 #include "OpenGL/VertexArrayObject.hpp"
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/StaticBuffer.hpp"
@@ -75,7 +75,10 @@ namespace cbn
 
 		bool is_sprite_visible(const BoundingBox& sprite);
 
-		void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
+	//	void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
+		
+		void push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
+
 
 	public:
 
@@ -88,7 +91,9 @@ namespace cbn
 		void submit(const BoundingBox& sprite, const glm::uvec4& vertex_data);
 		
 		void submit(const BoundingBox& sprite, const Identifier& texture_1);
-		
+	
+		void submit(const QuadMesh& sprite, const Identifier& texture_1);
+
 		void submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data);
 		
 		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2);

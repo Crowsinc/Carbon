@@ -105,12 +105,6 @@
     <ClCompile Include="Data\Identity\Identified.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Maths\Bounds\BoundingBox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Maths\Bounds\BoundingCircle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Maths\Matrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -123,10 +117,22 @@
     <ClCompile Include="Maths\Transforms\Translatable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Maths\Bounds\BoundingTriangle.cpp">
+    <ClCompile Include="Maths\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Maths\Transform.cpp">
+    <ClCompile Include="Maths\Models\BoundingBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths\Models\BoundingCircle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths\Models\BoundingTriangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths\Models\Meshes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths\Models\Common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -233,12 +239,6 @@
     <ClInclude Include="Data\Identity\Identified.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maths\Bounds\BoundingBox.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Maths\Bounds\BoundingCircle.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Maths\Matrix.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -251,10 +251,25 @@
     <ClInclude Include="Maths\Transforms\Rotatable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maths\Bounds\BoundingTriangle.hpp">
+    <ClInclude Include="Maths\Transform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maths\Transform.hpp">
+    <ClInclude Include="Maths\Models\BoundingBox.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Models\BoundingCircle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Models\BoundingTriangle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Models\Meshes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Physics\Collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Models\Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <glm/gtx/vector_query.hpp>
+#include <glm/gtx/projection.hpp>
 
 namespace cbn
 {
@@ -67,33 +68,25 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-
 	bool segments_intersect(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& q1, const glm::vec2& q2)
 	{
+		// NOTE: a lot of optimisation can be done here, theres a lot of re-done calculations
+
 		const float d = ((q2.y - q1.y) * (p2.x - p1.x)) - ((q2.x - q1.x) * (p2.y - p1.y));
 		const float n1 = ((q2.x - q1.x) * (p1.y - q1.y)) - ((q2.y - q1.y) * (p1.x - q1.x));
 		const float n2 = ((p2.x - p1.x) * (p1.y - q1.y)) - ((p2.y - p1.y) * (p1.x - q1.x));
-
+	
 		// If this condition is met, the line seg are parallel and 
 		// not coincident (not the same lines). 
 		if(d == 0.0f && n1 != 0.0f && n2 != 0.0f)
 			return false;
-
+	
 		const float s = n1 / d;
 		const float t = n2 / d;
-
+	
 		return s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0;
 	}
 
-	//-------------------------------------------------------------------------------------
-
-	bool collinear(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
-	{
-		// If the cross product cross product of the 3 points is 0, then the points are collinear
-
-		return std::fabsf((c.x - a.y) * (b.x - a.x) - (c.x - a.x) * (b.y - a.y)) <= std::numeric_limits<float>::epsilon();
-	}
-	
 	//-------------------------------------------------------------------------------------
 
 	int signum(const float v)
@@ -106,9 +99,17 @@ namespace cbn
 	int line_side(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
 	{
 		// Return 0 if c is on the line ab, 1 is c is on its right, -1 if its on its left
-		return signum((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+		return signum((a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x));
 	}
 	
+	//-------------------------------------------------------------------------------------
+
+	bool collinear(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c)
+	{
+		// If the cross product cross product of the 3 points is 0, then the points are collinear
+		return std::abs((c.y - b.y) * (b.x - a.x) - (b.y - a.y) * (c.x - b.x)) <= std::numeric_limits<float>::epsilon();
+	}
+
 	//-------------------------------------------------------------------------------------
 
 	bool on_segment(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p)
@@ -118,7 +119,57 @@ namespace cbn
 
 		// The point is on the line segment if its collinear with the 
 		// line end points and it is within the range of the end points. 
-		return collinear(l1, l2, p) && (p.x >= min_x) && (p.x <= max_x) && (p.y >= min_y) && (p.y <= max_y);
+		return collinear(l1, l2, p) && !(p.x > max_x || p.x < min_x || p.y > max_y || p.y < min_y);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	glm::vec2 closest_segment_point(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p)
+	{
+		// Given a line segment defined by l1 and l2, gets the point on the segment which is 
+		// closest to p. To do this, we first project a vector from the middle of the segment to 
+		// the point p along the segment. This gives us a projection which is effectively the closest
+		// point along the infinite line of the segment, starting at the mid point. If we then get the
+		// half magnitude of the segment, we can use it to clamp the projection's length so that it always 
+		// falls within the extents of the segment. That is, the projection is clamped such that it if
+		// it falls outside of the segment, instead only on the infinite line of the segment, it will
+		// be clamped back to an end point of the segment. If we then add this clamped vector to the mid
+		// point, we get the point on the segment closest to p.
+
+		const auto segment = l2 - l1;
+		const auto mid_point = (l1 + l2) * 0.5f;
+		const auto projection = glm::proj(p - mid_point, segment);
+		
+		const auto half_size = glm::abs(l2 - mid_point);
+		return mid_point + glm::clamp(projection, -half_size, half_size);
+	}
+
+	//-------------------------------------------------------------------------------------
+
+	//TODO: make this a generic method which returns t and s, 
+	bool ray_segment_intersection(const glm::vec2& origin, const glm::vec2& towards, const glm::vec2& l1, const glm::vec2& l2)
+	{
+		// THIS IS JUST THE SAME AS THE SEGMENT INTERSECTION TEST, BUT WITH SLIGHTLY DIFF TRUE CONDITION 
+		const auto& p1 = origin;
+		const auto& p2 = towards;
+		const auto& q1 = l1;
+		const auto& q2 = l2;
+
+		// NOTE: a lot of optimisation can be done here, theres a lot of re-done calculations
+
+		const float d = ((q2.y - q1.y) * (p2.x - p1.x)) - ((q2.x - q1.x) * (p2.y - p1.y));
+		const float n1 = ((q2.x - q1.x) * (p1.y - q1.y)) - ((q2.y - q1.y) * (p1.x - q1.x));
+		const float n2 = ((p2.x - p1.x) * (p1.y - q1.y)) - ((p2.y - p1.y) * (p1.x - q1.x));
+
+		// If this condition is met, the line seg are parallel and 
+		// not coincident (not the same lines). 
+		if(d == 0.0f && n1 != 0.0f && n2 != 0.0f)
+			return false;
+
+		const float s = n1 / d;
+		const float t = n2 / d;
+
+		return s >= 0.0f && t >= 0.0f && t <= 1.0f;
 	}
 
 	//-------------------------------------------------------------------------------------

@@ -40,6 +40,17 @@ namespace cbn
         }
         else
         {
+            //TODO: swap bot and top uvs as images are flipped in openGL
+            /*
+                i.e.
+            return {
+                bot_left_uv,
+                top_left_uv,
+                top_right_uv
+                bot_right_uv,
+            };
+            and redo the rotation above^^
+            */
             return {
                 top_left_uv,
                 bot_left_uv,

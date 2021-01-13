@@ -4,18 +4,6 @@ namespace cbn
 {
 
 	template<typename T>
-	struct Line
-	{
-		T x, y, thickness;
-	};
-
-	template<typename T>
-	struct Circle
-	{
-		T x, y, radius;
-	};
-
-	template<typename T>
 	struct Rectangle
 	{
 		T x, y, width, height;

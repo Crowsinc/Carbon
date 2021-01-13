@@ -81,8 +81,8 @@ namespace cbn
 		TextureFilter magnifying_filter = TextureFilter::NEAREST;
 		TextureFilter minifying_filter = TextureFilter::LINEAR;
 
-		TextureWrapping horizontal_wrapping = TextureWrapping::REPEAT;
-		TextureWrapping vertical_wrapping = TextureWrapping::REPEAT;
+		TextureWrapping horizontal_wrapping = TextureWrapping::CLAMP_TO_EDGE;
+		TextureWrapping vertical_wrapping = TextureWrapping::CLAMP_TO_EDGE;
 
 		TextureSwizzle swizzle = TextureSwizzle::RGBA;
 	};
