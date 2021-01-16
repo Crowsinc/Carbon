@@ -29,7 +29,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingTriangle::BoundingTriangle(const std::array<Point, TriangleMesh::Sides>& vertices)
+	BoundingTriangle::BoundingTriangle(const TriangleMesh::Vertices& vertices)
 		: m_LocalOriginOffset(0,0)
 	{
 		reshape(vertices);
@@ -37,7 +37,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	BoundingTriangle::BoundingTriangle(const Transform& transform, const std::array<Point, TriangleMesh::Sides>& vertices)
+	BoundingTriangle::BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices)
 		: Transformable(transform),
 		  m_LocalOriginOffset(0, 0)
 
@@ -57,16 +57,16 @@ namespace cbn
 
 	bool BoundingTriangle::overlaps(const BoundingBox& box) const
 	{
-		// This is done using SAT. For the triangle we need to check
-		// all of its normals. However, since the box has two parallel
-		// sides, we can just use two differing normals. 
-
 		const auto& tri_mesh = mesh();
 		const auto& box_mesh = box.mesh();
 
+		// This is done using SAT. For the triangle we need to check
+		// all of its normals. However, since the box has two parallel
+		// sides, we can just use two of the normals which correspond
+		// with its non-parallel sides. 
 		const std::array<glm::vec2, 5> axes = {
-			box_mesh.normal_1, box_mesh.normal_4,
-			tri_mesh.normal_1, tri_mesh.normal_2, tri_mesh.normal_3
+			box_mesh.normals[0], box_mesh.normals[3],
+			tri_mesh.normals[0], tri_mesh.normals[1], tri_mesh.normals[2]
 		};
 
 		return sat_test(axes, box_mesh.vertices, tri_mesh.vertices);
@@ -83,9 +83,9 @@ namespace cbn
 		const auto& mesh = this->mesh();
 
 		return contains(circle.centre())
-			|| circle.intersected_by(mesh.edge_1)
-			|| circle.intersected_by(mesh.edge_2)
-			|| circle.intersected_by(mesh.edge_3);
+			|| circle.intersected_by(mesh.edges[0])
+			|| circle.intersected_by(mesh.edges[1])
+			|| circle.intersected_by(mesh.edges[2]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -97,8 +97,8 @@ namespace cbn
 		const auto& mesh_2 = triangle.mesh();
 
 		const std::array<glm::vec2, 6> axes = {
-			mesh_1.normal_1, mesh_1.normal_2, mesh_1.normal_3,
-			mesh_2.normal_1, mesh_2.normal_2, mesh_2.normal_3
+			mesh_1.normals[0], mesh_1.normals[1], mesh_1.normals[2],
+			mesh_2.normals[0], mesh_2.normals[1], mesh_2.normals[2]
 		};
 
 		//TODO: switch to general polygon sat test
@@ -119,10 +119,10 @@ namespace cbn
 		// The box is enclosed in the triangle if all its vertices are inside
 		
 		const auto& mesh = box.mesh();
-		return contains(mesh.vertex_1)
-			&& contains(mesh.vertex_2)
-			&& contains(mesh.vertex_3)
-			&& contains(mesh.vertex_4);
+		return contains(mesh.vertices[0])
+			&& contains(mesh.vertices[1])
+			&& contains(mesh.vertices[2])
+			&& contains(mesh.vertices[3]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -134,9 +134,9 @@ namespace cbn
 		
 		const auto& mesh = this->mesh();
 		return contains(circle.centre())
-			&& !circle.intersected_by(mesh.edge_1)
-			&& !circle.intersected_by(mesh.edge_2)
-			&& !circle.intersected_by(mesh.edge_3);
+			&& !circle.intersected_by(mesh.edges[0])
+			&& !circle.intersected_by(mesh.edges[1])
+			&& !circle.intersected_by(mesh.edges[2]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -145,9 +145,9 @@ namespace cbn
 	{
 		// The triangle is enclosed if all its vertices are inside
 		const auto& mesh = triangle.mesh();
-		return contains(mesh.vertex_1)
-			&& contains(mesh.vertex_2)
-			&& contains(mesh.vertex_3);
+		return contains(mesh.vertices[0])
+			&& contains(mesh.vertices[1])
+			&& contains(mesh.vertices[2]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -157,9 +157,9 @@ namespace cbn
 		// Determine whether the point is inside the triangle by using barycentric coordinates
 		
 		const auto& mesh = this->mesh();
-		const float s =  mesh.vertex_1.y * mesh.vertex_3.x - mesh.vertex_1.x * mesh.vertex_3.y + (mesh.vertex_3.y - mesh.vertex_1.y) * point.x + (mesh.vertex_1.x - mesh.vertex_3.x) * point.y;
-		const float t =  mesh.vertex_1.x * mesh.vertex_2.y - mesh.vertex_1.y * mesh.vertex_2.x + (mesh.vertex_1.y - mesh.vertex_2.y) * point.x + (mesh.vertex_2.x - mesh.vertex_1.x) * point.y;
-		const float a = -mesh.vertex_2.y * mesh.vertex_3.x + mesh.vertex_1.y * (-mesh.vertex_2.x + mesh.vertex_3.x) + mesh.vertex_1.x * (mesh.vertex_2.y - mesh.vertex_3.y) + mesh.vertex_2.x * mesh.vertex_3.y;
+		const float s =  mesh.vertices[0].y * mesh.vertices[2].x - mesh.vertices[0].x * mesh.vertices[2].y + (mesh.vertices[2].y - mesh.vertices[0].y) * point.x + (mesh.vertices[0].x - mesh.vertices[2].x) * point.y;
+		const float t =  mesh.vertices[0].x * mesh.vertices[1].y - mesh.vertices[0].y * mesh.vertices[1].x + (mesh.vertices[0].y - mesh.vertices[1].y) * point.x + (mesh.vertices[1].x - mesh.vertices[0].x) * point.y;
+		const float a = -mesh.vertices[1].y * mesh.vertices[2].x + mesh.vertices[0].y * (-mesh.vertices[1].x + mesh.vertices[2].x) + mesh.vertices[0].x * (mesh.vertices[1].y - mesh.vertices[2].y) + mesh.vertices[1].x * mesh.vertices[2].y;
 		
 		return s > 0 && t > 0 && (s + t) < a;
 	}
@@ -177,9 +177,9 @@ namespace cbn
 		// its left and 0 if its on the line. So for the box to be intersected, at least one
 		// vertex has to be left of the line, and at least one must be on its right. Or one
 		// has to be on the line
-		const auto s1 = line_side(line.p1, line.p2, mesh.vertex_1);
-		const auto s2 = line_side(line.p1, line.p2, mesh.vertex_2);
-		const auto s3 = line_side(line.p1, line.p2, mesh.vertex_3);
+		const auto s1 = line_side(line.p1, line.p2, mesh.vertices[0]);
+		const auto s2 = line_side(line.p1, line.p2, mesh.vertices[1]);
+		const auto s3 = line_side(line.p1, line.p2, mesh.vertices[2]);
 
 		return (s1 >= 0 || s2 >= 0 || s3 >= 0) && (s1 <= 0 || s2 <= 0 || s3 <= 0);
 	}
@@ -193,9 +193,9 @@ namespace cbn
 		const auto& mesh = this->mesh();
 		
 		return contains(segment.p1) || contains(segment.p2)
-			|| segments_intersect(mesh.vertex_1, mesh.vertex_2, segment.p1, segment.p2)
-			|| segments_intersect(mesh.vertex_2, mesh.vertex_3, segment.p1, segment.p2)
-			|| segments_intersect(mesh.vertex_3, mesh.vertex_1, segment.p1, segment.p2);
+			|| segments_intersect(mesh.vertices[0], mesh.vertices[1], segment.p1, segment.p2)
+			|| segments_intersect(mesh.vertices[1], mesh.vertices[2], segment.p1, segment.p2)
+			|| segments_intersect(mesh.vertices[2], mesh.vertices[0], segment.p1, segment.p2);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -207,9 +207,9 @@ namespace cbn
 		const auto& mesh = this->mesh();
 		const auto ray_point = ray.origin + ray.direction;
 
-		return ray_segment_intersection(ray.origin, ray_point, mesh.vertex_1, mesh.vertex_2)
-		    || ray_segment_intersection(ray.origin, ray_point, mesh.vertex_2, mesh.vertex_3)
-		    || ray_segment_intersection(ray.origin, ray_point, mesh.vertex_3, mesh.vertex_1);
+		return ray_segment_intersection(ray.origin, ray_point, mesh.vertices[0], mesh.vertices[1])
+		    || ray_segment_intersection(ray.origin, ray_point, mesh.vertices[1], mesh.vertices[2])
+		    || ray_segment_intersection(ray.origin, ray_point, mesh.vertices[2], mesh.vertices[0]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -225,7 +225,7 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void BoundingTriangle::reshape(const std::array<Point, TriangleMesh::Sides>& vertices)
+	void BoundingTriangle::reshape(const TriangleMesh::Vertices& vertices)
 	{
 		// The shape is defined by the relative position of p1, p2 and p3. 
 		// To make the local mesh, we first find the centroid of the triangle.
@@ -258,9 +258,9 @@ namespace cbn
 		{
 			// If the offset is given in world coordinates, then we need to 
 			// project the offset along the local axes of the triangle to turn 
-			// them into local coordiantes. Since the normals direction vector
-			// and its normal line up with the axes and are unit normals, we can 
-			// do this with just two dot products. 
+			// them into local coordiantes. Since the direction vector and its 
+			// normal line up with the axes and are unit normals, we can do this 
+			// with just two dot products. 
 			const auto& dir = direction();
 			const glm::vec2 dir_normal{dir.y, -dir.x};
 

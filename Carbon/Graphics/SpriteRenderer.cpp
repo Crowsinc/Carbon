@@ -51,16 +51,15 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	//void SpriteRenderer::push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	{
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
 		CBN_Assert(!is_batch_full(), "Batch is full");
 
-		const auto vertex_1 = transform(mesh.vertex_1, m_ViewProjectionMatrix);
-		const auto vertex_2 = transform(mesh.vertex_2, m_ViewProjectionMatrix);
-		const auto vertex_3 = transform(mesh.vertex_3, m_ViewProjectionMatrix);
-		const auto vertex_4 = transform(mesh.vertex_4, m_ViewProjectionMatrix);
+		const auto vertex_1 = transform(mesh.vertices[0], m_ViewProjectionMatrix);
+		const auto vertex_2 = transform(mesh.vertices[1], m_ViewProjectionMatrix);
+		const auto vertex_3 = transform(mesh.vertices[2], m_ViewProjectionMatrix);
+		const auto vertex_4 = transform(mesh.vertices[3], m_ViewProjectionMatrix);
 
 		// Set top left vertex data
 		m_BufferPtr->vertex_1.position = vertex_1;
@@ -102,6 +101,56 @@ namespace cbn
 		m_BatchEndPosition++;
 	}
 	
+	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
+	{
+		CBN_Assert(m_BatchStarted, "No batch exists for submission");
+		CBN_Assert(!is_batch_full(), "Batch is full");
+
+		const auto vertex_1 = transform(vertices[0], m_ViewProjectionMatrix);
+		const auto vertex_2 = transform(vertices[1], m_ViewProjectionMatrix);
+		const auto vertex_3 = transform(vertices[2], m_ViewProjectionMatrix);
+		const auto vertex_4 = transform(vertices[3], m_ViewProjectionMatrix);
+
+		// Set top left vertex data
+		m_BufferPtr->vertex_1.position = vertex_1;
+		m_BufferPtr->vertex_1.texture[0] = index_1 + 0;
+		m_BufferPtr->vertex_1.texture[1] = index_2 + 0;
+		m_BufferPtr->vertex_1.texture[2] = index_3 + 0;
+		m_BufferPtr->vertex_1.texture[3] = index_4 + 0;
+		m_BufferPtr->vertex_1.data = vertex_data;
+
+
+		// Set bottom left vertex data
+		m_BufferPtr->vertex_2.position = vertex_2;
+		m_BufferPtr->vertex_2.texture[0] = index_1 + 1;
+		m_BufferPtr->vertex_2.texture[1] = index_2 + 1;
+		m_BufferPtr->vertex_2.texture[2] = index_3 + 1;
+		m_BufferPtr->vertex_2.texture[3] = index_4 + 1;
+		m_BufferPtr->vertex_2.data = vertex_data;
+
+
+		// Set bottom right vertex data
+		m_BufferPtr->vertex_3.position = vertex_3;
+		m_BufferPtr->vertex_3.texture[0] = index_1 + 2;
+		m_BufferPtr->vertex_3.texture[1] = index_2 + 2;
+		m_BufferPtr->vertex_3.texture[2] = index_3 + 2;
+		m_BufferPtr->vertex_3.texture[3] = index_4 + 2;
+		m_BufferPtr->vertex_3.data = vertex_data;
+
+
+		// Set top right vertex data
+		m_BufferPtr->vertex_4.position = vertex_4;
+		m_BufferPtr->vertex_4.texture[0] = index_1 + 3;
+		m_BufferPtr->vertex_4.texture[1] = index_2 + 3;
+		m_BufferPtr->vertex_4.texture[2] = index_3 + 3;
+		m_BufferPtr->vertex_4.texture[3] = index_4 + 3;
+		m_BufferPtr->vertex_4.data = vertex_data;
+
+		m_BufferPtr++;
+		m_CurrentBatchSize++;
+		m_BatchEndPosition++;
+	}
+
 	//-------------------------------------------------------------------------------------
 
 	bool SpriteRenderer::is_sprite_visible(const BoundingBox& sprite)
@@ -192,6 +241,11 @@ namespace cbn
 	void SpriteRenderer::submit(const QuadMesh& sprite, const Identifier& texture_1)
 	{
 		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
+	}
+
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1)
+	{
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------

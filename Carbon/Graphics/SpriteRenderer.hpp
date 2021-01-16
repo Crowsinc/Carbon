@@ -79,6 +79,8 @@ namespace cbn
 		
 		void push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
 
+		void push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
+
 
 	public:
 
@@ -93,6 +95,8 @@ namespace cbn
 		void submit(const BoundingBox& sprite, const Identifier& texture_1);
 	
 		void submit(const QuadMesh& sprite, const Identifier& texture_1);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1);
 
 		void submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data);
 		

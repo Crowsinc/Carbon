@@ -311,13 +311,13 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 	static const glm::uvec4 cyan_trans_ud = {Cyan.red, Cyan.green, Cyan.blue, Cyan.alpha / 4};
 
 	static const BoundingBox line{{300, 600, 275}, {2000,1}};
-	static const Line l{line.mesh().vertex_1, line.mesh().vertex_4};
+	static const Line l{line.mesh().vertices[0], line.mesh().vertices[3]};
 
 	static const BoundingBox segment{{800,700, 32}, {100, 1}};
-	static const Segment s{segment.mesh().vertex_1, segment.mesh().vertex_4};
+	static const Segment s{segment.mesh().vertices[0], segment.mesh().vertices[3]};
 
 	static const BoundingBox ray{Transform{1850, 1200, 50}, {2000,1}};
-	static const Ray r{ray.mesh().vertex_1, glm::normalize(ray.mesh().vertex_4 - ray.mesh().vertex_1)};
+	static const Ray r{ray.mesh().vertices[0], glm::normalize(ray.mesh().vertices[3] - ray.mesh().vertices[0])};
 
 	static std::array<Collider*, 6> colliders = {
 	    &Rect,& Rect2,& Circle,& Circle2,& Tri,& Tri2
@@ -540,18 +540,27 @@ SRes<ShaderProgram> load_texture_shader()
 }
 
 template<size_t S>
-std::vector<QuadMesh> create_static_sprites()
+std::vector<QuadMesh::Vertices> create_static_sprites()
 {
 	constexpr float padding = 1.056f;
 	constexpr glm::vec2 size = {3.5f, 3.5f};
+	constexpr glm::vec2 half_size = size * 0.5f;
 
-	std::vector<QuadMesh> meshes;
+
+	std::vector<QuadMesh::Vertices> meshes;
 	meshes.reserve(S);
 	for(float x = size.x / 2.0f; x < 1920; x += padding + size.x)
 	{
 		for(float y = size.y / 2.0f; y < 1080; y += padding + size.y)
 		{
-			meshes.push_back(QuadMesh::Create(Transform{x, y}, size));
+			const glm::vec2 location{x, y};
+
+			Extent extent{
+				location - half_size,
+				location + half_size
+			};
+
+			meshes.push_back(extent.vertices());
 
 			if(meshes.size() == S)
 				break;
@@ -629,7 +638,7 @@ void handle_dynamic_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
 	}
 	else
 	{
-		sprite.translate_to(rand() % 3500 - 1500, rand() % 3500 - 1500);
+		sprite.translate_by(rand() % 3500 - 1500, rand() % 3500 - 1500);
 	}
 }
 
@@ -659,7 +668,7 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 				const auto& mesh = sprites[total_submitted].mesh();
 
 				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
-				if(cam.overlaps(sprites[total_submitted]))
+				//if(cam.overlaps(sprites[total_submitted]))
 					renderer.submit(mesh, textures[i % 2]);
 				total_submitted++;
 			}
@@ -671,7 +680,7 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 				const auto& mesh = sprites[total_submitted].mesh();
 
 				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
-				if(cam.overlaps(sprites[total_submitted]))
+				//if(cam.overlaps(sprites[total_submitted]))
 					renderer.submit(mesh, textures[i % 2]);
 				total_submitted++;
 			}

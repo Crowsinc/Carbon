@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meshes.hpp"
+#include "Mesh.hpp"
 #include "BoundingBox.hpp"
 #include "BoundingTriangle.hpp"
 #include "../Physics/Collider.hpp"

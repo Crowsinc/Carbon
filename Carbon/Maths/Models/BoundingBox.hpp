@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meshes.hpp"
+#include "Mesh.hpp"
 #include "BoundingCircle.hpp"
 #include "BoundingTriangle.hpp"
 #include "../Physics/Collider.hpp"
@@ -27,6 +27,8 @@ namespace cbn
 		mutable Point m_Centre;
 		
 		Point transform_to_local(const Point& point) const;
+
+		void generate_mesh() const;
 
 		void update_extent() const;
 

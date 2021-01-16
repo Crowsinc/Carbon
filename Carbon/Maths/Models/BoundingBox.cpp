@@ -36,9 +36,41 @@ namespace cbn
 		const glm::vec2 centre_to_point = point - centre();
 
 		// Get the scalar projection of the origin to point vector across two
-		// perpendicular normals. Since the normals are unit vectors, we can
+		// positive perpendicular normals. Since the normals are unit vectors, we can
 		// simplify the projection to a dot product, avoiding any square roots.
-		return {glm::dot(centre_to_point, mesh.normal_4), glm::dot(centre_to_point, mesh.normal_1)};
+		return {glm::dot(centre_to_point, mesh.normals[3]), glm::dot(centre_to_point, mesh.normals[0])};
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	void BoundingBox::generate_mesh() const
+	{
+		// Note that by convention, our box is laid with the vertices and normals as shown:
+		/*
+			  Vertices            Normals
+									 0
+			0----------3		*---------*		
+			|		   | 		|         |		
+			|          |	  1 |         | 3	
+			|          |		|         |		
+			1----------2		*---------*		
+									 2			
+		*/
+
+		// Obtain local, untransformed, vertices using the local extent.
+		// This extent method follows the convention shown above for vertices. 
+		auto local_vertices = m_LocalExtent.vertices();
+
+		// The local origin is an offset from the centre of the local box which specifies the box's origin.
+		// The coordinate (0,0) of the local mesh is the origin of the box, so we need to offset all the vertices 
+		// so the origin of the box has the given offset from the centre while still being at (0,0).
+		local_vertices[0] -= m_LocalOriginOffset;
+		local_vertices[1] -= m_LocalOriginOffset;
+		local_vertices[2] -= m_LocalOriginOffset;
+		local_vertices[3] -= m_LocalOriginOffset;
+
+		// Create the transformed mesh
+		m_Mesh = QuadMesh::Create(as_transform(), local_vertices);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -61,35 +93,35 @@ namespace cbn
 
 		if(rotation >= 0 && rotation < 90)
 		{
-			// vertex 1 is top, vertex 2 is left, vertex 3 is bottom, vertex 4 is right
-			max_x = mesh.vertex_4.x;
-			min_x = mesh.vertex_2.x;
-			max_y = mesh.vertex_1.y;
-			min_y = mesh.vertex_3.y;
+			// vertex 0 is top, vertex 1 is left, vertex 2 is bottom, vertex 3 is right
+			max_x = mesh.vertices[3].x;
+			min_x = mesh.vertices[1].x;
+			max_y = mesh.vertices[0].y;
+			min_y = mesh.vertices[2].y;
 		}
 		else if(rotation >= 90 && rotation < 180)
 		{
-			// vertex 1 is left, vertex 2 is bottom, vertex 3 is right, vertex 4 is top
-			min_x = mesh.vertex_1.x;
-			max_x = mesh.vertex_3.x;
-			min_y = mesh.vertex_2.y;
-			max_y = mesh.vertex_4.y;
+			// vertex 0 is left, vertex 1 is bottom, vertex 2 is right, vertex 3 is top
+			min_x = mesh.vertices[0].x;
+			max_x = mesh.vertices[2].x;
+			min_y = mesh.vertices[1].y;
+			max_y = mesh.vertices[3].y;
 		}
 		else if(rotation >= 180 && rotation < 270)
 		{
-			// vertex 1 is bottom, vertex 2 is right, vertex 3 is top, vertex 4 is left
-			max_x = mesh.vertex_2.x;
-			min_x = mesh.vertex_4.x;
-			max_y = mesh.vertex_3.y;
-			min_y = mesh.vertex_1.y;
+			// vertex 0 is bottom, vertex 1 is right, vertex 2 is top, vertex 3 is left
+			max_x = mesh.vertices[1].x;
+			min_x = mesh.vertices[3].x;
+			max_y = mesh.vertices[2].y;
+			min_y = mesh.vertices[0].y;
 		}
 		else if(rotation >= 270 && rotation < 360)
 		{
-			// vertex 1 is right, vertex 2 is top, vertex 3 is left, vertex 4 is bottom
-			min_x = mesh.vertex_3.x;
-			max_x = mesh.vertex_1.x;
-			min_y = mesh.vertex_4.y;
-			max_y = mesh.vertex_2.y;
+			// vertex 0 is right, vertex 1 is top, vertex 2 is left, vertex 3 is bottom
+			min_x = mesh.vertices[2].x;
+			max_x = mesh.vertices[0].x;
+			min_y = mesh.vertices[3].y;
+			max_y = mesh.vertices[1].y;
 		}
 		else CBN_Assert(false, "The rotation is not wrapping between 0 and 360 as expected");
 
@@ -146,10 +178,11 @@ namespace cbn
 			const auto& mesh_1 = mesh();
 			const auto& mesh_2 = box.mesh();
 
-			// Get the axes of the boxes by just using two of their differing normals. 
+			// Get the axes of the boxes by just using two of their normals which 
+			// correspond with their non-parallel edges. 
 			const std::array<glm::vec2, 4> axes = {
-				mesh_1.normal_1, mesh_1.normal_4, 
-				mesh_2.normal_1, mesh_2.normal_4,
+				mesh_1.normals[0], mesh_1.normals[3], 
+				mesh_2.normals[0], mesh_2.normals[3],
 			};
 
 			return sat_test(axes, mesh_1.vertices, mesh_2.vertices);
@@ -202,12 +235,11 @@ namespace cbn
 	bool BoundingBox::encloses(const BoundingBox& box) const
 	{
 		// The box is enclosed if all its points are within this box
-	
 		const auto& mesh = box.mesh();
-		return contains(mesh.vertex_1) 
-			&& contains(mesh.vertex_2) 
-			&& contains(mesh.vertex_3)
-			&& contains(mesh.vertex_4);
+		return contains(mesh.vertices[0]) 
+			&& contains(mesh.vertices[1]) 
+			&& contains(mesh.vertices[2])
+			&& contains(mesh.vertices[3]);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -220,10 +252,10 @@ namespace cbn
 		// Note: This can probably be optimised mathematically if it becomes a problem.
 		const auto& mesh = this->mesh();
 		return contains(circle.centre())
-			&& !circle.intersected_by(mesh.edge_1)
-			&& !circle.intersected_by(mesh.edge_2)
-			&& !circle.intersected_by(mesh.edge_3)
-			&& !circle.intersected_by(mesh.edge_4);
+			&& !circle.intersected_by(mesh.edges[0])
+			&& !circle.intersected_by(mesh.edges[1])
+			&& !circle.intersected_by(mesh.edges[2])
+			&& !circle.intersected_by(mesh.edges[3]);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -233,9 +265,9 @@ namespace cbn
 		// The box encloses the triangle if all its vertices are inside the box
 
 		const auto& mesh = triangle.mesh();
-		return contains(mesh.vertex_1) 
-			&& contains(mesh.vertex_2)
-			&& contains(mesh.vertex_3);
+		return contains(mesh.vertices[0]) 
+			&& contains(mesh.vertices[1])
+			&& contains(mesh.vertices[2]);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -262,10 +294,10 @@ namespace cbn
 		// The line side function returns +1 if the vertex is right of the line, -1 if its on 
 		// its left and 0 if its on the line. So for the box to be intersected, at least one
 		// vertex has to be left of the line, and at least one must be on its right. Or one
-		const auto s1 = line_side(line.p1, line.p2, mesh.vertex_1);
-		const auto s2 = line_side(line.p1, line.p2, mesh.vertex_2);
-		const auto s3 = line_side(line.p1, line.p2, mesh.vertex_3);
-		const auto s4 = line_side(line.p1, line.p2, mesh.vertex_4);
+		const auto s1 = line_side(line.p1, line.p2, mesh.vertices[0]);
+		const auto s2 = line_side(line.p1, line.p2, mesh.vertices[1]);
+		const auto s3 = line_side(line.p1, line.p2, mesh.vertices[2]);
+		const auto s4 = line_side(line.p1, line.p2, mesh.vertices[3]);
 
 		return (s1 >= 0 || s2 >= 0 || s3 >= 0 || s4 >= 0) && (s1 <= 0 || s2 <= 0 || s3 <= 0 || s4 <= 0);
 	}
@@ -339,7 +371,7 @@ namespace cbn
 
 		//TODO: handle with caching instead
 		// The mesh will need updating, so will the extents etc.
-		m_Mesh = QuadMesh::Create(as_transform(), m_Size, m_LocalOriginOffset);
+		generate_mesh();
 		update_extent();
 	}
 
@@ -354,14 +386,16 @@ namespace cbn
 		// the box. Otherwise its specified using world coordinates. 
 		if(!local_coords)
 		{
+			// If the offset is given in world coordinates, then they need to become local coords
+
 			// If the offset is given in world coordinates, then we need to 
 			// project the offset along the local axes of the box to turn 
-			// them into local coordiantes. Since the normals 4 and 1 line up 
-			// with the axes and are unit normals, we can do this with just
-			// two dot products. 
+			// them into local coordiantes. Since the box normals 0 and 3, by
+			// convention, line up with the axes and are unit normals; we can 
+			// do this with just two dot products. 
 			const auto& mesh = this->mesh();
-			m_LocalOriginOffset.x = glm::dot(origin_offset, mesh.normal_4);
-			m_LocalOriginOffset.y = glm::dot(origin_offset, mesh.normal_1);
+			m_LocalOriginOffset.x = glm::dot(origin_offset, mesh.normals[3]);
+			m_LocalOriginOffset.y = glm::dot(origin_offset, mesh.normals[0]);
 		} else m_LocalOriginOffset = origin_offset;
 
 		// The translation is taken from the origin, so if the origin is changed then the box 
@@ -378,9 +412,9 @@ namespace cbn
 
 	const glm::vec2& BoundingBox::direction() const
 	{
-		// The direction is alligned with normal 1, which faces north in local space
+		// By the quad convention used, the direction is alligned with normal 0, which faces north in local space
 		const auto& mesh = this->mesh();
-		return mesh.normal_1;
+		return mesh.normals[0];
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -418,8 +452,7 @@ namespace cbn
 	const QuadMesh& BoundingBox::mesh() const
 	{
 		//TODO: caching
-
-		m_Mesh = QuadMesh::Create(as_transform(), m_Size, m_LocalOriginOffset);
+		generate_mesh();
 
 		return m_Mesh;
 	}

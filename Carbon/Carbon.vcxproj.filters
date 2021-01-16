@@ -129,9 +129,6 @@
     <ClCompile Include="Maths\Models\BoundingTriangle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Maths\Models\Meshes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Maths\Models\Common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -263,13 +260,13 @@
     <ClInclude Include="Maths\Models\BoundingTriangle.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Maths\Models\Meshes.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Maths\Physics\Collider.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Maths\Models\Common.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths\Models\Mesh.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -87,10 +87,10 @@ namespace cbn
 	{
 		// A circle encloses a box, if all its vertices are within the circle
 		const auto& mesh = box.mesh();
-		return contains(mesh.vertex_1)
-			&& contains(mesh.vertex_2)
-			&& contains(mesh.vertex_3)
-			&& contains(mesh.vertex_4);
+		return contains(mesh.vertices[0])
+			&& contains(mesh.vertices[1])
+			&& contains(mesh.vertices[2])
+			&& contains(mesh.vertices[3]);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -128,9 +128,9 @@ namespace cbn
 	{
 		// The circle encloes the triangle if all its vertices are within
 		const auto& mesh = triangle.mesh();
-		return contains(mesh.vertex_1)
-			&& contains(mesh.vertex_2)
-			&& contains(mesh.vertex_3);
+		return contains(mesh.vertices[0])
+			&& contains(mesh.vertices[1])
+			&& contains(mesh.vertices[2]);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -228,9 +228,9 @@ namespace cbn
 		{
 			// If the offset is given in world coordinates, then we need to 
 			// project the offset along the local axes of the circle to turn 
-			// them into local coordiantes. Since the normals direction vector
-			// and its normal line up with the axes and are unit normals, we can 
-			// do this with just two dot products. 
+			// them into local coordiantes. Since the direction vector and its 
+			// normal line up with the axes and are unit normals, we can do 
+			// this with just two dot products. 
 			const auto& dir = direction();
 			const glm::vec2 dir_normal{dir.y, -dir.x};
 

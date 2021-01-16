@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Meshes.hpp"
+#include "Mesh.hpp"
 #include "BoundingBox.hpp"
 #include "BoundingCircle.hpp"
 #include "../Physics/Collider.hpp"
@@ -17,7 +17,7 @@ namespace cbn
 	{
 	private:
 
-		std::array<Point, TriangleMesh::Sides> m_LocalVertices;
+		TriangleMesh::Vertices m_LocalVertices;
 		glm::vec2 m_LocalOriginOffset;
 
 		mutable glm::vec2 m_Direction;
@@ -29,9 +29,9 @@ namespace cbn
 
 	public:
 
-		BoundingTriangle(const std::array<Point, TriangleMesh::Sides>& vertices);
+		BoundingTriangle(const TriangleMesh::Vertices& vertices);
 
-		BoundingTriangle(const Transform& transform, const std::array<Point, TriangleMesh::Sides>& vertices);
+		BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices);
 
 		bool overlaps(const Collider& collider) const override;
 
@@ -59,7 +59,7 @@ namespace cbn
 
 		const Extent& extent() const override;
 
-		void reshape(const std::array<Point, TriangleMesh::Sides>& vertices);
+		void reshape(const TriangleMesh::Vertices& vertices);
 
 		void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false); 
 		 

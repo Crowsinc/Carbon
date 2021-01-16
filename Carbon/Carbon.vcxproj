@@ -110,6 +110,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -186,7 +187,6 @@
     <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Matrix.cpp" />
     <ClCompile Include="Maths\Models\Common.cpp" />
-    <ClCompile Include="Maths\Models\Meshes.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Diagnostics\Stopwatch.cpp" />
@@ -229,7 +229,7 @@
     <ClInclude Include="Maths\Matrix.hpp" />
     <ClInclude Include="Maths\Models\Common.hpp" />
     <ClInclude Include="Maths\Physics\Collider.hpp" />
-    <ClInclude Include="Maths\Models\Meshes.hpp" />
+    <ClInclude Include="Maths\Models\Mesh.hpp" />
     <ClInclude Include="Maths\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Maths\Transforms\Rotatable.hpp" />

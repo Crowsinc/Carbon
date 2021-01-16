@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <array>
 
 namespace cbn
 {
@@ -15,6 +16,8 @@ namespace cbn
 		bool overlaps(const Extent& other) const;
 
 		bool contains(const Point& point) const;
+
+		std::array<Point, 4> vertices() const;
 	};
 
 	struct Segment
