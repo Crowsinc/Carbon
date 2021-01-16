@@ -260,24 +260,6 @@ void choose_state_scene(SampleStates& state, URes<Window>& window, SpriteRendere
 	}
 }
 
-/*
-	TODO:
-		- Fix circle origin issue (DONE)
-			^^ The issue is just that the sample wasn't sending the new origin as a local space offset, instead as a transformed space offset. 
-			^^ fixed by adding the direction vector. 
-		- Triangle - centroid & centre ?
-		- Determine how culling will work, and whether sending the bounding box is really a good solution or not.
-			^ BoundingCircle for camera, BoundingBox for sprite. 
-		- Implement transform / mesh caching (Use transformables?, check whether the dynamic render boosts are worth it vs. the static losses
-			- Consider that scaling is now not a thing, yet the Transform solution can still allow trying to put scaling
-		- Implement culling and test
-		- Remake camera. 
-		- Linear maths + Optimise. 
-
-	TODO: allow up to 31 textures in texture pack, it should be upto the user to ensure they use the correct amount. 
-		- also make the static maps just be arrays
-*/
-
 void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
 {
 	static SRes<ShaderProgram> program = load_tint_shader();
@@ -286,7 +268,7 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 	static Identifier RectTextureID = "square";
 	static bool RectHeld = false;
 
-	static BoundingBox Rect2{{600.0f, 800.0f}, {128, 64}};
+	static BoundingBox Rect2{{600.0f, 800.0f, 25}, {128, 64}};
 	static bool RectHeld2 = false;
 
 	static BoundingCircle Circle{{1200, 900}, 16.0f};
@@ -316,16 +298,34 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 	static Identifier Tri2TextureID = "tri2";
 	static bool TriHeld2 = false;
 
+	static constexpr float alpha = 256 * (9.0f / 10.0f);
 
-	static const glm::uvec4 red_ud = {Red.red, Red.green, Red.blue, Red.alpha};
-	static const glm::uvec4 blue_ud = {Blue.red, Blue.green, Blue.blue, Blue.alpha};
-	static const glm::uvec4 white_ud = {White.red, White.green, White.blue, White.alpha};
-	static const glm::uvec4 magenta_ud = {Magenta.red, Magenta.green, Magenta.blue, Magenta.alpha};
+	static const glm::uvec4 red_ud = {Red.red, Red.green, Red.blue, alpha};
+	static const glm::uvec4 blue_ud = {Blue.red, Blue.green, Blue.blue, alpha};
+	static const glm::uvec4 white_ud = {White.red, White.green, White.blue, alpha};
+	static const glm::uvec4 magenta_ud = {Magenta.red, Magenta.green, Magenta.blue, alpha};
 
-	static const glm::uvec4 yellow_ud = {Yellow.red, Yellow.green, Yellow.blue, Yellow.alpha};
-	static const glm::uvec4 orange_ud = {Orange.red, Orange.green, Orange.blue, Orange.alpha};
-	static const glm::uvec4 cyan_ud = {Cyan.red, Cyan.green, Cyan.blue, Cyan.alpha};
+	static const glm::uvec4 yellow_ud = {Yellow.red, Yellow.green, Yellow.blue, alpha};
+	static const glm::uvec4 orange_ud = {Orange.red, Orange.green, Orange.blue, alpha};
+	static const glm::uvec4 cyan_ud = {Cyan.red, Cyan.green, Cyan.blue, alpha};
 	static const glm::uvec4 cyan_trans_ud = {Cyan.red, Cyan.green, Cyan.blue, Cyan.alpha / 4};
+
+	static const BoundingBox line{{300, 600, 275}, {2000,1}};
+	static const Line l{line.mesh().vertex_1, line.mesh().vertex_4};
+
+	static const BoundingBox segment{{800,700, 32}, {100, 1}};
+	static const Segment s{segment.mesh().vertex_1, segment.mesh().vertex_4};
+
+	static const BoundingBox ray{Transform{1850, 1200, 50}, {2000,1}};
+	static const Ray r{ray.mesh().vertex_1, glm::normalize(ray.mesh().vertex_4 - ray.mesh().vertex_1)};
+
+	static std::array<Collider*, 6> colliders = {
+	    &Rect,& Rect2,& Circle,& Circle2,& Tri,& Tri2
+	};
+
+	static std::array<glm::uvec4, 6> tint_colours = {
+		white_ud, white_ud, white_ud, white_ud, white_ud, white_ud
+	};
 
 
 	// Determine whether the mouse was clicked
@@ -447,22 +447,9 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 	}
 	
 
-	BoundingBox line{{300, 600, 275}, {2000,1}};
-	Line l{line.mesh().vertex_1, line.mesh().vertex_4};
 
-	BoundingBox segment{{800,700, 32}, {100, 1}};
-	Segment s{segment.mesh().vertex_1, segment.mesh().vertex_4};
 
-	BoundingBox ray{Transform{1850, 1200, 50}, {2000,1}};
-	Ray r{ray.mesh().vertex_1, glm::normalize(ray.mesh().vertex_4 - ray.mesh().vertex_1)};
 
-	std::array<Collider*, 6> colliders = {
-		&Rect, &Rect2, &Circle, &Circle2, &Tri, &Tri2
-	};
-
-	std::array<glm::uvec4, 6> tint_colours = {
-		white_ud, white_ud, white_ud, white_ud, white_ud, white_ud
-	};
 
 	for(auto i = 0; i < colliders.size(); i++)
 	{
@@ -480,11 +467,11 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 			if(curr.overlaps(target))
 				overlaps = true;
 
-			if(curr.encloses(target))
-				encloses = true;
-
-			if(target.encloses(curr))
+			if(curr.enclosed_by(target))
 				enclosed = true;
+
+			if(target.enclosed_by(curr))
+				encloses = true;
 		}
 
 		if(curr.intersected_by(l) || curr.intersected_by(r) || curr.intersected_by(s))
@@ -509,8 +496,8 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 	renderer.submit(Rect, RectTextureID, tint_colours[0]);
 	renderer.submit(Rect2, RectTextureID, tint_colours[1]);
 
-	renderer.submit(Circle.wrap_axis_alligned(), CircleTextureID, tint_colours[2]);
 	renderer.submit(Circle2.wrap_axis_alligned(), CircleTextureID, tint_colours[3]);
+	renderer.submit(Circle.wrap_axis_alligned(), CircleTextureID, tint_colours[2]);
 
 	renderer.submit(TriBB, TriTextureID, tint_colours[4]);
 	
@@ -552,7 +539,62 @@ SRes<ShaderProgram> load_texture_shader()
 	return program;
 }
 
-std::vector<BoundingBox> create_static_sprites()
+template<size_t S>
+std::vector<QuadMesh> create_static_sprites()
+{
+	constexpr float padding = 1.056f;
+	constexpr glm::vec2 size = {3.5f, 3.5f};
+
+	std::vector<QuadMesh> meshes;
+	meshes.reserve(S);
+	for(float x = size.x / 2.0f; x < 1920; x += padding + size.x)
+	{
+		for(float y = size.y / 2.0f; y < 1080; y += padding + size.y)
+		{
+			meshes.push_back(QuadMesh::Create(Transform{x, y}, size));
+
+			if(meshes.size() == S)
+				break;
+		}
+		if(meshes.size() == S)
+			break;
+	}
+	return meshes;
+}
+
+void static_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
+{
+	static const SRes<ShaderProgram> program = load_texture_shader();
+	static const auto meshes = create_static_sprites<100000>();
+	static const Identifier textures[2] = {"rock", "ground"};
+	
+	uint64_t total_submitted = 0;
+	while(total_submitted != meshes.size())
+	{
+		const int sprites_left = meshes.size() - total_submitted;
+		renderer.begin_batch(camera);
+		if(sprites_left >= 4096)
+		{
+			for(auto i = 0; i < 4096; i++)
+			{
+				renderer.submit(meshes[total_submitted], textures[i % 2]);
+				total_submitted++;
+			}
+		}
+		else
+		{
+			for(auto i = 0; i < sprites_left; i++)
+			{
+				renderer.submit(meshes[total_submitted], textures[i % 2]);
+				total_submitted++;
+			}
+		}
+		renderer.end_batch();
+		renderer.render(program);
+	}
+}
+
+std::vector<BoundingBox> create_dynamic_sprites()
 {
 	constexpr int SPRITE_COUNT = 100000;
 
@@ -568,7 +610,6 @@ std::vector<BoundingBox> create_static_sprites()
 		{
 			sprites.emplace_back(Transform{x, y}, size);
 
-
 			if(sprites.size() == SPRITE_COUNT)
 				break;
 		}
@@ -578,50 +619,9 @@ std::vector<BoundingBox> create_static_sprites()
 	return sprites;
 }
 
-void static_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
-{
-	static BoundingCircle cam(glm::distance({0,0}, camera.get_resolution()));
-
-	static SRes<ShaderProgram> program = load_texture_shader();
-	static std::vector<BoundingBox> sprites = create_static_sprites();
-	static Identifier textures[2] = {"rock", "ground"};
-	
-	uint64_t total_submitted = 0;
-	while(total_submitted != sprites.size())
-	{
-		const int sprites_left = sprites.size() - total_submitted;
-		renderer.begin_batch(camera);
-		if(sprites_left >= 4096)
-		{
-			for(auto i = 0; i < 4096; i++)
-			{
-				const auto& mesh = sprites[total_submitted].mesh();
-
-			//	if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(mesh, textures[i % 2]);
-				total_submitted++;
-			}
-		}
-		else
-		{
-			for(auto i = 0; i < sprites_left; i++)
-			{
-				const auto& mesh = sprites[total_submitted].mesh();
-
-			//	if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(mesh, textures[i % 2]);
-				total_submitted++;
-			}
-		}
-		renderer.end_batch();
-		renderer.render(program);
-	}
-
-}
-
 void handle_dynamic_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
 {
-	const float distance = glm::distance2(sprite.origin(), mouse_pos);
+	const float distance = glm::distance2(sprite.centre(), mouse_pos);
 
 	if(distance >= 10000)
 	{
@@ -639,7 +639,7 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 
 	static SRes<ShaderProgram> program = load_texture_shader();
 	static Identifier textures[2] = {"rock", "ground"};
-	static auto sprites = create_static_sprites();
+	static auto sprites = create_dynamic_sprites();
 
 	// Get mouse position
 	double pos_x, pos_y;

@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-//TODO: also normalize the scaling crap
-
 #include "../Maths.hpp"
 
 namespace cbn
@@ -109,16 +107,9 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool BoundingTriangle::encloses(const Collider& collider) const
+	bool BoundingTriangle::enclosed_by(const Collider& collider) const
 	{
-		// The triangle encloses the collider if it overlaps
-		// and the collider does not intersect any of the edges
-		
-		const auto& mesh = this->mesh();
-		return overlaps(collider)
-			&& collider.intersected_by(mesh.edge_1)
-			&& collider.intersected_by(mesh.edge_2)
-			&& collider.intersected_by(mesh.edge_3);
+		return collider.encloses(*this);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -258,28 +249,36 @@ namespace cbn
 
 	void BoundingTriangle::specify_origin(const glm::vec2& origin_offset, const bool local_coords)
 	{
-		// The origin specifies the origin of the triangle as an offset from the centroid.
+		const Point old_centre = centre();
+
+		// The origin specifies the origin of the box as an offset from the centre of the triangle.
 		// If the local_coords flag is set, then the offset is specified in the local space of 
 		// the triangle. Otherwise its specified using world coordinates. 
-		if(local_coords)
-			m_LocalOriginOffset = origin_offset;
-		else
+		if(!local_coords)
 		{
-			// If the origin is not specified using local coordinates then we need 
-			// to convert the origin offset to use local coordinates first. 
-			// This is done by projecting the given offset across the unit direction
-			// vector of the triangle, and its clockwise normal.
-			const auto& dir = this->direction();
-			const glm::vec2 dir_normal = {dir.y, -dir.x};
+			// If the offset is given in world coordinates, then we need to 
+			// project the offset along the local axes of the triangle to turn 
+			// them into local coordiantes. Since the normals direction vector
+			// and its normal line up with the axes and are unit normals, we can 
+			// do this with just two dot products. 
+			const auto& dir = direction();
+			const glm::vec2 dir_normal{dir.y, -dir.x};
 
-			// Note that since the normals of the both are unit vectors, we can do 
-			// the projection with a simple dot product. Also note that since its 
-			// a centre offset, its the negation of the origin offset as explained above.
 			m_LocalOriginOffset.x = glm::dot(origin_offset, dir_normal);
 			m_LocalOriginOffset.y = glm::dot(origin_offset, dir);
 		}
+		else m_LocalOriginOffset = origin_offset;
 
-		// The local mesh will need to be changed, so simply reshape the triangle with the new origin offset
+		// The translation is taken from the origin, so if the origin is changed then the triangle 
+		// would move so that the new origin is placed (in world coordinates) where the old 
+		// origin was. For this reason, we need to offset the translation so that the triangle stays 
+		// with the same location in the world. The translation amount has to be obtained from the difference 
+		// in position after transformation (non-local). The easiest way to do this is to observe the
+		// difference in the transformed centre after the origin change, and translate the triangle by 
+		// the opposite change to cancel it out. 
+		translate_by(old_centre - centre());
+
+		// The local mesh will need to be changed, so reshape the triangle to reform it
 		reshape(m_LocalVertices);
 	}
 	

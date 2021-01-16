@@ -76,13 +76,9 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	bool BoundingCircle::encloses(const Collider& collider) const
+	bool BoundingCircle::enclosed_by(const Collider& collider) const
 	{
-		// TODO: very hard maths problem.
-		// We would need to check that the extent of the circle contains the extent of the collider
-		// then return false if any overlap in the corners of the circle-extent shape.
-		// It would be an approximation at best
-		return false;
+		return collider.encloses(*this);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -101,15 +97,31 @@ namespace cbn
 
 	bool BoundingCircle::encloses(const BoundingCircle& circle) const
 	{
-		// If this circle encloses the given circle, then the distance to
-		// the centre of the circle plus the circles radius should be less 
-		// than the radius of this circle. That is, the circles furthest point
-		// should be within this circle. 
-		const float max_distance = radius();
-		const float radius = circle.radius();
-		return glm::distance2(centre(), circle.centre()) <= (max_distance - radius) * (max_distance - radius);
+		// For the given circle B to be enclosed within this one, then
+		// the furthest point of the circle B from the centre of this circle,
+		// must be within this circle. So we take the distance between the 
+		// centre of this circle and circle B, and add circle B's radius
+		// to get its furthest point's distance. If this distance falls 
+		// below the radius of this circle, then it is enclosed. 
+		
+		// Note however that we re-arrange the formula so that we can use the distance 
+		// squared to avoid square roots. If the distance between the centres is D,
+		// the circle Bs radius is r and our radius is R, the formula goes from:
+		//						D + r <= R
+		// to
+		//						D^2 <= (R - r)(R - r)
+		// However, if R - r is negative then the ineqaulity needs to be
+		// reversed. This is avoided by just returning false if the radius of circle
+		// B is greater than ours, as it would be imposisble to enclose cirlce B.
+
+		const float distance_squared = glm::distance2(centre(), circle.centre());
+		const float radial_difference = radius() - circle.radius();
+
+		return radial_difference > 0 && distance_squared <= radial_difference * radial_difference;
 	}
 	
+
+
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::encloses(const BoundingTriangle& triangle) const
@@ -207,37 +219,34 @@ namespace cbn
 
 	void BoundingCircle::specify_origin(const glm::vec2& origin_offset, const bool local_coords)
 	{
-		// The origin specifies the origin of the circle as an offset from the centre.
-        // If the local_coords flag is set, then the offset is specified in the local space of 
-        // the circle. Otherwise its specified using world coordinates. 
-		if(local_coords)
-			// Since the circle is defined by the centre, we instead want to store the offset
-			// of the local centre from the origin. Since the origin is at (0,0) in local space
-			// and is an offset from the local centre. Then the local centre is just the opposite
-			// of the offset.
-			m_LocalCentreOffset = -origin_offset;
-		else
+		const Point old_centre = centre();
+
+		// The origin specifies the origin of the box as an offset from the centre of the circle.
+		// If the local_coords flag is set, then the offset is specified in the local space of 
+		// the circle. Otherwise its specified using world coordinates. 
+		if(!local_coords)
 		{
-			// If the origin is not specified using local coordinates then we need 
-			// to convert the origin offset to use local coordinates first. 
-			// This is done by projecting the given offset across the unit direction
-			// vector of the circle, and its clockwise normal.
-			const auto& dir = this->direction();
-			const glm::vec2 dir_normal = {dir.y, -dir.x};
+			// If the offset is given in world coordinates, then we need to 
+			// project the offset along the local axes of the circle to turn 
+			// them into local coordiantes. Since the normals direction vector
+			// and its normal line up with the axes and are unit normals, we can 
+			// do this with just two dot products. 
+			const auto& dir = direction();
+			const glm::vec2 dir_normal{dir.y, -dir.x};
 
-			// Note that since the normals of the both are unit vectors, we can do 
-			// the projection with a simple dot product. Also note that since its 
-			// a centre offset, its the negation of the origin offset as explained above.
-			m_LocalCentreOffset.x = glm::dot(-origin_offset, dir_normal);
-			m_LocalCentreOffset.y = glm::dot(-origin_offset, dir);
+			m_LocalCentreOffset.x = -glm::dot(origin_offset, dir_normal);
+			m_LocalCentreOffset.y = -glm::dot(origin_offset, dir);
 		}
+		else m_LocalCentreOffset = -origin_offset;
 
-
-		//TODO: ?????------------------------------------------------------------------------------------------------
-		// Since the translation of the circle is from the origin point and the origin just changed
-		// the circle's location has also changed. So we need to translate the circle by the opposite
-		// offset so that the it remains in the same spot.
-		// translate_by(-m_LocalCentreOffset);
+		// The translation is taken from the origin, so if the origin is changed then the circle 
+		// would move so that the new origin is placed (in world coordinates) where the old 
+		// origin was. For this reason, we need to offset the translation so that the circle stays 
+		// with the same location in the world. The translation amount has to be obtained from the difference 
+		// in position after transformation (non-local). The easiest way to do this is to observe the
+		// difference in the transformed centre after the origin change, and translate the circle by 
+		// the opposite change to cancel it out. 
+		translate_by(old_centre - centre());
 	}
 	
 	//-------------------------------------------------------------------------------------

@@ -8,6 +8,8 @@
 namespace cbn
 {
 
+	//TODO: add compound collider for a collider made form colliders?
+
 	class BoundingBox;
 	class BoundingCircle;
 	class BoundingTriangle;
@@ -26,7 +28,12 @@ namespace cbn
 		virtual bool overlaps(const BoundingTriangle& triangle) const = 0;
 
 		
-		virtual bool encloses(const Collider& collider) const = 0;
+		// The API here is reversed because we don't know anything about the collider.
+		// However if the API is made from a set of bounding classes then we can test
+		// if we are enclosed by another collider by seeing if the collider encloses
+		// all our sub-colliders. Doing it the other way around is possible but adds
+		// a lot of complexity as we don't know anything about the collider. 
+		virtual bool enclosed_by(const Collider& collider) const = 0;
 
 		virtual bool encloses(const BoundingBox& box) const = 0;
 

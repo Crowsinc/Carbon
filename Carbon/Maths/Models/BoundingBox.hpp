@@ -46,7 +46,7 @@ namespace cbn
 
 		bool overlaps(const BoundingTriangle& triangle) const override;
 
-		bool encloses(const Collider& collider) const override;
+		bool enclosed_by(const Collider& collider) const override;
 
 		bool encloses(const BoundingBox& box) const override;
 
