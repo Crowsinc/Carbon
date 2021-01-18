@@ -18,6 +18,8 @@ namespace cbn
 		bool contains(const Point& point) const;
 
 		std::array<Point, 4> vertices() const;
+
+		glm::vec2 size() const;
 	};
 
 	struct Segment

@@ -61,6 +61,8 @@ namespace cbn
 
 	public:
 
+		//TODO: add transform_to and transform_by methods that let you apply transforms in bulk with a Transform object
+
 		Transformable();
 
 		Transformable(const Transformable& copy);

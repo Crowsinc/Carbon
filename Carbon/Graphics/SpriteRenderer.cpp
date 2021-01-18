@@ -51,56 +51,6 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
-	{
-		CBN_Assert(m_BatchStarted, "No batch exists for submission");
-		CBN_Assert(!is_batch_full(), "Batch is full");
-
-		const auto vertex_1 = transform(mesh.vertices[0], m_ViewProjectionMatrix);
-		const auto vertex_2 = transform(mesh.vertices[1], m_ViewProjectionMatrix);
-		const auto vertex_3 = transform(mesh.vertices[2], m_ViewProjectionMatrix);
-		const auto vertex_4 = transform(mesh.vertices[3], m_ViewProjectionMatrix);
-
-		// Set top left vertex data
-		m_BufferPtr->vertex_1.position = vertex_1;
-		m_BufferPtr->vertex_1.texture[0] = index_1 + 0;
-		m_BufferPtr->vertex_1.texture[1] = index_2 + 0;
-		m_BufferPtr->vertex_1.texture[2] = index_3 + 0;
-		m_BufferPtr->vertex_1.texture[3] = index_4 + 0;
-		m_BufferPtr->vertex_1.data = vertex_data;
-
-
-		// Set bottom left vertex data
-		m_BufferPtr->vertex_2.position = vertex_2;
-		m_BufferPtr->vertex_2.texture[0] = index_1 + 1;
-		m_BufferPtr->vertex_2.texture[1] = index_2 + 1;
-		m_BufferPtr->vertex_2.texture[2] = index_3 + 1;
-		m_BufferPtr->vertex_2.texture[3] = index_4 + 1;
-		m_BufferPtr->vertex_2.data = vertex_data;
-
-
-		// Set bottom right vertex data
-		m_BufferPtr->vertex_3.position = vertex_3;
-		m_BufferPtr->vertex_3.texture[0] = index_1 + 2;
-		m_BufferPtr->vertex_3.texture[1] = index_2 + 2;
-		m_BufferPtr->vertex_3.texture[2] = index_3 + 2;
-		m_BufferPtr->vertex_3.texture[3] = index_4 + 2;
-		m_BufferPtr->vertex_3.data = vertex_data;
-
-
-		// Set top right vertex data
-		m_BufferPtr->vertex_4.position = vertex_4;
-		m_BufferPtr->vertex_4.texture[0] = index_1 + 3;
-		m_BufferPtr->vertex_4.texture[1] = index_2 + 3;
-		m_BufferPtr->vertex_4.texture[2] = index_3 + 3;
-		m_BufferPtr->vertex_4.texture[3] = index_4 + 3;
-		m_BufferPtr->vertex_4.data = vertex_data;
-
-		m_BufferPtr++;
-		m_CurrentBatchSize++;
-		m_BatchEndPosition++;
-	}
-	
 	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	{
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
@@ -111,7 +61,7 @@ namespace cbn
 		const auto vertex_3 = transform(vertices[2], m_ViewProjectionMatrix);
 		const auto vertex_4 = transform(vertices[3], m_ViewProjectionMatrix);
 
-		// Set top left vertex data
+		// Top left vertex data
 		m_BufferPtr->vertex_1.position = vertex_1;
 		m_BufferPtr->vertex_1.texture[0] = index_1 + 0;
 		m_BufferPtr->vertex_1.texture[1] = index_2 + 0;
@@ -119,8 +69,7 @@ namespace cbn
 		m_BufferPtr->vertex_1.texture[3] = index_4 + 0;
 		m_BufferPtr->vertex_1.data = vertex_data;
 
-
-		// Set bottom left vertex data
+		// Bottom left vertex data
 		m_BufferPtr->vertex_2.position = vertex_2;
 		m_BufferPtr->vertex_2.texture[0] = index_1 + 1;
 		m_BufferPtr->vertex_2.texture[1] = index_2 + 1;
@@ -128,8 +77,7 @@ namespace cbn
 		m_BufferPtr->vertex_2.texture[3] = index_4 + 1;
 		m_BufferPtr->vertex_2.data = vertex_data;
 
-
-		// Set bottom right vertex data
+		// Bottom right vertex data
 		m_BufferPtr->vertex_3.position = vertex_3;
 		m_BufferPtr->vertex_3.texture[0] = index_1 + 2;
 		m_BufferPtr->vertex_3.texture[1] = index_2 + 2;
@@ -138,7 +86,7 @@ namespace cbn
 		m_BufferPtr->vertex_3.data = vertex_data;
 
 
-		// Set top right vertex data
+		// Top right vertex data
 		m_BufferPtr->vertex_4.position = vertex_4;
 		m_BufferPtr->vertex_4.texture[0] = index_1 + 3;
 		m_BufferPtr->vertex_4.texture[1] = index_2 + 3;
@@ -153,21 +101,13 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	bool SpriteRenderer::is_sprite_visible(const BoundingBox& sprite)
-	{
-		return true;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	SpriteRenderer::SpriteRenderer(const Version& opengl_version, const SpriteRendererSettings& settings, const SpriteRendererProperties& properties)
+	SpriteRenderer::SpriteRenderer(const Version& opengl_version, const SpriteRendererProperties& properties)
 		: m_SpritesPerStreamBuffer(properties.sprites_per_batch * properties.buffer_allocation_bias),
 		m_TexturePack(opengl_version),
 		m_Properties(properties),
 		m_BatchStartPosition(0),
 		m_BatchEndPosition(0),
 		m_CurrentBatchSize(0),
-		m_Settings(settings),
 		m_BatchStarted(false),
 		m_BatchEnded(true)
 	{
@@ -180,21 +120,17 @@ namespace cbn
 	{
 		CBN_Assert(!m_BatchStarted && m_BatchEnded, "Cannot start a new batch while batching is currently active");
 
-		// Reset batch statistics
+		// Reset batch statistics & set up camera
 		m_BatchEnded = false;
 		m_BatchStarted = true;
 		m_CurrentBatchSize = 0;
 		m_BatchStartPosition = m_BatchEndPosition;
+		m_ViewProjectionMatrix = camera.view_projection_matrix();
 
-		// Pre-calculate required camera data
-		m_ViewProjectionMatrix = camera.to_view_projection_matrix();
-		//TODO: m_CameraBoundingBox = camera.get_view_bounding_box();
-
-		// If there is no space at the end of the buffer for another batch, 
+		// If there is not enough space at the end of the buffer for another batch, 
 		// then we should wrap back around to the start of the buffer. Otherwise 
-		// we just continue where we last left off on the buffer for the last batch.
-		// This will ensure that we maximise the amount of buffer space used before we
-		// re-allocate it. 
+		// we just continue where the previous batch finished. This will ensure that 
+		// we maximise the amount of buffer space used before we re-allocate it. 
 		if(m_BatchStartPosition + m_Properties.sprites_per_batch >= m_SpritesPerStreamBuffer)
 		{
 			m_StreamBuffer->reallocate();
@@ -202,119 +138,76 @@ namespace cbn
 			m_BatchEndPosition = 0;
 		}
 
-		// Map the buffer
 		m_BufferPtr = reinterpret_cast<SpriteLayout*>(m_StreamBuffer->map(m_BatchStartPosition * sizeof(SpriteLayout), m_Properties.sprites_per_batch * sizeof(SpriteLayout)));
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-	
-		push_sprite_to_buffer(sprite.mesh(), 0, 0, 0, 0, c_EmptyVertexData);
+		push_sprite_to_buffer(vertices, 0, 0, 0, 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const glm::uvec4& vertex_data)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), 0, 0, 0, 0, vertex_data);
+		push_sprite_to_buffer(vertices, 0, 0, 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1)
-	{
-	//	if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-	//		return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::submit(const QuadMesh& sprite, const Identifier& texture_1)
-	{
-		push_sprite_to_buffer(sprite, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
-	}
 
 	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const glm::uvec4& vertex_data)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
 	}
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data)
 	{
-		if(m_Settings.cull_outside_camera && !is_sprite_visible(sprite))
-			return;
-
-		push_sprite_to_buffer(sprite.mesh(), m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
+		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -367,23 +260,9 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	SpriteRendererSettings SpriteRenderer::settings() const
-	{
-		return m_Settings;
-	}
-
-	//-------------------------------------------------------------------------------------
-
 	SpriteRendererProperties SpriteRenderer::properties() const
 	{
 		return m_Properties;
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	void SpriteRenderer::configure(const SpriteRendererSettings& settings)
-	{
-		m_Settings = settings;
 	}
 
 	//-------------------------------------------------------------------------------------

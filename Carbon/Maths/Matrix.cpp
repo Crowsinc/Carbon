@@ -63,8 +63,8 @@ namespace cbn
 			1.0f,
 			0.0f,
 			// Column 4
-			-cos_value * translation.x - sin_value * translation.y,
-			-sin_value * translation.x + cos_value * translation.y,
+		    -cos_value * translation.x + sin_value * translation.y,  //	-cos_value * translation.x - sin_value * translation.y,
+		    -sin_value * translation.x - cos_value * translation.y,  //	-sin_value * translation.x + cos_value * translation.y,  <-- these have y at top left
 			0.0f,
 			1.0f
 		};

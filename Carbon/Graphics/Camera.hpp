@@ -1,75 +1,39 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "../Maths/Models/BoundingBox.hpp"
+#include "../Maths/Transform.hpp"
+#include "../Maths/Matrix.hpp"
 
 namespace cbn
 {
-	
-	class Camera 
+
+	//TODO: caching
+
+	class Camera : public Transformable<Translatable2D, Rotatable2D, Scalable2D>
 	{
 	private:
 
-		constexpr static float s_MinimumZoomValue = 0.0001f;
-		
-		mutable bool m_ViewCacheOutdated, m_ProjectionCacheOutdated, m_ViewProjectionCacheOutdated;
-		mutable glm::mat4 m_ViewCache, m_ProjectionCache, m_ViewProjectionCache;
-		
-		glm::vec2 m_Resolution, m_CenterOffset;
-		float m_Rotation, m_Zoom;
-		glm::vec2 m_Translation;
-
+		glm::vec2 m_Resolution;
+		mutable BoundingBox m_BoundingBox;
+		mutable glm::mat4 m_ViewMatrix, m_ProjectionMatrix, m_ViewProjectionMatrix;
 
 	public:
-
-		Camera(const float width, const float height, const float x = 0, const float y = 0, const float zoom = 1, const float rotation_degrees = 0);
-
-		Camera(const glm::vec2& resolution, const glm::vec2& translation = {0,0}, const float zoom = 1, const float rotation_degrees = 0);
-
-		void translate_by(float x, float y);
-
-		void translate_by(const glm::vec2& translation);
-
-		void translate_to(float x, float y);
-
-		void translate_to(const glm::vec2& position);
-
-		void translate_towards(float x, float y, float amount);
-
-		void translate_towards(float heading_degrees, float amount);
-
-		void translate_towards(const glm::vec2& position, float amount);
-
-		void rotate_by(float degrees);
-
-		void rotate_to(float degrees);
-
-		void zoom_in_by(float zoom);
 		
-		void zoom_out_by(float zoom);
+		Camera(const glm::vec2& resolution);
 
-		void zoom_to(float zoom);
+		Camera(const Transform& transform, const glm::vec2& resolution);
 
-		void set_resolution(const float width, const float height);
+		void resize(const glm::vec2& resolution);
 
-		void set_resolution(const glm::vec2& resolution);
+		const glm::vec2& resolution() const;
+	
+		const glm::mat4& view_matrix() const;
 
-		float get_zoom() const;
+		const glm::mat4& projection_matrix() const;
 
-		float get_rotation_degrees() const;
+		const glm::mat4& view_projection_matrix() const;
 
-		float get_rotation_radians() const;
-
-		const glm::vec2& get_translation() const;
-
-		const glm::vec2& get_resolution() const;
-
-		glm::mat4 to_projection_matrix() const;
-
-		glm::mat4 to_view_matrix() const;
-
-		glm::mat4 to_view_projection_matrix() const;
-
+		const BoundingBox& bounding_box() const;
 	};
-
 
 }

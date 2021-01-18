@@ -385,6 +385,9 @@ namespace cbn
 	
 	void Window::set_resolution(const glm::vec2 & resolution)
 	{
+		//TODO: temp, determine where this should actually go
+		glViewport(0, 0, resolution.x, resolution.y);
+
 		glfwSetWindowSize(m_GLFWHandle, static_cast<int>(resolution.x), static_cast<int>(resolution.y));
 
 		// Update the resolution member but do not invoke the resolution

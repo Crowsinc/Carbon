@@ -86,33 +86,35 @@ namespace cbn
 
 		void update();
 
-		bool is_visible() const;
+		//TODO: rename things
 
-		bool is_focused() const;
+		bool is_visible() const; //visible
 
-		bool is_vsync_enabled() const;
+		bool is_focused() const; //focused
 
-		bool is_debug_enabled() const;
+		bool is_vsync_enabled() const;  //vsync
 
-		glm::uvec2 get_resolution() const;
+		bool is_debug_enabled() const; //debug_enabled?
 
-		std::string_view get_title() const;
+		glm::uvec2 get_resolution() const; //resolution()
 
-		DisplayMode get_display_mode() const;
+		std::string_view get_title() const; //title()
+
+		DisplayMode get_display_mode() const; 
 
 		const Version get_opengl_version() const;
 
-		void set_vsync(const bool enable_vsync);
+		void set_vsync(const bool enable_vsync); // configure_display
 
-		void set_title(const std::string& title);
+		void set_title(const std::string& title); // configure_display
 
-		void set_resolution(const glm::vec2& resolution);
+		void set_resolution(const glm::vec2& resolution); //resize()
 
-		void set_display_mode(const DisplayMode display_mode);
+		void set_display_mode(const DisplayMode display_mode); // configure_display
 		
 		void operator=(Window&& window) noexcept;
 
-		GLFWwindow* TEMP_HANDLE() const { return m_GLFWHandle; }; //-----------------------------------------remove me
+		GLFWwindow* TEMP_HANDLE() const { return m_GLFWHandle; }; //-----------------------------------------remove me once input handling is in
 	};
 
 }

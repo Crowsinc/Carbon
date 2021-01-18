@@ -16,15 +16,12 @@
 namespace cbn
 {
 
+	//TODO: improve user data situation
+
 	struct SpriteRendererProperties
 	{
 		uint16_t sprites_per_batch = 4096;
 		uint32_t buffer_allocation_bias = 32;
-	};
-
-	struct SpriteRendererSettings
-	{
-		bool cull_outside_camera = true;
 	};
 
 	class SpriteRenderer
@@ -66,51 +63,38 @@ namespace cbn
 		uint32_t m_CurrentBatchSize;
 
 		const SpriteRendererProperties m_Properties;
-		SpriteRendererSettings m_Settings;
 		glm::mat4 m_ViewProjectionMatrix;
-		//BoundingBox m_CameraBoundingBox;
 		TexturePack m_TexturePack;
 
 		void initialize_renderer(const Version& opengl_version);
 
-		bool is_sprite_visible(const BoundingBox& sprite);
-
-	//	void push_sprite_to_buffer(const BoundingBox& sprite, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
-		
-		void push_sprite_to_buffer(const QuadMesh& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
-
 		void push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
-
 
 	public:
 
-		SpriteRenderer(const Version& opengl_version, const SpriteRendererSettings& settings = {}, const SpriteRendererProperties& properties = {});
+		SpriteRenderer(const Version& opengl_version, const SpriteRendererProperties& properties = {});
 
 		void begin_batch(const Camera& camera);
 
-		void submit(const BoundingBox& sprite);
-		
-		void submit(const BoundingBox& sprite, const glm::uvec4& vertex_data);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1);
-	
-		void submit(const QuadMesh& sprite, const Identifier& texture_1);
+		void submit(const QuadMesh::Vertices& vertices);
+
+		void submit(const QuadMesh::Vertices& vertices, const glm::uvec4& vertex_data);
 
 		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1);
 
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const glm::uvec4& vertex_data);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4);
-		
-		void submit(const BoundingBox& sprite, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data);
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const glm::uvec4& vertex_data);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4);
+
+		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data);
 
 		void end_batch();
 
@@ -122,11 +106,7 @@ namespace cbn
 
 		int batch_size() const;
 
-		SpriteRendererSettings settings() const;
-
 		SpriteRendererProperties properties() const;
-
-		void configure(const SpriteRendererSettings& settings);
 
 		void set_texture_pack(const TexturePack& textures);
 

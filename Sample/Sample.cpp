@@ -88,8 +88,8 @@ int main()
 		runflag = false;
 	});
 
-	//TODO: fix having to do this
-	glViewport(0, 0, 1920, 1080);
+	//TODO: enable these by default on the sprite renderer? or make these context settings
+	// Like, make a context class that you can get from the Window
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -106,9 +106,13 @@ int main()
 	prop.buffer_allocation_bias = 32;
 	prop.sprites_per_batch = 4096;
 
-	cbn::Camera scene_camera(1920, 1080);
+	// Origin is in centre, so move the camera
+	cbn::Camera scene_camera({1920, 1080});
+	scene_camera.translate_by(1920.0f / 2, 1080.0f / 2);
+
+
 	cbn::TexturePack texture_pack(window->get_opengl_version());
-	cbn::SpriteRenderer renderer(window->get_opengl_version(),{}, prop);
+	cbn::SpriteRenderer renderer(window->get_opengl_version(), prop);
 
 
 	cbn::SRes<cbn::Texture> rock_texture = cbn::Texture::Open("res/rock.png");
@@ -233,9 +237,9 @@ void choose_state_scene(SampleStates& state, URes<Window>& window, SpriteRendere
 	const glm::vec2 mouse_pos = {pos_x, window->get_resolution().y - pos_y};
 
 	renderer.begin_batch(camera);
-	renderer.submit(BTButtonBB, BTButtonTextureID, BTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
-	renderer.submit(SRTButtonBB, SRTButtonTextureID, SRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
-	renderer.submit(DRTButtonBB, DRTButtonTextureID, DRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
+	renderer.submit(BTButtonBB.mesh().vertices, BTButtonTextureID, BTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
+	renderer.submit(SRTButtonBB.mesh().vertices, SRTButtonTextureID, SRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
+	renderer.submit(DRTButtonBB.mesh().vertices, DRTButtonTextureID, DRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
 	renderer.end_batch();
 
 	renderer.render(program);
@@ -493,21 +497,21 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 
 	renderer.begin_batch(camera);
 
-	renderer.submit(Rect, RectTextureID, tint_colours[0]);
-	renderer.submit(Rect2, RectTextureID, tint_colours[1]);
+	renderer.submit(Rect.mesh().vertices, RectTextureID, tint_colours[0]);
+	renderer.submit(Rect2.mesh().vertices, RectTextureID, tint_colours[1]);
 
-	renderer.submit(Circle2.wrap_axis_alligned(), CircleTextureID, tint_colours[3]);
-	renderer.submit(Circle.wrap_axis_alligned(), CircleTextureID, tint_colours[2]);
+	renderer.submit(Circle2.wrap_axis_alligned().mesh().vertices, CircleTextureID, tint_colours[3]);
+	renderer.submit(Circle.wrap_axis_alligned().mesh().vertices, CircleTextureID, tint_colours[2]);
 
-	renderer.submit(TriBB, TriTextureID, tint_colours[4]);
+	renderer.submit(TriBB.mesh().vertices, TriTextureID, tint_colours[4]);
 	
-	renderer.submit(Tri2.wrap_axis_alligned(), RectTextureID, cyan_trans_ud);
-	renderer.submit(TriBB2, Tri2TextureID, tint_colours[5]);
+	renderer.submit(Tri2.wrap_axis_alligned().mesh().vertices, RectTextureID, cyan_trans_ud);
+	renderer.submit(TriBB2.mesh().vertices, Tri2TextureID, tint_colours[5]);
 
 
-	renderer.submit(line, RectTextureID, yellow_ud);
-	renderer.submit(segment, RectTextureID, orange_ud);
-	renderer.submit(ray, RectTextureID, cyan_ud);
+	renderer.submit(line.mesh().vertices, RectTextureID, yellow_ud);
+	renderer.submit(segment.mesh().vertices, RectTextureID, orange_ud);
+	renderer.submit(ray.mesh().vertices, RectTextureID, cyan_ud);
 
 	renderer.end_batch();
 	renderer.render(program);
@@ -644,7 +648,7 @@ void handle_dynamic_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
 
 void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
 {
-	static BoundingCircle cam(glm::distance({0,0}, camera.get_resolution()));
+	static BoundingCircle cam{camera.as_transform(), glm::length(camera.bounding_box().extent().size())};
 
 	static SRes<ShaderProgram> program = load_texture_shader();
 	static Identifier textures[2] = {"rock", "ground"};
@@ -665,11 +669,11 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 		{
 			for(auto i = 0; i < 4096; i++)
 			{
-				const auto& mesh = sprites[total_submitted].mesh();
+				const auto& verts = sprites[total_submitted].mesh().vertices;
 
 				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
 				//if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(mesh, textures[i % 2]);
+					renderer.submit(verts, textures[i % 2]);
 				total_submitted++;
 			}
 		}
@@ -677,11 +681,11 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 		{
 			for(auto i = 0; i < sprites_left; i++)
 			{
-				const auto& mesh = sprites[total_submitted].mesh();
+				const auto& verts = sprites[total_submitted].mesh().vertices;
 
 				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
 				//if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(mesh, textures[i % 2]);
+					renderer.submit(verts, textures[i % 2]);
 				total_submitted++;
 			}
 		}
