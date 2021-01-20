@@ -11,6 +11,9 @@
 namespace cbn
 {
 
+	//TODO: convert to templated class so that we can get independent identities for different class types
+	// But then default it to some null type so we can use it as with before as well
+
 	class Identified
 	{
 	private:

@@ -4,11 +4,9 @@
 #include <glm/glm.hpp>
 
 #include "OpenGL/OpenGL.hpp"
-#include "../Utility/Event.hpp"
 #include "../Utility/Version.hpp"
 #include "../Memory/Resource.hpp"
-
-#include <iostream>
+#include "../Control/Events/EventHost.hpp"
 
 namespace cbn
 {
@@ -25,14 +23,14 @@ namespace cbn
 			WINDOWED
 		};
 
-		Event<std::string, GLenum, GLenum> ErrorEvent;
-		Event<DisplayMode> DisplayModeChangeEvent;
-		Event<glm::uvec2> ResolutionChangeEvent;
-		Event<std::string> TitleChangeEvent;
-		Event<bool> VisibilityChangeEvent;
-		Event<void> CloseRequestEvent;
-		Event<bool> FocusChangeEvent;
-		Event<bool> VSyncChangeEvent;
+		EventHost<Window, std::string, GLenum, GLenum> ErrorEvent;
+		EventHost<Window, DisplayMode> DisplayModeEvent;
+		EventHost<Window, glm::uvec2> ResolutionEvent;
+		EventHost<Window, std::string> TitleEvent;
+		EventHost<Window, bool> VisibilityEvent;
+		EventHost<Window, bool> FocusEvent;
+		EventHost<Window, bool> VSyncEvent;
+		EventHost<Window> CloseEvent;
 
 		struct Properties
 		{
@@ -57,7 +55,7 @@ namespace cbn
 		std::string m_Title;
 		bool m_OpenGLDebug;
 		bool m_VSync;
-
+		
 		static void gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param);
 
 		static void glfw_resize_callback(GLFWwindow* glfw_handle, int width, int height);
@@ -114,7 +112,11 @@ namespace cbn
 		
 		void operator=(Window&& window) noexcept;
 
-		GLFWwindow* TEMP_HANDLE() const { return m_GLFWHandle; }; //-----------------------------------------remove me once input handling is in
+		GLFWwindow* TEMP_HANDLE() const
+		{
+			return m_GLFWHandle;
+		}
+
 	};
 
 }

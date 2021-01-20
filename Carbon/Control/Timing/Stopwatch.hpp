@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-#include "../Utility/Units.hpp"
+#include "../../Utility/Units.hpp"
 
 namespace cbn
 {
@@ -19,7 +19,7 @@ namespace cbn
 
 		Stopwatch();
 
-		void start();
+		void start(); // Use start and stop, or just restart?
 
 		double stop(const cbn::TimeUnit& time_unit = cbn::Milliseconds);
 		

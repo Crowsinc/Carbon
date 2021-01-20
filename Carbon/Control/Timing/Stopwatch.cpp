@@ -1,6 +1,6 @@
 #include "Stopwatch.hpp"
 
-#include "Assert.hpp"
+#include "../../Diagnostics/Assert.hpp"
 
 namespace cbn
 {
@@ -11,7 +11,10 @@ namespace cbn
 		: m_StartTime(std::chrono::high_resolution_clock::now()),
 		  m_StopTime(m_StartTime),
 		  m_Started(false)
-	{}
+	{
+		// Start the timer by default. 
+		start();
+	}
 	
 	//-------------------------------------------------------------------------------------
 

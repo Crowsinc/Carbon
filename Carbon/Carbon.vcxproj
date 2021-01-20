@@ -161,6 +161,9 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
+    <ClCompile Include="Control\Events\Subscription.cpp" />
+    <ClCompile Include="Control\Timing\Ticker.cpp" />
+    <ClCompile Include="Control\Timing\Timer.cpp" />
     <ClCompile Include="Data\Identity\Identifiable.cpp" />
     <ClCompile Include="Data\Identity\Identified.cpp" />
     <ClCompile Include="Data\Identity\Identifier.cpp" />
@@ -189,7 +192,7 @@
     <ClCompile Include="Maths\Models\Common.cpp" />
     <ClCompile Include="Maths\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
-    <ClCompile Include="Diagnostics\Stopwatch.cpp" />
+    <ClCompile Include="Control\Timing\Stopwatch.cpp" />
     <ClCompile Include="Graphics\Resources\Image.cpp" />
     <ClCompile Include="Maths\Transforms\Rotatable.cpp" />
     <ClCompile Include="Maths\Transforms\Scalable.cpp" />
@@ -201,6 +204,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
+    <ClInclude Include="Control\Events\EventCallback.hpp" />
+    <ClInclude Include="Control\Events\EventHandler.hpp" />
+    <ClInclude Include="Control\Events\EventHost.hpp" />
+    <ClInclude Include="Control\Events\Subscription.hpp" />
+    <ClInclude Include="Control\Timing\Ticker.hpp" />
+    <ClInclude Include="Control\Timing\Timer.hpp" />
     <ClInclude Include="Data\Identity\Identifiable.hpp" />
     <ClInclude Include="Data\Identity\Identified.hpp" />
     <ClInclude Include="Data\Identity\Identifier.hpp" />
@@ -238,8 +247,7 @@
     <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
-    <ClInclude Include="Utility\Event.hpp" />
-    <ClInclude Include="Diagnostics\Stopwatch.hpp" />
+    <ClInclude Include="Control\Timing\Stopwatch.hpp" />
     <ClInclude Include="Graphics\Resources\Image.hpp" />
     <ClInclude Include="Memory\Resource.hpp" />
     <ClInclude Include="Data\String.hpp" />
@@ -249,7 +257,6 @@
   <ItemGroup>
     <None Include="Maths\Shapes.hpp" />
     <None Include="Utility\VectorExtensions.tpp" />
-    <None Include="Utility\Event.tpp" />
     <None Include="Memory\Resource.tpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

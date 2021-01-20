@@ -14,7 +14,7 @@ namespace cbn
 		// The user parameter is a GLFW window handle, which is itself associated 
 		// with the window object that contains the error event that needs to be called
 		const Window* window = static_cast<Window*>(glfwGetWindowUserPointer((GLFWwindow*)user_param));
-		window->ErrorEvent.invoke(std::string(message), source, severity);
+		window->ErrorEvent.dispatch(std::string(message), source, severity);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ namespace cbn
 		// without using the set_resolution function hence we need to update the resolution
 		// attribute of the window. We also want to invoke the property change event. 
 		window->m_Resolution = glm::vec2(width, height);
-		window->ResolutionChangeEvent.invoke(window->m_Resolution);
+		window->ResolutionEvent.dispatch(window->m_Resolution);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ namespace cbn
 	void Window::glfw_focus_callback(GLFWwindow* glfw_handle, int is_focused)
 	{
 		const Window* window = static_cast<const Window*>(glfwGetWindowUserPointer(glfw_handle));
-		window->FocusChangeEvent.invoke(is_focused);
+		window->FocusEvent.dispatch(is_focused);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ namespace cbn
 	void Window::glfw_close_callback(GLFWwindow * glfw_handle)
 	{
 		const Window* window = static_cast<Window*>(glfwGetWindowUserPointer(glfw_handle));
-		window->CloseRequestEvent.invoke();
+		window->CloseEvent.dispatch();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ namespace cbn
 		if(is_visible()) return;
 		
 		glfwShowWindow(m_GLFWHandle);
-		VisibilityChangeEvent.invoke(true);
+		VisibilityEvent.dispatch(true);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ namespace cbn
 		if(!is_visible()) return;
 
 		glfwShowWindow(m_GLFWHandle);
-		VisibilityChangeEvent.invoke(false);
+		VisibilityEvent.dispatch(false);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -368,7 +368,7 @@ namespace cbn
 		glfwSwapInterval(enable_vsync ? 1 : 0);
 
 		m_VSync = enable_vsync;
-		VSyncChangeEvent.invoke(enable_vsync);
+		VSyncEvent.dispatch(enable_vsync);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -378,12 +378,12 @@ namespace cbn
 		glfwSetWindowTitle(m_GLFWHandle, title.c_str());
 
 		m_Title = title;
-		TitleChangeEvent.invoke(title);
+		TitleEvent.dispatch(title);
 	}
 
 	//-------------------------------------------------------------------------------------
 	
-	void Window::set_resolution(const glm::vec2 & resolution)
+	void Window::set_resolution(const glm::vec2& resolution)
 	{
 		//TODO: temp, determine where this should actually go
 		glViewport(0, 0, resolution.x, resolution.y);
@@ -402,7 +402,7 @@ namespace cbn
 		glfw_set_display_mode(m_GLFWHandle, display_mode);
 			
 		m_DisplayMode = display_mode;
-		DisplayModeChangeEvent.invoke(display_mode);
+		DisplayModeEvent.dispatch(display_mode);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -420,7 +420,7 @@ namespace cbn
 		// Since this new window object will now control the GLFW handle, we need to update the user pointer
 		glfwSetWindowUserPointer(m_GLFWHandle, this);
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
 }

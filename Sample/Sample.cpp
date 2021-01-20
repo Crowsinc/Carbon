@@ -1,8 +1,8 @@
 #define CBN_DISABLE_ASSERTS
 
+#include <Control/Timing/Stopwatch.hpp>
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
-#include <Diagnostics/Stopwatch.hpp>
 
 #include <glm/gtx/norm.hpp>
 
@@ -61,7 +61,7 @@ int main()
 	props.opengl_version = {4,6,0};
 
 #ifdef _DEBUG
-	props.opengl_debug = false;
+	props.opengl_debug = true;
 	props.vsync = true;
 
 #else
@@ -77,13 +77,13 @@ int main()
 
 
 	// Subscribe to the error handling event
-	window->ErrorEvent.subscribe([](std::string msg, GLenum source, GLenum severity)
+	const auto sub1 = window->ErrorEvent.subscribe([](std::string msg, GLenum source, GLenum severity)
 	{
 			std::cout << msg << std::endl;
 	});
 
 	// Subscribe to the close requested event in order to stop the sample when the window is closed.
-	window->CloseRequestEvent.subscribe([&]()
+	const auto sub2 = window->CloseEvent.subscribe([&]()
 	{
 		runflag = false;
 	});
@@ -173,16 +173,16 @@ int main()
 			window->set_vsync(true);
 		}
 
-		frames++;
-		
 		// Update the window
 		window->update();
-		if(watch.get_elapsed_time(cbn::Seconds) > 1.0)
+		if(watch.get_elapsed_time(cbn::Seconds) >= 1)
 		{
-			window->set_title("Carbon Sample  |  Frames Per Second: " + std::to_string(frames) + " fps  |  Frame Time: " + std::to_string(1 / (float)frames) + "ms");
+			printf("FPS: %3.d \t Frame Time: %8.6fms \n", frames, (1 / (float)frames));
 			watch.restart();
 			frames = 0;
 		}
+
+		frames++;
 	}
 	return 0;
 }
@@ -345,6 +345,7 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 
 	bool any_held = RectHeld || RectHeld2 || CircleHeld || CircleHeld2 || TriHeld || TriHeld2;
 
+
 	if(mouse_clicked)
 	{
 		// 1st Rect
@@ -449,11 +450,6 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 		CircleHeld = false;
 		CircleHeld2 = false;
 	}
-	
-
-
-
-
 
 	for(auto i = 0; i < colliders.size(); i++)
 	{
