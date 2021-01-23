@@ -10,19 +10,27 @@ namespace cbn
 	{
 	public:
 
-		EventHost<Ticker, uint64_t, float> TickEvent;
+		EventHost<Ticker, uint64_t, Time> TickEvent;
 
 	private:
 
 		Stopwatch m_Stopwatch;
+		uint64_t m_Counter;
+		Time m_DeltaTime;
 
 	public:
 
 		Ticker();
 
-		void tick() const;
+		void tick();
 
-		float delta_time() const; // time between curr tick and last tick in seconds. or curr time and last tick time? 
+		Time delta_time() const; 
+
+		Time elapsed_time() const;
+
+		uint64_t tick_count() const;
+
+		void reset_counter();
 
 	};
 

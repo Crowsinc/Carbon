@@ -1,6 +1,9 @@
 #define CBN_DISABLE_ASSERTS
 
 #include <Control/Timing/Stopwatch.hpp>
+#include <Control/Timing/Timer.hpp>
+#include <Control/Timing/Ticker.hpp>
+
 #include <Graphics/Window.hpp>
 #include <Carbon.hpp>
 
@@ -50,6 +53,10 @@ void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRende
 
 void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera);
 
+void print(std::string str)
+{
+	std::cout << Time::Timestamp() << " | " << str << "\n";
+}
 
 int main()
 {
@@ -59,27 +66,20 @@ int main()
 	props.resolution = {1920,1080};
 	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
 	props.opengl_version = {4,6,0};
-
-#ifdef _DEBUG
 	props.opengl_debug = true;
-	props.vsync = true;
-
-#else
-	props.opengl_debug = false;
-	props.vsync = false;
-#endif
 
 	auto window = cbn::Window::Create(props);
 	if(window)
-		std::cout << "Window Created!" << std::endl;
+		print("Window Created!");
 	else
-		std::cout << "Window Failed To Create!" << std::endl;
+		print("Window Failed To Create!");
 
 
 	// Subscribe to the error handling event
 	const auto sub1 = window->ErrorEvent.subscribe([](std::string msg, GLenum source, GLenum severity)
 	{
-			std::cout << msg << std::endl;
+		if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+			print(msg);
 	});
 
 	// Subscribe to the close requested event in order to stop the sample when the window is closed.
@@ -95,11 +95,11 @@ int main()
 
 	// Print relevant information
 	std::string gpu = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-	std::cout << "GPU: " << gpu << std::endl;
+	print("GPU: " + gpu);
 
 	int i = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &i);
-	std::cout << "Max TBO Texels: " << std::to_string(i) << std::endl;
+	print("Max TBO Texels: " + std::to_string(i));
 
 	// Create sprite renderer and texture pack
 	cbn::SpriteRendererProperties prop;
@@ -110,10 +110,8 @@ int main()
 	cbn::Camera scene_camera({1920, 1080});
 	scene_camera.translate_by(1920.0f / 2, 1080.0f / 2);
 
-
 	cbn::TexturePack texture_pack(window->get_opengl_version());
 	cbn::SpriteRenderer renderer(window->get_opengl_version(), prop);
-
 
 	cbn::SRes<cbn::Texture> rock_texture = cbn::Texture::Open("res/rock.png");
 	cbn::SRes<cbn::Texture> ground_texture = cbn::Texture::Open("res/ground.png");
@@ -141,12 +139,26 @@ int main()
 
 	// Prepare the main loop
 	uint64_t frames = 0;
-	cbn::Stopwatch watch;
 
 	SampleStates state = SampleStates::CHOOSE_STATE;
 	window->set_vsync(true);
 
-	watch.start();
+
+	AutoTimer timer;
+
+	auto s = timer.TimerEvent.subscribe([&]()
+	{
+		const auto frame_time = 1.0f / frames;
+		
+		char title[100];
+		sprintf_s(title, sizeof(title)/sizeof(char), "Carbon Sample | FPS: %3.d \t Frame Time: %8.6fms \n", frames, frame_time);
+		window->set_title({title});
+
+		frames = 0;
+	});
+
+	timer.start(Time::Seconds(1));
+
 	while(runflag)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -175,13 +187,6 @@ int main()
 
 		// Update the window
 		window->update();
-		if(watch.get_elapsed_time(cbn::Seconds) >= 1)
-		{
-			printf("FPS: %3.d \t Frame Time: %8.6fms \n", frames, (1 / (float)frames));
-			watch.restart();
-			frames = 0;
-		}
-
 		frames++;
 	}
 	return 0;
@@ -190,8 +195,6 @@ int main()
 
 SRes<ShaderProgram> load_tint_shader()
 {
-	std::cout << "Loading tint shader\n";
-
 	auto [vertex_sh, error_log1] = cbn::Shader::Open("res/ButtonVShader.glsl", cbn::Shader::Stage::VERTEX);
 	if(!vertex_sh)
 		std::cout << error_log1 << std::endl;
@@ -516,8 +519,6 @@ void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer
 
 SRes<ShaderProgram> load_texture_shader()
 {
-	std::cout << "Creating texture shader\n";
-
 	auto [vertex_sh, error_log1] = cbn::Shader::Open("res/TextureVShader.glsl", cbn::Shader::Stage::VERTEX);
 	if(!vertex_sh)
 		std::cout << error_log1 << std::endl;

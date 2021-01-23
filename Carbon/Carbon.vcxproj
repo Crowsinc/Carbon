@@ -141,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -163,6 +163,7 @@
     <ClCompile Include="Algorithms\BinPacking.cpp" />
     <ClCompile Include="Control\Events\Subscription.cpp" />
     <ClCompile Include="Control\Timing\Ticker.cpp" />
+    <ClCompile Include="Control\Timing\Time.cpp" />
     <ClCompile Include="Control\Timing\Timer.cpp" />
     <ClCompile Include="Data\Identity\Identifiable.cpp" />
     <ClCompile Include="Data\Identity\Identified.cpp" />
@@ -199,7 +200,6 @@
     <ClCompile Include="Maths\Transforms\Translatable.cpp" />
     <ClCompile Include="Utility\Colour.cpp" />
     <ClCompile Include="Data\String.cpp" />
-    <ClCompile Include="Utility\Units.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -209,6 +209,7 @@
     <ClInclude Include="Control\Events\EventHost.hpp" />
     <ClInclude Include="Control\Events\Subscription.hpp" />
     <ClInclude Include="Control\Timing\Ticker.hpp" />
+    <ClInclude Include="Control\Timing\Time.hpp" />
     <ClInclude Include="Control\Timing\Timer.hpp" />
     <ClInclude Include="Data\Identity\Identifiable.hpp" />
     <ClInclude Include="Data\Identity\Identified.hpp" />
@@ -251,7 +252,6 @@
     <ClInclude Include="Graphics\Resources\Image.hpp" />
     <ClInclude Include="Memory\Resource.hpp" />
     <ClInclude Include="Data\String.hpp" />
-    <ClInclude Include="Utility\Units.hpp" />
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>

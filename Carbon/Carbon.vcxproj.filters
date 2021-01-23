@@ -18,9 +18,6 @@
     <ClCompile Include="..\Libraries\GLAD\include\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\Units.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\Version.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,11 +138,11 @@
     <ClCompile Include="Control\Timing\Ticker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Control\Timing\Time.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Utility\Units.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Version.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -291,6 +288,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Control\Timing\Ticker.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Control\Timing\Time.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

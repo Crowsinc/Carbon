@@ -1,8 +1,6 @@
 #pragma once
 
-#include <chrono>
-
-#include "../../Utility/Units.hpp"
+#include "Time.hpp"
 
 namespace cbn
 {
@@ -11,21 +9,22 @@ namespace cbn
 	{
 	private:
 
-		std::chrono::high_resolution_clock::time_point m_StartTime;
-		std::chrono::high_resolution_clock::time_point m_StopTime;
-		bool m_Started;
+		Time m_StartTime, m_Elapsed;
+		bool m_Running;
 
 	public:
 
 		Stopwatch();
 
-		void start(); // Use start and stop, or just restart?
+		void start();
 
-		double stop(const cbn::TimeUnit& time_unit = cbn::Milliseconds);
-		
-		double restart(const cbn::TimeUnit& time_unit = cbn::Milliseconds);
+		void stop();
 
-		double get_elapsed_time(const cbn::TimeUnit& time_unit = cbn::Milliseconds) const;
+		Time restart();
+
+		Time elapsed() const;
+
+		bool is_running() const;
 
 	};
 

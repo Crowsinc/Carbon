@@ -7,55 +7,55 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	Stopwatch::Stopwatch() 
-		: m_StartTime(std::chrono::high_resolution_clock::now()),
-		  m_StopTime(m_StartTime),
-		  m_Started(false)
-	{
-		// Start the timer by default. 
-		start();
-	}
+	Stopwatch::Stopwatch()
+		: m_Running(false),
+		m_StartTime(),
+		m_Elapsed()
+	{}
 	
 	//-------------------------------------------------------------------------------------
 
 	void Stopwatch::start()
 	{
-		m_StartTime = std::chrono::high_resolution_clock::now();
-		m_Started = true;
+		m_Running = true;
+		m_StartTime = Time::Now();
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::stop(const cbn::TimeUnit & time_unit)
+	void Stopwatch::stop()
 	{
-		CBN_Assert(m_Started, "Stopwatch cannot be stopped without first being started.");
-
-		m_StopTime = std::chrono::high_resolution_clock::now();
-		m_Started = false;
-
-		return get_elapsed_time(time_unit);
+		CBN_Assert(is_running(), "Cannot stop a Stopwatch which is not running");
+		
+		m_Elapsed = Time::Now() - m_StartTime;
+		m_Running = false;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::restart(const cbn::TimeUnit& time_unit)
+	Time Stopwatch::restart()
 	{
-		const auto elapsed = stop();
+		// Collect the current elapsed time, then simply start the stopwatch again. 
+		// Note that we don't need to stop it in order to start it again. 
+		const auto elapsed = this->elapsed();
 		start();
-
 		return elapsed;
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	double Stopwatch::get_elapsed_time(const cbn::TimeUnit& time_unit) const
+	Time Stopwatch::elapsed() const
 	{
-		// If the stopwatch has been started but not stopped, then return the time between
-		// starting and now, otherwise return the time between the start and stopping events. 
-		const auto end_time = (m_Started) ? std::chrono::high_resolution_clock::now() : m_StopTime;
-		const auto difference_ns = static_cast<double>((end_time - m_StartTime).count());
+		// If the stopwatch is running, then return the time elapsed since it was started.
+		// Otherwise we just return the time elapsed between when it started and stopped. 
+		return is_running() ? (Time::Now() - m_StartTime) : m_Elapsed;
+	}
 
-		return cbn::Nanoseconds.convert_to(difference_ns, time_unit);
+	//-------------------------------------------------------------------------------------
+
+	bool Stopwatch::is_running() const
+	{
+		return m_Running;
 	}
 
 	//-------------------------------------------------------------------------------------
