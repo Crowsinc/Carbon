@@ -61,8 +61,6 @@ namespace cbn
 
 	public:
 
-		//TODO: add transform_to and transform_by methods that let you apply transforms in bulk with a Transform object
-
 		Transformable();
 
 		Transformable(const Transformable& copy);
@@ -72,6 +70,10 @@ namespace cbn
 		glm::mat4 transform_matrix() const;
 
 		Transform as_transform() const;
+
+		void transform_to(const Transform& transform);
+
+		void transform_by(const Transform& transform);
 
 	};
 	
@@ -272,6 +274,22 @@ namespace cbn
 		const auto [translation, scale, rotation] = resolve_transforms();
 
 		return {translation, rotation, scale};
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	template<typename T1, typename T2, typename T3>
+	inline void Transformable<T1, T2, T3>::transform_to(const Transform& transform)
+	{
+		distribute_transforms(transform);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	template<typename T1, typename T2, typename T3>
+	inline void Transformable<T1, T2, T3>::transform_by(const Transform& transform)
+	{
+		transform_to(transform.apply(as_transform()));
 	}
 	
 	//-------------------------------------------------------------------------------------

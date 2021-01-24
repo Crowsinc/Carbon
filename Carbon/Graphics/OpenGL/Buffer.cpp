@@ -18,6 +18,9 @@ namespace cbn
 
 	Buffer::~Buffer()
 	{
+		// Before we destroy the object, we need to ensure the static bounded object tracker
+		// doesnt consider it as being bound. Otherwise issues will arise when a new object
+		// takes its ID.
 		unbind();
 		glDeleteBuffers(1, &m_BufferID);
 	}

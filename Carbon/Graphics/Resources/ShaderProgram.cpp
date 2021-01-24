@@ -131,6 +131,10 @@ namespace cbn
 
 	ShaderProgram::~ShaderProgram()
 	{
+		// Before we destroy the object, we need to ensure the static bounded object tracker
+		// doesnt consider it as being bound. Otherwise issues will arise when a new object
+		// takes its ID.
+		unbind();
 		glDeleteProgram(m_ProgramID);
 	}
 

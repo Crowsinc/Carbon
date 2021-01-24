@@ -2,6 +2,9 @@
 
 namespace cbn
 {
+
+	//TODO: make conversion to filesystem::path possible
+
 	//-------------------------------------------------------------------------------------
 
 	String::String(const char* data)

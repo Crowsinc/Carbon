@@ -84,6 +84,8 @@ namespace cbn
 
 		void update();
 
+		void clear() const;
+
 		//TODO: rename things
 
 		bool is_visible() const; //visible

@@ -5,15 +5,13 @@
 #include "BoundingTriangle.hpp"
 #include "../Physics/Collider.hpp"
 
-#include "../Transform.hpp"
-
 namespace cbn
 {
 
 	class BoundingBox;
 	class BoundingTriangle;
 
-	class BoundingCircle : public Collider, public Transformable<Translatable2D, Rotatable2D>
+	class BoundingCircle : public Collider
 	{
 	private:
 
@@ -60,13 +58,13 @@ namespace cbn
 
 		void resize(const float radius);
 
-		void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false);
+		void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false) override;
 
-		const glm::vec2& direction() const;
+		const glm::vec2& direction() const override;
 
-		const Point& centre() const;
+		const Point& centre() const override;
 
-		const Point& origin() const;
+		const Point& origin() const override;
 
 		const float radius() const;
 

@@ -5,7 +5,6 @@
 #include "BoundingCircle.hpp"
 #include "../Physics/Collider.hpp"
 
-#include "../Transform.hpp"
 
 namespace cbn
 {
@@ -13,7 +12,7 @@ namespace cbn
 	class BoundingBox;
 	class BoundingCircle;
 
-	class BoundingTriangle : public Collider, public Transformable<Translatable2D, Rotatable2D>
+	class BoundingTriangle : public Collider
 	{
 	private:
 
@@ -25,7 +24,7 @@ namespace cbn
 		mutable TriangleMesh m_Mesh;
 		mutable Extent m_Extent;
 
-		void update_extent() const;
+		Extent create_extent(const TriangleMesh::Vertices& vertices) const;
 
 	public:
 
@@ -61,17 +60,19 @@ namespace cbn
 
 		void reshape(const TriangleMesh::Vertices& vertices);
 
-		void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false); 
+		void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false) override;
 		 
-		const glm::vec2& direction() const; 
+		const glm::vec2& direction() const override;
 
-		const Point& centre() const;
+		const Point& centre() const override;
 		
-		const Point& origin() const;
+		const Point& origin() const override;
 
 		const TriangleMesh& mesh() const;
 
 		BoundingBox wrap_axis_alligned() const;
+
+		BoundingBox wrap_object_alligned() const;
 
 	};
 

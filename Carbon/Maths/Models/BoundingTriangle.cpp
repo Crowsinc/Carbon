@@ -8,13 +8,13 @@ namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
-	void BoundingTriangle::update_extent() const
+	Extent BoundingTriangle::create_extent(const TriangleMesh::Vertices& vertices) const
 	{
+		//TODO: make this an extent constructor
+
 		// Since the triangle can be any possible triangle in any orientation, the only way to get 
 		// its min and max coords is to manually find the minimum and maximum coords. Unlike with 
 		// rectangles where we can use rectangle properties to speed this up. 
-
-		const auto& vertices = this->mesh().vertices;
 
 		const auto [min_x, max_x] = std::minmax_element(vertices.begin(), vertices.end(), [](const glm::vec2& a, const glm::vec2& b){
 			return a.x < b.x;
@@ -23,8 +23,7 @@ namespace cbn
 			return a.y < b.y;
 		});
 
-		m_Extent.max = {max_x->x, max_y->y};
-		m_Extent.min = {min_x->x, min_y->y};
+		return Extent{{min_x->x, min_y->y}, {max_x->x, max_y->y}};
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -38,10 +37,9 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	BoundingTriangle::BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices)
-		: Transformable(transform),
-		  m_LocalOriginOffset(0, 0)
-
+		: m_LocalOriginOffset(0, 0)
 	{
+		transform_to(transform);
 		reshape(vertices);
 	}
 
@@ -217,8 +215,7 @@ namespace cbn
 	const Extent& BoundingTriangle::extent() const
 	{
 		//TODO: caching
-		
-		update_extent();
+		m_Extent = create_extent(mesh().vertices);
 
 		return m_Extent;
 	}
@@ -330,11 +327,43 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	cbn::BoundingBox BoundingTriangle::wrap_axis_alligned() const
+	BoundingBox BoundingTriangle::wrap_axis_alligned() const
 	{
 		// Simply create a bounding box from the extent
 		return {extent()};
 	}
 	
 	//-------------------------------------------------------------------------------------
+
+	BoundingBox BoundingTriangle::wrap_object_alligned() const
+	{
+		// We want to create a bounding box which is alligned with the triangle
+
+		// First find the local size of the triangle. This is the extent of the triangle
+		// when it is at its local 'resting' position with no translation or rotation.
+		// To do this we create an extent using the triangles local vertices.
+		const auto local_extent = create_extent(m_LocalVertices);
+		const auto local_size = local_extent.max - local_extent.min;
+		BoundingBox bounding_box(local_size);
+
+		// We want to give it the same origin as the triangle so that
+		// when we apply the triangle's transforms, the box correctly
+		// matches the transformed triangle. The triangle's centre is
+		// defined by its centroid not the centre of its extent, while
+		// the boxes centre is always the centre of its extent. This means
+		// that to make the origins allign we need to account for the 
+		// offset in their local centres as well in order to make the triangle's
+		// local origin offset go to the same spot when given to the box
+		const auto local_centroid = (m_LocalVertices[0] + m_LocalVertices[1] + m_LocalVertices[2]) * (1.0f / 3.0f);
+		bounding_box.specify_origin(m_LocalOriginOffset + (local_centroid - local_extent.centre()), true);
+
+		// Once the origin is alligned, transform it to match the 
+		// non-local triangles transform.
+		bounding_box.transform_to(as_transform());
+
+		return bounding_box;
+	}
+
+	//-------------------------------------------------------------------------------------
+
 }

@@ -33,9 +33,9 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	BoundingCircle::BoundingCircle(const Transform& transform, const float radius)
-		: Transformable(transform),
-		  m_LocalCentreOffset(0, 0)
+		: m_LocalCentreOffset(0, 0)
 	{
+		transform_to(transform);
 		resize(radius);
 	}
 	

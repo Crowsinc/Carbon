@@ -5,6 +5,8 @@
 #include "../Models/BoundingCircle.hpp"
 #include "../Models/BoundingTriangle.hpp"
 
+#include "../Transform.hpp"
+
 namespace cbn
 {
 
@@ -14,8 +16,9 @@ namespace cbn
 	class BoundingCircle;
 	class BoundingTriangle;
 
-	struct Collider
+	struct Collider : public Transformable<Translatable2D, Rotatable2D>
 	{
+
 		virtual const Extent& extent() const = 0;
 
 		// MUST NOT PUSH THE OVERLAP TEST TO ANOTHER CLASS OR WILL CAUSE INF RECURSION
@@ -41,17 +44,30 @@ namespace cbn
 
 		virtual bool encloses(const BoundingTriangle& triangle) const = 0;
 
-
-
 		virtual bool contains(const Point& point) const = 0;
-
-
 
 		virtual bool intersected_by(const Line& line) const = 0;
 
 		virtual bool intersected_by(const Segment& segment) const = 0;
 
 		virtual bool intersected_by(const Ray& ray) const = 0;
+
+
+		// Should this be a thing? It certainly makes the sample code much nicer
+		// Would really help usability if more bounding class functionality was abstracted
+		// Think of a quad tree of colliders. Would really help if we didnt have to do casting.
+
+		// I guess it makes sense to have things which let you change the collider position, which includes
+		// abstracting the transformable to the collider and specifying the origin. 
+		virtual void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false) = 0;
+
+		virtual const glm::vec2& centre() const = 0;
+
+		virtual const glm::vec2& origin() const = 0;
+
+		virtual const glm::vec2& direction() const = 0;
+
+
 		
 	};
 

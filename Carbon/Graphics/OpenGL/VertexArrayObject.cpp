@@ -21,7 +21,9 @@ namespace cbn
 
 	VertexArrayObject::~VertexArrayObject()
 	{
-		std::cout << "deconstructing";
+		// If the VAO is bound, we need to unbind it before we destroy it in order to
+		// ensure that s_BoundObjectID doesnt end up pointing to a destroyed objected. 
+		unbind();
 		glDeleteVertexArrays(1, &m_ObjectID);
 	}
 

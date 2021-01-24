@@ -1,722 +1,727 @@
 #define CBN_DISABLE_ASSERTS
 
-#include <Control/Timing/Stopwatch.hpp>
-#include <Control/Timing/Timer.hpp>
-#include <Control/Timing/Ticker.hpp>
-
-#include <Graphics/Window.hpp>
-#include <Carbon.hpp>
-
-#include <glm/gtx/norm.hpp>
-
-#include <Maths/Maths.hpp>
-
 #include <algorithm>
 #include <iostream>
 #include <thread>
 
-#include <Maths/Models/BoundingCircle.hpp>
-#include <Maths/Models/BoundingBox.hpp>
-#include <Maths/Models/BoundingTriangle.hpp>
+#include <Carbon.hpp>
+#include <glm/gtx/norm.hpp>
 
-#include <Graphics/SpriteRenderer.hpp>
-#include <Graphics/Resources/Shader.hpp>
-#include <Graphics/Resources/ShaderProgram.hpp>
-#include <Graphics/OpenGL/VertexArrayObject.hpp>
-
-#include <Data/Identity/Identifier.hpp>
-
-#include <Graphics/Resources/Texture.hpp>
-#include <Graphics/Resources/TextureAtlas.hpp>
-
-#include <Graphics/OpenGL/OpenGL.hpp>
-
-bool runflag = true;
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 using namespace cbn;
 
-#include <gl/GL.h>
+//-------------------------------------------------------------------------------------
 
-enum class SampleStates
+enum class Scene
 {
-	CHOOSE_STATE,
-	STATIC_RENDER_STATE,
-	DYNAMIC_RENDER_STATE,
-	BOUNDS_TEST_STATE
+	STATIC_RENDER,
+	DYNAMIC_RENDER,
+	BOUNDS_TEST
 };
 
-void choose_state_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera);
+void print_info();
 
-void static_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera);
+void print(const String& str);
 
-void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera);
+URes<Window> create_window();
 
-void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera);
+SRes<ShaderProgram> load_program(const String& vertex_name, const String& fragment_name);
 
-void print(std::string str)
-{
-	std::cout << Time::Timestamp() << " | " << str << "\n";
-}
+TexturePack load_textures(const URes<Window>& window, const std::map<Identifier, String> textures);
+
+Scene main_menu_scene(URes<Window>& window, bool& runflag);
+
+std::vector<BoundingBox> create_screen_sprites(const Camera& camera, const uint64_t sprite_count);
+
+void static_render_scene(URes<Window>& window, bool& runflag);
+
+void move_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos);
+
+void dynamic_render_scene(URes<Window>& window, bool& runflag);
+
+void bounds_test_scene(URes<Window>& window, bool& runflag);
+
+//-------------------------------------------------------------------------------------
+
+constexpr bool DEBUG = false;
 
 int main()
 {
-	// Create render window
-	cbn::Window::Properties props;
-	props.title = "Carbon Sample";
-	props.resolution = {1920,1080};
-	props.display_mode = cbn::Window::DisplayMode::WINDOWED;
-	props.opengl_version = {4,6,0};
-	props.opengl_debug = true;
-
-	auto window = cbn::Window::Create(props);
+	// Create the render window
+	URes<Window> window = create_window();
 	if(window)
-		print("Window Created!");
+		print("Successfully created window");
 	else
-		print("Window Failed To Create!");
+		print("Failed to create window");
 
-
-	// Subscribe to the error handling event
-	const auto sub1 = window->ErrorEvent.subscribe([](std::string msg, GLenum source, GLenum severity)
+	// If debugging is enabled, subscribe to the error event
+	Subscription error_subscription;
+	if(window->is_debug_enabled())
 	{
-		if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-			print(msg);
-	});
+		print("Subscribing to OpenGL error event");
+		error_subscription = window->ErrorEvent.subscribe(
+			[](std::string msg, GLenum source, GLenum severity)
+			{
+				if(severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+					print(msg);
+			}
+		);
+	}
 
-	// Subscribe to the close requested event in order to stop the sample when the window is closed.
-	const auto sub2 = window->CloseEvent.subscribe([&]()
+	// Print common capabilities & hardware info
+	print_info();
+
+	// The loops and scenes will run while the runflag is asserted. 
+	// Subscribe to the close event so that we can stop the sample
+	// from running when the window is requested to close. 
+	bool runflag = true;
+	Subscription close_subscription = window->CloseEvent.subscribe([&]()
 	{
 		runflag = false;
 	});
 
-	//TODO: enable these by default on the sprite renderer? or make these context settings
-	// Like, make a context class that you can get from the Window
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// Render a main menu that allows the user to pick what scene to test
+	// When the scene is being used, we go fall back to the main menu.
+	while(runflag)
+	{
+		// Run the main menu
+		auto next_scene = main_menu_scene(window, runflag);
+		
+		// Start and run the correct scene.
+		switch(next_scene)
+		{
+			case Scene::STATIC_RENDER:
+				static_render_scene(window, runflag);
+				break;
+			case Scene::DYNAMIC_RENDER:
+				dynamic_render_scene(window, runflag);
+				break;
+			case Scene::BOUNDS_TEST:
+				bounds_test_scene(window, runflag);
+				break;
+		}
 
-	// Print relevant information
-	std::string gpu = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+	}
+
+}
+
+//-------------------------------------------------------------------------------------
+
+void print(const String& str)
+{
+	std::cout << Time::Timestamp() << " | " << str << std::endl;
+}
+
+//-------------------------------------------------------------------------------------
+
+void print_info()
+{
+	// Print OpenGL version being used
+	String version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+	print("OpenGL Version: " + version);
+
+	// Print GPU being used
+	String gpu = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
 	print("GPU: " + gpu);
 
+	// Print TBO support
 	int i = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &i);
 	print("Max TBO Texels: " + std::to_string(i));
+}
 
-	// Create sprite renderer and texture pack
-	cbn::SpriteRendererProperties prop;
-	prop.buffer_allocation_bias = 32;
-	prop.sprites_per_batch = 4096;
+//-------------------------------------------------------------------------------------
 
-	// Origin is in centre, so move the camera
-	cbn::Camera scene_camera({1920, 1080});
-	scene_camera.translate_by(1920.0f / 2, 1080.0f / 2);
+URes<Window> create_window()
+{
+	// Set up the window's properties
+	Window::Properties properties;
+	properties.title = "Carbon Sample";
+	properties.resolution = {1920,1080};
+	properties.display_mode = Window::DisplayMode::WINDOWED;
+	properties.opengl_version = {4,6,0};
+	properties.opengl_debug = DEBUG;
+	properties.vsync = false;
 
-	cbn::TexturePack texture_pack(window->get_opengl_version());
-	cbn::SpriteRenderer renderer(window->get_opengl_version(), prop);
+	return Window::Create(properties);
+}
 
-	cbn::SRes<cbn::Texture> rock_texture = cbn::Texture::Open("res/rock.png");
-	cbn::SRes<cbn::Texture> ground_texture = cbn::Texture::Open("res/ground.png");
-	cbn::SRes<cbn::Texture> bt_button_texture = cbn::Texture::Open("res/BTButton.png");
-	cbn::SRes<cbn::Texture> drt_button_texture = cbn::Texture::Open("res/DRTButton.png");
-	cbn::SRes<cbn::Texture> srt_button_texture = cbn::Texture::Open("res/SRTButton.png");
-	cbn::SRes<cbn::Texture> sqr_texture = cbn::Texture::Open("res/square.png");
-	cbn::SRes<cbn::Texture> circle_texture = cbn::Texture::Open("res/circle.png");
-	cbn::SRes<cbn::Texture> tri_texture = cbn::Texture::Open("res/tri.png");
-	cbn::SRes<cbn::Texture> tri2_texture = cbn::Texture::Open("res/tri2.png");
+//-------------------------------------------------------------------------------------
 
-	texture_pack = {
-		TexturePackEntry{"rock", rock_texture},
-		TexturePackEntry{"ground", ground_texture},
-        TexturePackEntry{"bt_button", bt_button_texture},
-		TexturePackEntry{"drt_button", drt_button_texture},
-		TexturePackEntry{"srt_button", srt_button_texture},
-		TexturePackEntry{"circle", circle_texture},
-		TexturePackEntry{"square", sqr_texture},
-		TexturePackEntry{"tri", tri_texture},
-		TexturePackEntry{"tri2", tri2_texture}
+SRes<ShaderProgram> load_program(const String& vertex_name, const String& fragment_name)
+{
+	// Load the vertex shader
+	const std::string vertex_shader_path = "res/shaders/" + vertex_name;
+	auto [vertex_shader, log_1] = Shader::Open(vertex_shader_path, Shader::Stage::VERTEX);
+	if(!vertex_shader)
+		print("Failed to load " + vertex_name + " due to:\n\t" + log_1);
+
+	// Load the fragment shader
+	const std::string fragment_shader_path = "res/shaders/" + fragment_name;
+	auto [fragment_shader, log_2] = Shader::Open(fragment_shader_path, Shader::Stage::FRAGMENT);
+	if(!fragment_shader)
+		print("Failed to load " + fragment_name + " due to:\n\t" + log_2);
+
+	// Create the program
+	auto [program, log_3] = ShaderProgram::Create(vertex_shader, nullptr, fragment_shader);
+	if(!program)
+		print("Failed to create program that uses " + vertex_name + "/" + fragment_name + " due to:\n\t" + log_3);
+
+	//TODO: find a better way to do this
+	// Initialize the program's samplers if it has them
+	program->bind();
+	if(program->has_uniform({"samplers[0]"}))
+		for(int i = 0; i < 15; i++)
+			program->set_uniform("samplers[" + String{std::to_string(i)} + "]", i + 1);
+
+	return program;
+}
+
+//-------------------------------------------------------------------------------------
+
+TexturePack load_textures(const URes<Window>& window, const std::map<Identifier, String> textures)
+{
+	// Load each texture into an array
+	std::array<TexturePackEntry, TexturePack::SupportedTextureCount> entries{};
+
+	for(int i = 0; const auto& [id, name] : textures)
+	{
+		if(i <= entries.size() - 1)
+		{
+			const std::string full_path = "res/textures/" + name;
+
+			entries[i].identifier = id;
+			entries[i].texture = Texture::Open(full_path);
+		}
+		else print("Could not fit texture with ID: " + id.alias() + " and name: " + name);
+		
+		i++;
+	}
+
+	return TexturePack{entries, window->get_opengl_version()};
+}
+
+//-------------------------------------------------------------------------------------
+
+struct SceneButton
+{
+	BoundingBox bounding_box;
+	Identifier texture_id;
+	Scene linked_scene;
+
+	SceneButton(const glm::vec2& pos, const glm::vec2& size, const Identifier& texture_id, const Scene scene)
+		: bounding_box({pos}, size),
+		texture_id(texture_id),
+		linked_scene(scene) {}
+};
+
+//-------------------------------------------------------------------------------------
+
+Scene main_menu_scene(URes<Window>& window, bool& runflag)
+{
+	// Create the standard renderer and scene camera
+	// Note that the camera is centred at (0,0). 
+	SpriteRenderer renderer(window->get_opengl_version());
+	Camera camera(window->get_resolution());
+
+	// Create the buttons
+	const glm::vec2 button_size{256, 128};
+	std::array<SceneButton, 3> buttons
+	{
+		SceneButton{{0, 256}, button_size, "BTButton", Scene::BOUNDS_TEST},
+		SceneButton{{0, 0}, button_size, "SRTButton", Scene::STATIC_RENDER},
+		SceneButton{{0,-256}, button_size, "DRTButton", Scene::DYNAMIC_RENDER}
 	};
 
+	// Load button textures and shaders
+	auto tint_program = load_program("TintVertShader.glsl", "TintFragShader.glsl");
+	static const auto texture_pack = load_textures(window, {
+		{buttons[0].texture_id, buttons[0].texture_id.alias() + ".png"},
+		{buttons[1].texture_id, buttons[1].texture_id.alias() + ".png"},
+		{buttons[2].texture_id, buttons[2].texture_id.alias() + ".png"},
+	});
 	renderer.set_texture_pack(texture_pack);
 
-	// Prepare the main loop
-	uint64_t frames = 0;
-
-	SampleStates state = SampleStates::CHOOSE_STATE;
 	window->set_vsync(true);
 
-
-	AutoTimer timer;
-
-	auto s = timer.TimerEvent.subscribe([&]()
-	{
-		const auto frame_time = 1.0f / frames;
-		
-		char title[100];
-		sprintf_s(title, sizeof(title)/sizeof(char), "Carbon Sample | FPS: %3.d \t Frame Time: %8.6fms \n", frames, frame_time);
-		window->set_title({title});
-
-		frames = 0;
-	});
-
-	timer.start(Time::Seconds(1));
+	const glm::uvec4 select_colour{Red.red, Red.green, Red.blue, Red.alpha};
+	const glm::uvec4 normal_colour{White.red, White.green, White.blue, White.alpha};
 
 	while(runflag)
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		switch(state)
-		{
-			case SampleStates::CHOOSE_STATE:
-				choose_state_scene(state, window, renderer, scene_camera);
-				break;
-			case SampleStates::STATIC_RENDER_STATE:
-				static_render_scene(state, window, renderer, scene_camera);
-				break;
-			case SampleStates::DYNAMIC_RENDER_STATE:
-				dynamic_render_scene(state, window, renderer, scene_camera);
-				break;
-			case SampleStates::BOUNDS_TEST_STATE:
-				bounds_test_scene(state, window, renderer, scene_camera);
-				break;
-		}
-		
-		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		{
-			state = SampleStates::CHOOSE_STATE;
-			window->set_vsync(true);
-		}
-
-		// Update the window
-		window->update();
-		frames++;
-	}
-	return 0;
-}
-
-
-SRes<ShaderProgram> load_tint_shader()
-{
-	auto [vertex_sh, error_log1] = cbn::Shader::Open("res/ButtonVShader.glsl", cbn::Shader::Stage::VERTEX);
-	if(!vertex_sh)
-		std::cout << error_log1 << std::endl;
-
-	auto [frag_sh, error_log2] = cbn::Shader::Open("res/ButtonFShader.glsl", cbn::Shader::Stage::FRAGMENT);
-	if(!frag_sh)
-		std::cout << error_log2 << std::endl;
-
-	auto [program, error_log3] = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh);
-	if(!program)
-		std::cout << error_log3 << std::endl;
-
-	//TODO: find a better way to do this
-	program->bind();
-	if(program->has_uniform({"samplers[0]"}))
-		for(int i = 0; i < 15; i++)
-			program->set_uniform("samplers[" + String{std::to_string(i)} + "]", i + 1);
-
-	return program;
-}
-
-void choose_state_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
-{
-	static const float button_x = window->get_resolution().x / 2.0f;
-	static const float mid_y = window->get_resolution().y / 2.0f;
-
-	static const BoundingBox BTButtonBB{Transform{button_x,mid_y + 256}, {256, 128}};
-	static const Identifier BTButtonTextureID = "bt_button";
-	static const BoundingBox SRTButtonBB{Transform{button_x,mid_y}, {256, 128}};
-	static const Identifier SRTButtonTextureID = "srt_button";
-	static const BoundingBox DRTButtonBB{Transform{button_x,mid_y - 256}, {256, 128}};
-	static const Identifier DRTButtonTextureID = "drt_button";
-	static const glm::uvec4 red_ud = {Red.red, Red.green, Red.blue, Red.alpha};
-	static const glm::uvec4 white_ud = {White.red, White.green, White.blue, White.alpha};
-	static SRes<ShaderProgram> program = load_tint_shader();
-	
-	// Determine whether the mouse was clicked
-	bool mouse_clicked = GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT);
-	
-	// Get mouse position
-	double pos_x, pos_y;
-	glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
-	const glm::vec2 mouse_pos = {pos_x, window->get_resolution().y - pos_y};
-
-	renderer.begin_batch(camera);
-	renderer.submit(BTButtonBB.mesh().vertices, BTButtonTextureID, BTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
-	renderer.submit(SRTButtonBB.mesh().vertices, SRTButtonTextureID, SRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
-	renderer.submit(DRTButtonBB.mesh().vertices, DRTButtonTextureID, DRTButtonBB.contains(mouse_pos) ? red_ud : white_ud);
-	renderer.end_batch();
-
-	renderer.render(program);
-
-	// If the mouse is clicked, check if its on a bounding box and dispatch the correct event
-	if(mouse_clicked)
-	{
-		if(BTButtonBB.contains(mouse_pos))
-			state = SampleStates::BOUNDS_TEST_STATE;
-
-		if(SRTButtonBB.contains(mouse_pos))
-		{
-			state = SampleStates::STATIC_RENDER_STATE;
-			window->set_vsync(false);
-		}
-
-		if(DRTButtonBB.contains(mouse_pos))
-		{
-			state = SampleStates::DYNAMIC_RENDER_STATE;
-			window->set_vsync(false);
-		}
-	}
-}
-
-void bounds_test_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
-{
-	static SRes<ShaderProgram> program = load_tint_shader();
-
-	static BoundingBox Rect{{800.0f, 600.0f}, {32, 32}};
-	static Identifier RectTextureID = "square";
-	static bool RectHeld = false;
-
-	static BoundingBox Rect2{{600.0f, 800.0f, 25}, {128, 64}};
-	static bool RectHeld2 = false;
-
-	static BoundingCircle Circle{{1200, 900}, 16.0f};
-	static Identifier CircleTextureID = "circle";
-	static bool CircleHeld = false;
-
-	static BoundingCircle Circle2{{1200, 200}, 64.0f};
-	static bool CircleHeld2 = false;
-
-	static std::array<glm::vec2, 3> Tri1Verts = {
-		glm::vec2{0, 32}, 
-		glm::vec2{-16, 0}, 
-		glm::vec2{16, 0}
-	};
-	static BoundingTriangle Tri{{200, 300}, Tri1Verts};
-	static BoundingBox TriBB = Tri.wrap_axis_alligned();
-	static Identifier TriTextureID = "tri";
-	static bool TriHeld = false;
-
-	static std::array<glm::vec2, 3> Tri2Verts = {
-        glm::vec2{0, 108}, 
-		glm::vec2{237, 0}, 
-		glm::vec2{420, 26}
-	};
-	static BoundingTriangle Tri2{{800, 300}, Tri2Verts};
-	static BoundingBox TriBB2 = Tri2.wrap_axis_alligned();
-	static Identifier Tri2TextureID = "tri2";
-	static bool TriHeld2 = false;
-
-	static constexpr float alpha = 256 * (9.0f / 10.0f);
-
-	static const glm::uvec4 red_ud = {Red.red, Red.green, Red.blue, alpha};
-	static const glm::uvec4 blue_ud = {Blue.red, Blue.green, Blue.blue, alpha};
-	static const glm::uvec4 white_ud = {White.red, White.green, White.blue, alpha};
-	static const glm::uvec4 magenta_ud = {Magenta.red, Magenta.green, Magenta.blue, alpha};
-
-	static const glm::uvec4 yellow_ud = {Yellow.red, Yellow.green, Yellow.blue, alpha};
-	static const glm::uvec4 orange_ud = {Orange.red, Orange.green, Orange.blue, alpha};
-	static const glm::uvec4 cyan_ud = {Cyan.red, Cyan.green, Cyan.blue, alpha};
-	static const glm::uvec4 cyan_trans_ud = {Cyan.red, Cyan.green, Cyan.blue, Cyan.alpha / 4};
-
-	static const BoundingBox line{{300, 600, 275}, {2000,1}};
-	static const Line l{line.mesh().vertices[0], line.mesh().vertices[3]};
-
-	static const BoundingBox segment{{800,700, 32}, {100, 1}};
-	static const Segment s{segment.mesh().vertices[0], segment.mesh().vertices[3]};
-
-	static const BoundingBox ray{Transform{1850, 1200, 50}, {2000,1}};
-	static const Ray r{ray.mesh().vertices[0], glm::normalize(ray.mesh().vertices[3] - ray.mesh().vertices[0])};
-
-	static std::array<Collider*, 6> colliders = {
-	    &Rect,& Rect2,& Circle,& Circle2,& Tri,& Tri2
-	};
-
-	static std::array<glm::uvec4, 6> tint_colours = {
-		white_ud, white_ud, white_ud, white_ud, white_ud, white_ud
-	};
-
-
-	// Determine whether the mouse was clicked
-	bool mouse_clicked = GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT);
-
-	// Get mouse position
-	double pos_x, pos_y;
-	glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
-	const glm::vec2 mouse_pos = {pos_x, window->get_resolution().y - pos_y};
-	//std::cout << "x: " << mouse_pos.x << " \ty: " << mouse_pos.y << "\n";
-
-	bool space_pressed = glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS;
-
-	bool any_held = RectHeld || RectHeld2 || CircleHeld || CircleHeld2 || TriHeld || TriHeld2;
-
-
-	if(mouse_clicked)
-	{
-		// 1st Rect
-		if(Rect.contains(mouse_pos) && !any_held)
-		{
-			Rect.specify_origin(mouse_pos - Rect.centre());
-			RectHeld = true;
-		}
-		if(RectHeld)
-		{
-			Rect.translate_to(mouse_pos);
-			if(space_pressed)
-				Rect.rotate_by(5);
-		}
-
-		// 2nd Rect
-		if(Rect2.contains(mouse_pos) && !any_held)
-		{
-			Rect2.specify_origin(mouse_pos - Rect2.centre());
-			RectHeld2 = true;
-		}
-		if(RectHeld2)
-		{
-			Rect2.translate_to(mouse_pos);
-			if(space_pressed)
-				Rect2.rotate_by(5);
-		}
-
-		// 1st Circle
-		if(Circle.contains(mouse_pos) && !any_held)
-		{
-			Circle.specify_origin(mouse_pos - Circle.centre());
-			CircleHeld = true;
-		}
-		if(CircleHeld)
-		{
-			Circle.translate_to(mouse_pos);
-			if(space_pressed)
-				Circle.rotate_by(5);
-		}
-
-		// 2nd Circle
-		if(Circle2.contains(mouse_pos) && !any_held)
-		{
-			Circle2.specify_origin(mouse_pos - Circle2.centre());
-			CircleHeld2 = true;
-		}
-		if(CircleHeld2)
-		{
-			Circle2.translate_to(mouse_pos);
-			if(space_pressed)
-				Circle2.rotate_by(5);
-		}
-
-		if(Tri.contains(mouse_pos) && !any_held)
-		{
-			const auto tri_offset = mouse_pos - Tri.centre();
-			const auto centre_offset = Tri.centre() - TriBB.centre();
-			Tri.specify_origin(tri_offset);
-			TriBB.specify_origin(tri_offset + centre_offset);
-			TriHeld = true;
-		}
-		if(TriHeld)
-		{
-			Tri.translate_to(mouse_pos);
-			TriBB.translate_to(mouse_pos);
-
-			if(space_pressed)
-			{
-				Tri.rotate_by(5);
-				TriBB.rotate_by(5);
-			}
-		}
-
-
-		if(Tri2.contains(mouse_pos) && !any_held)
-		{
-			const auto tri_offset = mouse_pos - Tri2.centre();
-			const auto centre_offset = Tri2.centre() - TriBB2.centre();
-			Tri2.specify_origin(tri_offset);
-			TriBB2.specify_origin(tri_offset + centre_offset);
-			TriHeld2 = true;
-		}
-		if(TriHeld2)
-		{
-			Tri2.translate_to(mouse_pos);
-			TriBB2.translate_to(mouse_pos);
-
-			if(space_pressed)
-			{
-				Tri2.rotate_by(5);
-				TriBB2.rotate_by(5);
-			}
-		}
-	}
-	else
-	{
-		TriHeld = false;
-		TriHeld2 = false;
-		RectHeld = false;
-		RectHeld2 = false;
-		CircleHeld = false;
-		CircleHeld2 = false;
-	}
-
-	for(auto i = 0; i < colliders.size(); i++)
-	{
-		bool overlaps = false;
-		bool encloses = false;
-		bool enclosed = false;
-		
-		const auto& curr = *colliders[i];
-		for(auto j = 0; j < colliders.size(); j++)
-		{
-			if(i == j) continue;
-
-			const auto& target = *colliders[j];
-
-			if(curr.overlaps(target))
-				overlaps = true;
-
-			if(curr.enclosed_by(target))
-				enclosed = true;
-
-			if(target.enclosed_by(curr))
-				encloses = true;
-		}
-
-		if(curr.intersected_by(l) || curr.intersected_by(r) || curr.intersected_by(s))
-			overlaps = true;
-
-		if(enclosed)
-			tint_colours[i] = yellow_ud;
-		else if(encloses)
-			tint_colours[i] = orange_ud;
-		else if(overlaps && curr.contains(mouse_pos))
-			tint_colours[i] = magenta_ud;
-		else if(overlaps)
-			tint_colours[i] = blue_ud;
-		else if(curr.contains(mouse_pos))
-			tint_colours[i] = red_ud;
-		else
-			tint_colours[i] = white_ud;
-	}
-
-	renderer.begin_batch(camera);
-
-	renderer.submit(Rect.mesh().vertices, RectTextureID, tint_colours[0]);
-	renderer.submit(Rect2.mesh().vertices, RectTextureID, tint_colours[1]);
-
-	renderer.submit(Circle2.wrap_axis_alligned().mesh().vertices, CircleTextureID, tint_colours[3]);
-	renderer.submit(Circle.wrap_axis_alligned().mesh().vertices, CircleTextureID, tint_colours[2]);
-
-	renderer.submit(TriBB.mesh().vertices, TriTextureID, tint_colours[4]);
-	
-	renderer.submit(Tri2.wrap_axis_alligned().mesh().vertices, RectTextureID, cyan_trans_ud);
-	renderer.submit(TriBB2.mesh().vertices, Tri2TextureID, tint_colours[5]);
-
-
-	renderer.submit(line.mesh().vertices, RectTextureID, yellow_ud);
-	renderer.submit(segment.mesh().vertices, RectTextureID, orange_ud);
-	renderer.submit(ray.mesh().vertices, RectTextureID, cyan_ud);
-
-	renderer.end_batch();
-	renderer.render(program);
-}
-
-
-SRes<ShaderProgram> load_texture_shader()
-{
-	auto [vertex_sh, error_log1] = cbn::Shader::Open("res/TextureVShader.glsl", cbn::Shader::Stage::VERTEX);
-	if(!vertex_sh)
-		std::cout << error_log1 << std::endl;
-
-	auto [frag_sh, error_log2] = cbn::Shader::Open("res/TextureFShader.glsl", cbn::Shader::Stage::FRAGMENT);
-	if(!frag_sh)
-		std::cout << error_log2 << std::endl;
-
-	auto [program, error_log3] = cbn::ShaderProgram::Create(vertex_sh, nullptr, frag_sh);
-	if(!program)
-		std::cout << error_log3 << std::endl;
-
-	//TODO: find a better way to do this
-	program->bind();
-	if(program->has_uniform({"samplers[0]"}))
-		for(int i = 0; i < 15; i++)
-			program->set_uniform("samplers[" + String{std::to_string(i)} + "]", i + 1);
-
-	return program;
-}
-
-template<size_t S>
-std::vector<QuadMesh::Vertices> create_static_sprites()
-{
-	constexpr float padding = 1.056f;
-	constexpr glm::vec2 size = {3.5f, 3.5f};
-	constexpr glm::vec2 half_size = size * 0.5f;
-
-
-	std::vector<QuadMesh::Vertices> meshes;
-	meshes.reserve(S);
-	for(float x = size.x / 2.0f; x < 1920; x += padding + size.x)
-	{
-		for(float y = size.y / 2.0f; y < 1080; y += padding + size.y)
-		{
-			const glm::vec2 location{x, y};
-
-			Extent extent{
-				location - half_size,
-				location + half_size
-			};
-
-			meshes.push_back(extent.vertices());
-
-			if(meshes.size() == S)
-				break;
-		}
-		if(meshes.size() == S)
-			break;
-	}
-	return meshes;
-}
-
-void static_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
-{
-	static const SRes<ShaderProgram> program = load_texture_shader();
-	static const auto meshes = create_static_sprites<100000>();
-	static const Identifier textures[2] = {"rock", "ground"};
-	
-	uint64_t total_submitted = 0;
-	while(total_submitted != meshes.size())
-	{
-		const int sprites_left = meshes.size() - total_submitted;
+		window->clear();
+
+		// Get mouse position. Note that we need to offset it as screen coordinates
+		// have (0,0) top left, while its in the middle for us. 
+		double pos_x, pos_y;
+		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
+		const glm::vec2 mouse_pos{pos_x - (camera.resolution().x * 0.5f), (camera.resolution().y * 0.5f) - pos_y};
+
+		// Render the buttons
 		renderer.begin_batch(camera);
-		if(sprites_left >= 4096)
+
+		for(const auto& button : buttons)
 		{
-			for(auto i = 0; i < 4096; i++)
-			{
-				renderer.submit(meshes[total_submitted], textures[i % 2]);
-				total_submitted++;
-			}
+			const auto& colour = button.bounding_box.contains(mouse_pos) ? select_colour : normal_colour;
+			const auto& button_verts = button.bounding_box.mesh().vertices;
+
+			renderer.submit(button_verts, button.texture_id, colour);
 		}
-		else
-		{
-			for(auto i = 0; i < sprites_left; i++)
-			{
-				renderer.submit(meshes[total_submitted], textures[i % 2]);
-				total_submitted++;
-			}
-		}
+
 		renderer.end_batch();
-		renderer.render(program);
+		renderer.render(tint_program);
+
+		// If the mouse is clicked, then we need to test if any of the buttons where clicked
+		if(GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT))
+		{
+			for(const auto& button : buttons)
+			{
+				// If a button was clicked, change the scene
+				if(button.bounding_box.contains(mouse_pos))
+					return button.linked_scene;
+			}
+		}
+
+		window->update();
 	}
 }
 
-std::vector<BoundingBox> create_dynamic_sprites()
+//-------------------------------------------------------------------------------------
+
+std::vector<BoundingBox> create_screen_sprites(const Camera& camera, const uint64_t sprite_count)
 {
-	constexpr int SPRITE_COUNT = 100000;
-
-	constexpr float padding = 1.056f;
-	constexpr glm::vec2 size = {3.5f, 3.5f};
-
 	std::vector<BoundingBox> sprites;
-	sprites.reserve(SPRITE_COUNT);
+	sprites.reserve(sprite_count);
 
-	for(float x = size.x / 2.0f; x < 1920; x += padding + size.x)
+	// We want to fit the given sprite count perfectly in the resolution of the camera
+	// To do this, we first find the amount of sprites vertically and horizontally
+	// that we need to meet the sprite_count while matching the aspect ratio of the 
+	// camera.
+	const float aspect_ratio = camera.resolution().x / camera.resolution().y;
+	const float vertical_sprites = std::sqrtf(sprite_count / aspect_ratio);
+	const float horizontal_sprites = sprite_count / vertical_sprites;
+
+	// Knowing the amount of sprites, we then determine the size that the sprites
+	// would need to have in order to take up the entire resolution.
+	const glm::vec2 sprite_size{camera.resolution().x / horizontal_sprites, camera.resolution().y / vertical_sprites};
+	const glm::vec2 half_size = sprite_size * 0.5f;
+	const auto half_res = camera.resolution() * 0.5f;
+	for(float y = -half_res.y; y < half_res.y; y += sprite_size.y)
 	{
-		for(float y = size.y / 2.0f; y < 1080; y += padding + size.y)
+		for(float x = -half_res.x; x < half_res.x; x += sprite_size.x)
 		{
-			sprites.emplace_back(Transform{x, y}, size);
+			const glm::vec2 pos{x, y};
 
-			if(sprites.size() == SPRITE_COUNT)
-				break;
+			sprites.emplace_back(sprite_size).translate_to(pos);
 		}
-		if(sprites.size() == SPRITE_COUNT)
-			break;
 	}
 	return sprites;
 }
 
-void handle_dynamic_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
+//-------------------------------------------------------------------------------------
+
+void static_render_scene(URes<Window>& window, bool& runflag)
+{
+	// Set up the renderer & camera. By making the batches larger
+	// we minimise the number of draw calls and the amount of sprites
+	// which get rendered with the unrolled loop section of our render 
+	// loop below.
+	constexpr uint16_t batch_size = 16384 * 2;
+	SpriteRenderer renderer(window->get_opengl_version(), {batch_size, 16});
+	Camera camera(window->get_resolution());
+
+	// Load the texture shader
+	auto texture_program = load_program("TextureVertShader.glsl", "TextureFragShader.glsl");
+
+	// Load textures
+	std::array<Identifier, 2> texture_ids{
+		Identifier{"Ground"}, Identifier{"Rock"}
+	};
+	const auto texture_pack = load_textures(window, {
+		{texture_ids[0], texture_ids[0].alias() + ".png"},
+		{texture_ids[1], texture_ids[1].alias() + ".png"},
+	});
+	renderer.set_texture_pack(texture_pack);
+
+	// Create 100k static meshes which will be rendered
+	// Note that the camera is centred at (0,0)
+	const auto sprites = create_screen_sprites(camera, 100000);
+	std::vector<QuadMesh::Vertices> meshes;
+	meshes.reserve(sprites.size());
+	for(const auto& sprite : sprites)
+		meshes.push_back(sprite.mesh().vertices);
+
+	// Remove Vsync as we want it to run as quick as possible
+	window->set_vsync(false);
+
+	AutoTimer timer;
+	float frames = 0;
+	auto subscription = timer.TimerEvent.subscribe([&]()
+	{
+		window->set_title("Carbon Sample | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames));
+		frames = 0;
+	});
+	timer.start(Time::Seconds(1));
+
+	// Render all the sprites
+	while(runflag)
+	{
+		window->clear();
+
+		// Return back to the menu if escape is pressed
+		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			window->set_title("Carbon Sample");
+			return;
+		}
+
+		uint64_t total_submitted = 0;
+		while(total_submitted != meshes.size())
+		{
+			const auto sprites_left = meshes.size() - total_submitted;
+			renderer.begin_batch(camera);
+
+			if(sprites_left >= batch_size)
+			{
+				for(auto i = 0; i < batch_size; i++)
+				{
+					renderer.submit(meshes[total_submitted], texture_ids[i % 2]);
+					total_submitted++;
+				}
+			}
+			else
+			{
+				for(auto i = 0; i < sprites_left; i++)
+				{
+					renderer.submit(meshes[total_submitted], texture_ids[i % 2]);
+					total_submitted++;
+				}
+			}
+			renderer.end_batch();
+			renderer.render(texture_program);
+		}
+		
+		window->update();
+		frames++;
+	}
+}
+
+//-------------------------------------------------------------------------------------
+
+void move_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
 {
 	const float distance = glm::distance2(sprite.centre(), mouse_pos);
 
 	if(distance >= 10000)
-	{
 		sprite.translate_towards(mouse_pos.x, mouse_pos.y, 4);
-	}
 	else
-	{
 		sprite.translate_by(rand() % 3500 - 1500, rand() % 3500 - 1500);
+}
+
+//-------------------------------------------------------------------------------------
+
+void dynamic_render_scene(URes<Window>& window, bool& runflag)
+{
+	// Set up the renderer & camera. By making the batches larger
+	// we minimise the number of draw calls and the amount of sprites
+	// which get rendered with the unrolled loop section of our render 
+	// loop below.
+	constexpr uint16_t batch_size = 16384 * 2;
+	SpriteRenderer renderer(window->get_opengl_version(), {batch_size, 16});
+	Camera camera(window->get_resolution());
+
+	// Load the texture shader
+	auto texture_program = load_program("TextureVertShader.glsl", "TextureFragShader.glsl");
+
+	// Load textures
+	std::array<Identifier, 2> texture_ids{
+		Identifier{"Ground"}, Identifier{"Rock"}
+	};
+	const auto texture_pack = load_textures(window, {
+		{texture_ids[0], texture_ids[0].alias() + ".png"},
+		{texture_ids[1], texture_ids[1].alias() + ".png"},
+	});
+	renderer.set_texture_pack(texture_pack);
+
+	// Create 100k static meshes which will be rendered
+	// Note that the camera is centred at (0,0)
+	auto sprites = create_screen_sprites(camera, 100000);
+
+	// Remove Vsync as we want it to run as quick as possible
+	window->set_vsync(false);
+
+	AutoTimer timer;
+	float frames = 0;
+	auto subscription = timer.TimerEvent.subscribe([&]()
+	{
+		window->set_title("Carbon Sample | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames));
+		frames = 0;
+	});
+	timer.start(Time::Seconds(1));
+
+	// Render all the sprites
+	while(runflag)
+	{
+		window->clear();
+
+		// Return back to the menu if escape is pressed
+		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			window->set_title("Carbon Sample");
+			return;
+		}
+
+		// Get mouse position. Note that we need to offset it as screen coordinates
+        // have (0,0) top left, while its in the middle for us. 
+		double pos_x, pos_y;
+		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
+		const glm::vec2 mouse_pos{pos_x - (camera.resolution().x * 0.5f), (camera.resolution().y * 0.5f) - pos_y};
+
+		// Render and move the sprites
+		uint64_t total_submitted = 0;
+		while(total_submitted != sprites.size())
+		{
+			const auto sprites_left = sprites.size() - total_submitted;
+			renderer.begin_batch(camera);
+
+			if(sprites_left >= batch_size)
+			{
+				for(auto i = 0; i < batch_size; i++)
+				{
+					move_sprite(sprites[total_submitted], mouse_pos);
+
+					renderer.submit(sprites[total_submitted].mesh().vertices, texture_ids[i % 2]);
+					total_submitted++;
+				}
+			}
+			else
+			{
+				for(auto i = 0; i < sprites_left; i++)
+				{
+					move_sprite(sprites[total_submitted], mouse_pos);
+
+					renderer.submit(sprites[total_submitted].mesh().vertices, texture_ids[i % 2]);
+					total_submitted++;
+				}
+			}
+			renderer.end_batch();
+			renderer.render(texture_program);
+		}
+
+		window->update();
+		frames++;
 	}
 }
 
-void dynamic_render_scene(SampleStates& state, URes<Window>& window, SpriteRenderer& renderer, Camera& camera)
+//-------------------------------------------------------------------------------------
+
+void bounds_test_scene(URes<Window>& window, bool& runflag)
 {
-	static BoundingCircle cam{camera.as_transform(), glm::length(camera.bounding_box().extent().size())};
+	// Create the standard renderer and scene camera
+	SpriteRenderer renderer(window->get_opengl_version());
 
-	static SRes<ShaderProgram> program = load_texture_shader();
-	static Identifier textures[2] = {"rock", "ground"};
-	static auto sprites = create_dynamic_sprites();
+	// Note that the camera is centred at (0,0). 
+	// In order to make it a bit easier to position the 
+	// colliders. We will move the camera up by half
+	// its resolution to put (0,0) on its bottom left. 
+	Camera camera(window->get_resolution());
+	camera.translate_by(camera.resolution() * 0.5f);
 
-	// Get mouse position
-	double pos_x, pos_y;
-	glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
-	const glm::vec2 mouse_pos = {pos_x, window->get_resolution().y - pos_y};
+	// Load shader & textures
+	auto tint_program = load_program("TintVertShader.glsl", "TintFragShader.glsl");
 
-	uint64_t total_submitted = 0;
-	while(total_submitted != sprites.size())
+	const Identifier circle_texture_id = "Circle";
+	const Identifier rectangle_texture_id = "Rectangle";
+	const Identifier triangle_1_texture_id = "Triangle1";
+	const Identifier triangle_2_texture_id = "Triangle2";
+
+	const auto texture_pack = load_textures(window, {
+		{circle_texture_id, "Circle.png"},
+		{rectangle_texture_id, "Square.png"},
+		{triangle_1_texture_id, "Triangle1.png"},
+		{triangle_2_texture_id, "Triangle2.png"}
+	});
+	renderer.set_texture_pack(texture_pack);
+
+	// Create tint colours
+	static constexpr float alpha = 256 * (9.0f / 10.0f);
+	static const glm::uvec4 red_colour = {Red.red, Red.green, Red.blue, alpha};
+	static const glm::uvec4 blue_colour = {Blue.red, Blue.green, Blue.blue, alpha};
+	static const glm::uvec4 cyan_colour = {Cyan.red, Cyan.green, Cyan.blue, alpha};
+	static const glm::uvec4 white_colour = {White.red, White.green, White.blue, alpha};
+	static const glm::uvec4 yellow_colour = {Yellow.red, Yellow.green, Yellow.blue, alpha};
+	static const glm::uvec4 orange_colour = {Orange.red, Orange.green, Orange.blue, alpha};
+	static const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
+
+	// Create the colliders
+	static BoundingBox rect_1{{800.0f, 600.0f}, {32, 32}};
+	static BoundingBox rect_2{{600.0f, 800.0f, 25}, {128, 64}};
+	static BoundingCircle circle_1{{1200, 900}, 16.0f};
+	static BoundingCircle circle_2{{1200, 200}, 64.0f};
+
+	static TriangleMesh::Vertices triangle_1_vertices = {
+		glm::vec2{0, 32},
+		glm::vec2{-16, 0},
+		glm::vec2{16, 0}
+	};
+
+	static TriangleMesh::Vertices triangle_2_vertices = {
+		glm::vec2{0, 108},
+		glm::vec2{237, 0},
+		glm::vec2{420, 26}
+	};
+
+	// The triangles cannot be rendered by the sprite renderer directly so
+	// we use a object alligned bounding box which mimics the triangle 
+	// and render that instead.
+	static BoundingTriangle triangle_1{{200, 300}, triangle_1_vertices};
+	static BoundingBox triangle_1_obb = triangle_1.wrap_axis_alligned();
+
+	static BoundingTriangle triangle_2{{800, 300}, triangle_2_vertices};
+	static BoundingBox triangle_2_obb = triangle_2.wrap_axis_alligned();
+
+	// Using bounding boxes, create lines to act as rays, segments and rays
+	// TODO: implement a line renderer instead
+	 const BoundingBox line_bb{{300, 600, 275}, {2000,1}};
+	 const Line line{line_bb.mesh().vertices[0], line_bb.mesh().vertices[3]};
+	
+	 const BoundingBox segment_bb{{800,700, 32}, {100, 1}};
+	 const Segment segment{segment_bb.mesh().vertices[0], segment_bb.mesh().vertices[3]};
+
+	 const BoundingBox ray_bb{Transform{1850, 1200, 50}, {2000,1}};
+	 const Ray ray{ray_bb.mesh().vertices[0], glm::normalize(ray_bb.mesh().vertices[3] - ray_bb.mesh().vertices[0])};
+
+	// Store all colliders and their associated data in arrays to allow processing them with a loop
+	std::array<Collider*, 6> colliders = {
+		&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 // NOTE: triangle positions must stay the same
+	};
+	std::array<glm::uvec4, 6> tint_colours = {
+	     white_colour, white_colour, white_colour, white_colour, white_colour, white_colour
+	};
+	std::array<bool, 6> held = {
+		 false, false, false, false, false, false
+	};
+
+	// Run the test & render the shapes, we want to enable vsync to limit it
+	window->set_vsync(true);
+	while(runflag)
 	{
-		const int sprites_left = sprites.size() - total_submitted;
+		window->clear();
+
+		// Return back to the menu if escape is pressed
+		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			window->set_title("Carbon Sample");
+			return;
+		}
+
+		bool mouse_clicked = GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT);
+		bool space_pressed = glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS;
+
+		// Get mouse position. Note that we need to offset it as screen coordinates
+	    // have (0,0) top left, while for us its currently bottom left (as we moved the camera). 
+		double pos_x, pos_y;
+		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
+		const glm::vec2 mouse_pos{pos_x, camera.resolution().y - pos_y};
+
+		// handle the colliders
+		for(auto i = 0; i < colliders.size(); i++)
+		{
+			bool any_held = std::any_of(held.begin(), held.end(), [](auto v) { return v; });
+			auto& colour = tint_colours[i];
+			auto& curr = *colliders[i];
+			auto& is_held = held[i];
+
+			bool overlaps = false;
+			bool encloses = false;
+			bool enclosed = false;
+			bool moused_over = curr.contains(mouse_pos);
+
+			// If no other collider is already held, the mouse is clicked and the 
+			// mouse is hovering over the collider. Then we want to pick it up. 
+			if(mouse_clicked)
+			{
+				if(!any_held && moused_over)
+				{
+					const auto world_origin_offset = mouse_pos - curr.centre();
+
+					// When we pick it up, we want to flag that were holding it and move its origin to where the mouse is. 
+					curr.specify_origin(world_origin_offset);
+					is_held = true;
+				}
+			}
+			else is_held = false;
+
+			// If collider is held, then we want to move it to where the mouse is
+		    // and rotate it if space is held. 
+			if(is_held)
+			{
+				curr.translate_to(mouse_pos);
+
+				if(space_pressed)
+					curr.rotate_by(5);
+			}
+
+
+			// Check for any overlap or enclosing between colliders
+			for(auto j = 0; j < colliders.size(); j++)
+			{
+				if(i == j) continue;
+
+				const auto& target = *colliders[j];
+
+				if(curr.overlaps(target))
+					overlaps = true;
+
+				if(curr.enclosed_by(target))
+					enclosed = true;
+
+				if(target.enclosed_by(curr))
+					encloses = true;
+			}
+
+			if(curr.intersected_by(line) || curr.intersected_by(ray) || curr.intersected_by(segment))
+				overlaps = true;
+
+			if(enclosed)
+				tint_colours[i] = yellow_colour;
+			else if(encloses)
+				tint_colours[i] = orange_colour;
+			else if(overlaps && moused_over)
+				tint_colours[i] = magenta_colour;
+			else if(overlaps)
+				tint_colours[i] = blue_colour;
+			else if(moused_over)
+				tint_colours[i] = red_colour;
+			else
+				tint_colours[i] = white_colour;
+		}
+
+		// Render the bounds
 		renderer.begin_batch(camera);
 
-		if(sprites_left >= 4096)
-		{
-			for(auto i = 0; i < 4096; i++)
-			{
-				const auto& verts = sprites[total_submitted].mesh().vertices;
+		renderer.submit(rect_1.mesh().vertices, rectangle_texture_id, tint_colours[0]);
+		renderer.submit(rect_2.mesh().vertices, rectangle_texture_id, tint_colours[1]);
 
-				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
-				//if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(verts, textures[i % 2]);
-				total_submitted++;
-			}
-		}
-		else
-		{
-			for(auto i = 0; i < sprites_left; i++)
-			{
-				const auto& verts = sprites[total_submitted].mesh().vertices;
+		renderer.submit(circle_1.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[2]);
+		renderer.submit(circle_2.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[3]);
 
-				handle_dynamic_sprite(sprites[total_submitted], mouse_pos);
-				//if(cam.overlaps(sprites[total_submitted]))
-					renderer.submit(verts, textures[i % 2]);
-				total_submitted++;
-			}
-		}
+		renderer.submit(triangle_1.wrap_object_alligned().mesh().vertices, triangle_1_texture_id, tint_colours[4]);
+		renderer.submit(triangle_2.wrap_object_alligned().mesh().vertices, triangle_2_texture_id, tint_colours[5]);
+
+		renderer.submit(line_bb.mesh().vertices, rectangle_texture_id, yellow_colour);
+		renderer.submit(segment_bb.mesh().vertices, rectangle_texture_id, orange_colour);
+		renderer.submit(ray_bb.mesh().vertices, rectangle_texture_id, cyan_colour);
+
 		renderer.end_batch();
-		renderer.render(program);
-	}
+		renderer.render(tint_program);
 
+		window->update();
+	}
+	
 }
 
-/*
-SRes<TextureAtlas> build_atlas()
-{
-	const std::filesystem::path path = "res/";
-
-	IdentityMap<SRes<Image>> images;
-
-	for(const auto& entry : std::filesystem::directory_iterator(path))
-	{
-		std::filesystem::path image_path = entry.path().string();
-
-		SRes<Image> img = Image::Open(image_path);
-		if(!img)
-		{
-			std::cout << "Could not load image " << image_path.string() << std::endl;
-			continue;
-		}
-
-		images.emplace(entry.path().filename().string(), std::move(img));
-	}
-
-	std::cout << "Packing... " << images.size() << " textures" << std::endl;
-
-	auto atlas = cbn::TextureAtlas::Pack(4096, 4096, images);
-	return atlas;
-}
-
-*/
+//-------------------------------------------------------------------------------------

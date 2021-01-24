@@ -142,15 +142,15 @@ namespace cbn
 	BoundingBox::BoundingBox(const Extent& extent)
 		: BoundingBox(extent.max - extent.min)
 	{
-		translate_to((extent.min + extent.max) * 0.5f);
+		translate_to(extent.centre());
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	BoundingBox::BoundingBox(const Transform& transform, const glm::vec2& size)
-		: Transformable(transform),
-		  m_LocalOriginOffset(0, 0)
+		: m_LocalOriginOffset(0, 0)
 	{
+		transform_to(transform);
 		resize(size);
 	}
 	

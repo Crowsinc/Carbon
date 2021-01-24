@@ -48,6 +48,7 @@ namespace cbn
 
 #pragma pack(pop)
 
+	//TODO: make constexpr
 	const Colour White = {255, 255, 255};
 	const Colour Black = {0, 0, 0};
 	const Colour Red = {255, 0, 0};
