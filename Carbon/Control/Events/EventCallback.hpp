@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "../../Data/Identity/Identified.hpp"
+#include "../../Data/Identity/Unique.hpp"
 
 namespace cbn
 {
@@ -10,7 +10,7 @@ namespace cbn
 	// Simply a way to store a callback in an identifiable way. 
 	// TODO: improve and generalise later. 
 	template<typename ...Args>
-	class EventCallback : public Identified
+	class EventCallback : public Unique<EventCallback<Args...>>
 	{
 	public:
 		using RawType = std::function<void(Args...)>;

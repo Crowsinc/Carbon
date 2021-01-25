@@ -4,7 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
-#include "../../Data/Identity/Identified.hpp"
+#include "../../Data/Identity/Unique.hpp"
 #include "../../Diagnostics/Assert.hpp"
 
 #include "Subscription.hpp"
@@ -23,7 +23,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	template<typename Parent, typename ...Args>
-	class EventHost : public Identified
+	class EventHost : public Unique<EventHost<Parent, Args...>>
 	{
 		friend Parent;
 	public:

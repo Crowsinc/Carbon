@@ -547,28 +547,28 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 	renderer.set_texture_pack(texture_pack);
 
 	// Create tint colours
-	static constexpr float alpha = 256 * (9.0f / 10.0f);
-	static const glm::uvec4 red_colour = {Red.red, Red.green, Red.blue, alpha};
-	static const glm::uvec4 blue_colour = {Blue.red, Blue.green, Blue.blue, alpha};
-	static const glm::uvec4 cyan_colour = {Cyan.red, Cyan.green, Cyan.blue, alpha};
-	static const glm::uvec4 white_colour = {White.red, White.green, White.blue, alpha};
-	static const glm::uvec4 yellow_colour = {Yellow.red, Yellow.green, Yellow.blue, alpha};
-	static const glm::uvec4 orange_colour = {Orange.red, Orange.green, Orange.blue, alpha};
-	static const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
+	constexpr float alpha = 256 * (9.0f / 10.0f);
+	const glm::uvec4 red_colour = {Red.red, Red.green, Red.blue, alpha};
+	const glm::uvec4 blue_colour = {Blue.red, Blue.green, Blue.blue, alpha};
+	const glm::uvec4 cyan_colour = {Cyan.red, Cyan.green, Cyan.blue, alpha};
+	const glm::uvec4 white_colour = {White.red, White.green, White.blue, alpha};
+	const glm::uvec4 yellow_colour = {Yellow.red, Yellow.green, Yellow.blue, alpha};
+	const glm::uvec4 orange_colour = {Orange.red, Orange.green, Orange.blue, alpha};
+	const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
 
 	// Create the colliders
-	static BoundingBox rect_1{{800.0f, 600.0f}, {32, 32}};
-	static BoundingBox rect_2{{600.0f, 800.0f, 25}, {128, 64}};
-	static BoundingCircle circle_1{{1200, 900}, 16.0f};
-	static BoundingCircle circle_2{{1200, 200}, 64.0f};
+	BoundingBox rect_1{{800.0f, 600.0f}, {32, 32}};
+	BoundingBox rect_2{{600.0f, 800.0f, 25}, {128, 64}};
+	BoundingCircle circle_1{{1200, 900}, 16.0f};
+	BoundingCircle circle_2{{1200, 200}, 64.0f};
 
-	static TriangleMesh::Vertices triangle_1_vertices = {
+	TriangleMesh::Vertices triangle_1_vertices = {
 		glm::vec2{0, 32},
 		glm::vec2{-16, 0},
 		glm::vec2{16, 0}
 	};
 
-	static TriangleMesh::Vertices triangle_2_vertices = {
+	TriangleMesh::Vertices triangle_2_vertices = {
 		glm::vec2{0, 108},
 		glm::vec2{237, 0},
 		glm::vec2{420, 26}

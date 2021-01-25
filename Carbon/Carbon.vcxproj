@@ -166,7 +166,6 @@
     <ClCompile Include="Control\Timing\Time.cpp" />
     <ClCompile Include="Control\Timing\Timer.cpp" />
     <ClCompile Include="Data\Identity\Identifiable.cpp" />
-    <ClCompile Include="Data\Identity\Identified.cpp" />
     <ClCompile Include="Data\Identity\Identifier.cpp" />
     <ClCompile Include="Graphics\Animation\Animator.cpp" />
     <ClCompile Include="Graphics\Animation\Animation.cpp" />
@@ -212,8 +211,8 @@
     <ClInclude Include="Control\Timing\Time.hpp" />
     <ClInclude Include="Control\Timing\Timer.hpp" />
     <ClInclude Include="Data\Identity\Identifiable.hpp" />
-    <ClInclude Include="Data\Identity\Identified.hpp" />
     <ClInclude Include="Data\Identity\Identifier.hpp" />
+    <ClInclude Include="Data\Identity\Unique.hpp" />
     <ClInclude Include="Graphics\Animation\Animator.hpp" />
     <ClInclude Include="Graphics\Animation\Animation.hpp" />
     <ClInclude Include="Graphics\Animation\AnimationNode.hpp" />
