@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-
 namespace cbn
 {
 
@@ -12,6 +11,10 @@ namespace cbn
 	private:
 
 		glm::vec2 m_Translation;
+
+	protected:
+
+		virtual void on_translate();
 
 	public:
 		
@@ -36,7 +39,6 @@ namespace cbn
 		void translate_towards(const glm::vec2& position, const float amount);
 
 		const glm::vec2& translation() const;
-
 
 	};
 

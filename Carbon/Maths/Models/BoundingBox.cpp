@@ -11,6 +11,17 @@
 
 namespace cbn
 {
+
+	//-------------------------------------------------------------------------------------
+
+	void BoundingBox::on_transform()
+	{
+		// Set all cache flags to true, to signal that its all outdated
+		m_AllignmentOutdated = true;
+		m_CentreOutdated = true;
+		m_ExtentOutdated = true;
+		m_MeshOutdated = true;
+	}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -20,7 +31,7 @@ namespace cbn
 		// is centred on (0,0). This works because the point has no orientation, hence we can effectly 
 		// transform the coordinate system to allign it with the rotated box and treat it as AABB. However, 
 		// in this case we do the opposite and transform the point as if it were the boxes' local coordinate system. 
-		
+
 		// To do this, find the vector between the box centre and point and project it
 		// across two perpendicular normals of the box. This will give us the offset from 
 		// the boxes' centre to the point along these normals. The normals are alligned
@@ -40,7 +51,7 @@ namespace cbn
 		// simplify the projection to a dot product, avoiding any square roots.
 		return {glm::dot(centre_to_point, mesh.normals[3]), glm::dot(centre_to_point, mesh.normals[0])};
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void BoundingBox::generate_mesh() const
@@ -49,12 +60,12 @@ namespace cbn
 		/*
 			  Vertices            Normals
 									 0
-			0----------3		*---------*		
-			|		   | 		|         |		
-			|          |	  1 |         | 3	
-			|          |		|         |		
-			1----------2		*---------*		
-									 2			
+			0----------3		*---------*
+			|		   | 		|         |
+			|          |	  1 |         | 3
+			|          |		|         |
+			1----------2		*---------*
+									 2
 		*/
 
 		// Obtain local, untransformed, vertices using the local extent.
@@ -72,7 +83,7 @@ namespace cbn
 		// Create the transformed mesh
 		m_Mesh = QuadMesh::Create(as_transform(), local_vertices);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	void BoundingBox::update_extent() const
@@ -128,31 +139,40 @@ namespace cbn
 		m_Extent.min = {min_x, min_y};
 		m_Extent.max = {max_x, max_y};
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
-	BoundingBox::BoundingBox(const glm::vec2& size)
-		: m_LocalOriginOffset(0,0)
+	BoundingBox::BoundingBox(const glm::vec2& size, const glm::vec2& origin_offset, bool local_coords)
+		: m_LocalOriginOffset(0,0),
+		m_AllignmentOutdated(true),
+		m_ExtentOutdated(true),
+		m_CentreOutdated(true),
+		m_MeshOutdated(true)
 	{
 		resize(size);
+		specify_origin(origin_offset, local_coords);
 	}
-	
+
+	//-------------------------------------------------------------------------------------
+
+	BoundingBox::BoundingBox(const Transform& transform, const glm::vec2& size, const glm::vec2& origin_offset, bool local_coords)
+		: Transformable(transform),
+		m_AllignmentOutdated(true),
+		m_LocalOriginOffset(0, 0),
+		m_ExtentOutdated(true),
+		m_CentreOutdated(true),
+		m_MeshOutdated(true)
+	{
+		// Note that while we set the transform first, it actually isn't applied to the bounding box
+		// until after the origin is specified. Which is the required behaviour. 
+		resize(size);
+		specify_origin(origin_offset, local_coords);
+	}
 	//-------------------------------------------------------------------------------------
 
 	BoundingBox::BoundingBox(const Extent& extent)
-		: BoundingBox(extent.max - extent.min)
-	{
-		translate_to(extent.centre());
-	}
-	
-	//-------------------------------------------------------------------------------------
-
-	BoundingBox::BoundingBox(const Transform& transform, const glm::vec2& size)
-		: m_LocalOriginOffset(0, 0)
-	{
-		transform_to(transform);
-		resize(size);
-	}
+		: BoundingBox(Transform{extent.centre()}, extent.max - extent.min) 
+	{}
 	
 	//-------------------------------------------------------------------------------------
 
@@ -340,7 +360,6 @@ namespace cbn
 		const auto t0 = (m_LocalExtent.min - local_ray_origin) * inverse_local_dir;
 		const auto t1 = (m_LocalExtent.max - local_ray_origin) * inverse_local_dir;
 
-		// TODO: use minmax
 		const auto t_min = glm::compMax(glm::min(t0, t1));
 		const auto t_max = glm::compMin(glm::max(t0, t1));
 
@@ -351,9 +370,12 @@ namespace cbn
 
 	const Extent& BoundingBox::extent() const
 	{
-		//TODO: caching
+		if(m_ExtentOutdated)
+		{
+			update_extent();
 
-		update_extent();
+			m_ExtentOutdated = false;
+		}
 
 		return m_Extent;
 	}
@@ -369,10 +391,9 @@ namespace cbn
 		m_LocalExtent.min = -half_size;
 		m_LocalExtent.max = half_size;
 
-		//TODO: handle with caching instead
-		// The mesh will need updating, so will the extents etc.
-		generate_mesh();
-		update_extent();
+		// Flag the mesh and extent as being outdated because they will need to be updated
+		m_ExtentOutdated = true;
+		m_MeshOutdated = true;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -421,13 +442,15 @@ namespace cbn
 
 	const Point& BoundingBox::centre() const
 	{
-		// TODO: caching
-		
-		// The local origin offset is given as an offset from the centre. Since the origin is
-		// at (0,0) in local space, the centre in local space has the opposite offset as the
-		// origin.
+		if(m_CentreOutdated)
+		{
+			// The local origin offset is given as an offset from the centre. Since the origin is
+			// at (0,0) in local space, the centre in local space has the opposite offset as the
+			// origin.
+			m_Centre = as_transform().apply(-m_LocalOriginOffset);
 
-		m_Centre = as_transform().apply(-m_LocalOriginOffset);
+			m_CentreOutdated = false;
+		}
 
 		return m_Centre;
 	}
@@ -451,8 +474,12 @@ namespace cbn
 		
 	const QuadMesh& BoundingBox::mesh() const
 	{
-		//TODO: caching
-		generate_mesh();
+		if(m_MeshOutdated)
+		{
+			generate_mesh();
+
+			m_MeshOutdated = false;
+		}
 
 		return m_Mesh;
 	}
@@ -461,10 +488,13 @@ namespace cbn
 		
 	bool BoundingBox::is_axis_alligned() const
 	{
-		//TODO: proper caching
+		if(m_AllignmentOutdated)
+		{
+			// The box is axis alligned if its rotation is a multiple of 90 degrees. 
+			m_AxisAlligned = std::fabsf(std::fmodf(rotation_degrees(), 90.0f)) <= std::numeric_limits<float>::epsilon();
 
-		// The box is axis alligned if its rotation is a multiple of 90 degrees. 
-		m_AxisAlligned = std::fabsf(std::fmodf(rotation_degrees(), 90.0f)) <= std::numeric_limits<float>::epsilon();
+			m_AllignmentOutdated = false;
+		}
 
 		return m_AxisAlligned;
 	}

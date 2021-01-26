@@ -91,7 +91,7 @@ namespace cbn
 	void AutoTimer::stop()
 	{
 		m_Running = false;
-		m_TimerThread.detach();
+		m_TimerThread.join();
 	}
 	
 	//-------------------------------------------------------------------------------------

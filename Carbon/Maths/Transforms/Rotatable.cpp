@@ -16,19 +16,26 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
+	void Rotatable2D::on_rotate()
+	{}
+	
+	//-------------------------------------------------------------------------------------
+
 	Rotatable2D::Rotatable2D()
 		: Rotatable2D(0) {}
 	
 	//-------------------------------------------------------------------------------------
 
 	Rotatable2D::Rotatable2D(const float degrees)
-		: m_RotationDegrees(0) {}
+		: m_RotationDegrees(degrees) {}
 	
 	//-------------------------------------------------------------------------------------
 
 	void Rotatable2D::rotate_by(const float degrees)
 	{
 		m_RotationDegrees = wrap_degrees(m_RotationDegrees + degrees);
+
+		on_rotate();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -36,6 +43,8 @@ namespace cbn
 	void Rotatable2D::rotate_to(const float degrees)
 	{
 		m_RotationDegrees = wrap_degrees(degrees);
+
+		on_rotate(); 
 	}
 	
 	//-------------------------------------------------------------------------------------

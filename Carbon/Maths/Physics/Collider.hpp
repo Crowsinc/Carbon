@@ -5,8 +5,6 @@
 #include "../Models/BoundingCircle.hpp"
 #include "../Models/BoundingTriangle.hpp"
 
-#include "../Transform.hpp"
-
 namespace cbn
 {
 
@@ -16,7 +14,7 @@ namespace cbn
 	class BoundingCircle;
 	class BoundingTriangle;
 
-	struct Collider : public Transformable<Translatable2D, Rotatable2D>
+	struct Collider
 	{
 
 		virtual const Extent& extent() const = 0;

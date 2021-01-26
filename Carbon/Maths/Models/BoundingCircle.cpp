@@ -10,35 +10,38 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void BoundingCircle::update_extent() const
+	void BoundingCircle::on_transform()
 	{
-		// The minimum and maximum coords are just the coords which are one radius
-		// from the centre in each cardinal direction.
-
-		const glm::vec2 xy_radius = {radius(), radius()};
-		const auto& centre = this->centre();
-
-		m_Extent.min = centre - xy_radius;
-		m_Extent.max = centre + xy_radius;
+		m_ExtentOutdated = true;
+		m_CentreOutdated = true; 
+		m_DirectionOutdated = true;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingCircle::BoundingCircle(const float radius)
-		: m_LocalCentreOffset(0,0)
+	BoundingCircle::BoundingCircle(const float radius, const glm::vec2& origin_offset, const bool local_coords)
+		: m_LocalCentreOffset(0, 0),
+		m_DirectionOutdated(true),
+		m_ExtentOutdated(true), 
+		m_CentreOutdated(true)
 	{
 		resize(radius);
+		specify_origin(origin_offset, local_coords);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingCircle::BoundingCircle(const Transform& transform, const float radius)
-		: m_LocalCentreOffset(0, 0)
+	BoundingCircle::BoundingCircle(const Transform& transform, const float radius, const glm::vec2& origin_offset, const bool local_coords)
+		: Transformable(transform),
+		m_LocalCentreOffset(0, 0),
+		m_DirectionOutdated(true),
+		m_ExtentOutdated(true),
+		m_CentreOutdated(true)
 	{
-		transform_to(transform);
 		resize(radius);
+		specify_origin(origin_offset, local_coords);
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	bool BoundingCircle::overlaps(const Collider& collider) const
@@ -200,7 +203,19 @@ namespace cbn
 
 	const Extent& BoundingCircle::extent() const
 	{
-		update_extent();
+		if(m_ExtentOutdated)
+		{
+			// The minimum and maximum coords are just the coords which are one radius
+	        // from the centre in each cardinal direction.
+
+			const glm::vec2 xy_radius = {radius(), radius()};
+			const auto& centre = this->centre();
+
+			m_Extent.min = centre - xy_radius;
+			m_Extent.max = centre + xy_radius;
+
+			m_ExtentOutdated = false;
+		}
 
 		return m_Extent;
 	}
@@ -211,8 +226,8 @@ namespace cbn
 	{
 		m_Radius = radius;
 	
-		// We can update the extent here without caching because its very fast
-		update_extent();
+		// With a new radius, the extent is now outdated
+		m_ExtentOutdated = true;
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -253,9 +268,12 @@ namespace cbn
 
 	const Point& BoundingCircle::centre() const
 	{
-		//TODO: caching
+		if(m_CentreOutdated)
+		{
+			m_Centre = as_transform().apply(m_LocalCentreOffset);
 
-		m_Centre = as_transform().apply(m_LocalCentreOffset);
+			m_CentreOutdated = false;
+		}
 
 		return m_Centre;
 	}
@@ -264,14 +282,17 @@ namespace cbn
 
 	const Point& BoundingCircle::direction() const
 	{
-		//TODO: caching
-		
-		// The local direction is from the centre upwards one unit
-		// So specify the local direction as a point that is one unit 
-		// above the local centre, then transform it and find the new direction
-		// between this point and the transformed centre.
-		constexpr glm::vec2 unit_j{0.0f, 1.0f};
-		m_Direction = as_transform().apply(m_LocalCentreOffset + unit_j) - centre();
+		if(m_DirectionOutdated)
+		{
+			// The local direction is from the centre upwards one unit
+			// So specify the local direction as a point that is one unit 
+			// above the local centre, then transform it and find the new direction
+			// between this point and the transformed centre.
+			constexpr glm::vec2 unit_j{0.0f, 1.0f};
+			m_Direction = as_transform().apply(m_LocalCentreOffset + unit_j) - centre();
+
+			m_DirectionOutdated = false;
+		}
 
 		return m_Direction;
 	}

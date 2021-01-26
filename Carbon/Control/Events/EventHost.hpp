@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <map>
 #include <functional>
 #include <unordered_map>
@@ -36,8 +38,6 @@ namespace cbn
 
 	public:
 
-		EventHost();
-
 		~EventHost();
 
 		Subscription subscribe(typename EventCallback<Args...>::RawType callback);
@@ -54,15 +54,9 @@ namespace cbn
 	template<typename Parent, typename ...Args>
 	inline void EventHost<Parent, Args...>::dispatch(Args... args) const
 	{
-		EventHandler.dispatch_event(*this, args...);
-	}
-
-	//-------------------------------------------------------------------------------------
-
-	template<typename Parent, typename ...Args>
-	inline EventHost<Parent, Args...>::EventHost()
-	{
-		EventHandler.register_host(*this);
+		// Only dispatch if the host has actually be registered
+		if(EventHandler.is_registered(*this))
+			EventHandler.dispatch_event(*this, args...);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -70,7 +64,9 @@ namespace cbn
 	template<typename Parent, typename ...Args>
 	inline EventHost<Parent, Args...>::~EventHost()
 	{
-		EventHandler.unregister_host(*this);
+		// If the event host was registered, then unregister it
+		if(EventHandler.is_registered(*this))
+			EventHandler.unregister_host(*this);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -78,9 +74,16 @@ namespace cbn
 	template<typename Parent, typename ...Args>
 	inline Subscription EventHost<Parent, Args...>::subscribe(typename EventCallback<Args...>::RawType callback)
 	{
+		// We want to register on the first subscription so we aren't wasting time
+		// for events that aren't even being used. This gives a performance boost as 
+		// there will likely be thousands of objects whose events wouldn't be used in
+		// a game scenario.
+		if(!EventHandler.is_registered(*this))
+			EventHandler.register_host(*this);
+
 		return EventHandler.create_subscription(*this, EventCallback<Args...>{callback});
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
 }

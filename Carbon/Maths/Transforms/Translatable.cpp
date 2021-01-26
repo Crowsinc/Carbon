@@ -10,6 +10,11 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	
+	void Translatable2D::on_translate()
+	{}
+
+	//-------------------------------------------------------------------------------------
+
 	Translatable2D::Translatable2D()
 		: Translatable2D(0, 0) {}
 	
@@ -29,6 +34,8 @@ namespace cbn
 	{
 		m_Translation.x += x;
 		m_Translation.y += y;
+
+		on_translate();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -36,6 +43,8 @@ namespace cbn
 	void Translatable2D::translate_by(const glm::vec2& translation)
 	{
 		m_Translation += translation;
+
+		on_translate();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -44,6 +53,8 @@ namespace cbn
 	{
 		m_Translation.x = x;
 		m_Translation.y = y;
+
+		on_translate();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -51,6 +62,8 @@ namespace cbn
 	void Translatable2D::translate_to(const glm::vec2& position)
 	{
 		m_Translation = position;
+
+		on_translate();
 	}
 	
 	//-------------------------------------------------------------------------------------

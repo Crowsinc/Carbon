@@ -13,6 +13,7 @@
 #include "Maths/Models/BoundingBox.hpp"
 #include "Maths/Models/BoundingCircle.hpp"
 #include "Maths/Models/BoundingTriangle.hpp"
+#include "Maths/Transforms/Transformable.hpp"
 
 #include "Graphics/Window.hpp"
 #include "Graphics/SpriteRenderer.hpp"

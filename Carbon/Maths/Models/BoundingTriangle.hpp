@@ -5,6 +5,7 @@
 #include "BoundingCircle.hpp"
 #include "../Physics/Collider.hpp"
 
+#include "../Transforms/Transformable.hpp"
 
 namespace cbn
 {
@@ -12,25 +13,31 @@ namespace cbn
 	class BoundingBox;
 	class BoundingCircle;
 
-	class BoundingTriangle : public Collider
+	class BoundingTriangle : public Collider, public Transformable<Translatable2D, Rotatable2D>
 	{
 	private:
 
 		TriangleMesh::Vertices m_LocalVertices;
 		glm::vec2 m_LocalOriginOffset;
 
+		mutable bool m_DirectionOutdated, m_MeshOutdated;
+		mutable bool m_ExtentOutdated, m_CentreOutdated;
 		mutable glm::vec2 m_Direction;
-		mutable Point m_Centre;
 		mutable TriangleMesh m_Mesh;
 		mutable Extent m_Extent;
+		mutable Point m_Centre;
 
 		Extent create_extent(const TriangleMesh::Vertices& vertices) const;
 
+		void on_transform() override;
+
 	public:
 
-		BoundingTriangle(const TriangleMesh::Vertices& vertices);
+		BoundingTriangle(const BoundingTriangle& other) = default;
 
-		BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices);
+		BoundingTriangle(const TriangleMesh::Vertices& vertices, const glm::vec2& origin_offset = {0,0}, const bool local_coords = false);
+
+		BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices, const glm::vec2& origin_offset = {0,0}, const bool local_coords = false);
 
 		bool overlaps(const Collider& collider) const override;
 

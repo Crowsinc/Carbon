@@ -7,15 +7,19 @@
 namespace cbn
 {
 
-	//TODO: caching
 
 	class Camera : public Transformable<Translatable2D, Rotatable2D, Scalable2D>
 	{
 	private:
 
 		glm::vec2 m_Resolution;
-		mutable BoundingBox m_BoundingBox;
+
+		mutable bool m_ProjectionMatrixOutdated, m_ViewMatrixOutdated, m_ViewProjectionMatrixOutdated;
 		mutable glm::mat4 m_ViewMatrix, m_ProjectionMatrix, m_ViewProjectionMatrix;
+		mutable bool m_BoundingBoxOutdated;
+		mutable BoundingBox m_BoundingBox;
+
+		void on_transform() override;
 
 	public:
 		

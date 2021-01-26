@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include <glm/glm.hpp>
 
 #include "Common.hpp"

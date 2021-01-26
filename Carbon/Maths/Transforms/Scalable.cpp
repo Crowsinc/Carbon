@@ -7,6 +7,11 @@ namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
+	void Scalable2D::on_scale()
+	{}
+	
+	//-------------------------------------------------------------------------------------
+
 	Scalable2D::Scalable2D()
 		: Scalable2D(1.0f, 1.0f) {}
 
@@ -37,6 +42,8 @@ namespace cbn
 	void Scalable2D::scale_by(const glm::vec2& scaling)
 	{
 		m_Scale += scaling;
+
+		on_scale();
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -45,6 +52,8 @@ namespace cbn
 	{
 		m_Scale.x += scale_x;
 		m_Scale.y += scale_y;
+
+		on_scale();
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -59,6 +68,8 @@ namespace cbn
 	void Scalable2D::scale_to(const glm::vec2& scaling)
 	{
 		m_Scale = scaling;
+
+		on_scale();
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -67,8 +78,10 @@ namespace cbn
 	{
 		m_Scale.x = scale_x;
 		m_Scale.y = scale_y;
+
+		on_scale();
 	}
-	
+
 	//-------------------------------------------------------------------------------------
 
 	const glm::vec2& Scalable2D::scale() const
@@ -78,6 +91,11 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	
+	void Scalable1D::on_scale()
+	{}
+	
+	//-------------------------------------------------------------------------------------
+
 	Scalable1D::Scalable1D()
 		: Scalable1D(1.0f) {}
 	
@@ -91,6 +109,8 @@ namespace cbn
 	void Scalable1D::scale_by(const float scale)
 	{
 		m_Scale += scale;
+
+		on_scale();
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -98,6 +118,8 @@ namespace cbn
 	void Scalable1D::scale_to(const float scale)
 	{
 		m_Scale = scale;
+
+		on_scale();
 	}
 
 	//-------------------------------------------------------------------------------------

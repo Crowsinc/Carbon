@@ -5,30 +5,35 @@
 #include "BoundingTriangle.hpp"
 #include "../Physics/Collider.hpp"
 
+#include "../Transforms/Transformable.hpp"
+
 namespace cbn
 {
 
 	class BoundingBox;
 	class BoundingTriangle;
 
-	class BoundingCircle : public Collider
+	class BoundingCircle : public Collider, public Transformable<Translatable2D, Rotatable2D>
 	{
 	private:
 
 		float m_Radius;
 		glm::vec2 m_LocalCentreOffset;
-
+		
+		mutable bool m_ExtentOutdated, m_CentreOutdated, m_DirectionOutdated;
+		mutable glm::vec2 m_Direction;
 		mutable Extent m_Extent;
 		mutable Point m_Centre;
-		mutable glm::vec2 m_Direction;
 
-		void update_extent() const;
+		void on_transform() override;
 
 	public:
 
-		BoundingCircle(const float radius);
+		BoundingCircle(const BoundingCircle& other) = default;
 
-		BoundingCircle(const Transform& transform, const float radius);
+		BoundingCircle(const float radius, const glm::vec2& origin_offset = {0,0}, const bool local_coords = false);
+
+		BoundingCircle(const Transform& transform, const float radius, const glm::vec2& origin_offset = {0,0}, const bool local_coords = false);
 
 		bool overlaps(const Collider& collider) const override;
 

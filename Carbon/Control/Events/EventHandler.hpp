@@ -4,6 +4,8 @@
 #include "EventCallback.hpp"
 #include "../../Diagnostics/Assert.hpp"
 
+#include <iostream>
+
 namespace cbn
 {
 
@@ -30,9 +32,7 @@ namespace cbn
 
 	public:
 
-		int host_count() const;
-
-		int subscription_count(const EventHost<Parent, Args...>& host) const;
+		bool is_registered(const EventHost<Parent, Args...>& host) const;
 
 	};
 
@@ -57,11 +57,9 @@ namespace cbn
 	template<typename Parent, typename ...Args>
 	inline void EventHandler<Parent, Args...>::dispatch_event(const EventHost<Parent, Args...>& host, Args... args)
 	{
-		// Note that if this assert is hit, then the EventHost class isn't programmed properly as it should 
-		// become registered as soon as the class is instantiated, thus before it can be passed into this method
-		CBN_Assert(m_HostCallbacks.count(host.uid()) == 1, "Cannot create subscription for unregistered host");
+		CBN_Assert(m_HostCallbacks.contains(host.uid()) == 1, "Cannot create subscription for unregistered host");
 
-		const auto& callbacks = m_HostCallbacks[host.uid()];
+		const auto& callbacks = m_HostCallbacks.at(host.uid());
 		for(const auto& [_, callback] : callbacks)
 			callback.invoke(args...);
 	}
@@ -71,9 +69,7 @@ namespace cbn
 	template<typename Parent, typename ...Args>
 	inline Subscription EventHandler<Parent, Args...>::create_subscription(const EventHost<Parent, Args...>& host, EventCallback<Args...> callback)
 	{
-		// Note that if this assert is hit, then the EventHost class isn't programmed properly as it should 
-		// become registered as soon as the class is instantiated, thus before it can be passed into this method
-		CBN_Assert(m_HostCallbacks.count(host.uid()) == 1, "Cannot create subscription for unregistered host");
+		CBN_Assert(m_HostCallbacks.contains(host.uid()) == 1, "Cannot create subscription for unregistered host");
 
 		const auto host_uid = host.uid();
 		const auto callback_uid = callback.uid();
@@ -85,26 +81,15 @@ namespace cbn
 			m_HostCallbacks[host_uid].erase(callback_uid);
 		});
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
 	template<typename Parent, typename ...Args>
-	inline int EventHandler<Parent, Args...>::host_count() const
+	inline bool EventHandler<Parent, Args...>::is_registered(const EventHost<Parent, Args...>& host) const
 	{
-		return m_HostCallbacks.size();
+		return m_HostCallbacks.contains(host.uid());
 	}
 
 	//-------------------------------------------------------------------------------------
-
-	template<typename Parent, typename ...Args>
-	inline int EventHandler<Parent, Args...>::subscription_count(const EventHost<Parent, Args...>& host) const
-	{
-		// Note that if this assert is hit, then the EventHost class isn't programmed properly as it should 
-		// become registered as soon as the class is instantiated, thus before it can be passed into this method
-		CBN_Assert(m_HostCallbacks.count(host.uid()) == 1, "Cannot create subscription for unregistered host");
-
-		return m_HostCallbacks.at(host.uid()).size();
-	}
-
 
 }

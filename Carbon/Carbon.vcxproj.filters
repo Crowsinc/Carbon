@@ -290,6 +290,9 @@
     <ClInclude Include="Data\Identity\Unique.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Maths\Transforms\Transformable.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utility\VectorExtensions.tpp" />

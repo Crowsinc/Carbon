@@ -11,6 +11,10 @@ namespace cbn
 
 		glm::vec2 m_Scale;
 
+	protected:
+
+		virtual void on_scale();
+
 	public:
 
 		Scalable2D();
@@ -42,6 +46,10 @@ namespace cbn
 	private:
 
 		float m_Scale;
+
+	protected:
+
+		virtual void on_scale();
 
 	public:
 

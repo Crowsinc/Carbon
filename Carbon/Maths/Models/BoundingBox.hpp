@@ -5,26 +5,30 @@
 #include "BoundingTriangle.hpp"
 #include "../Physics/Collider.hpp"
 
+#include "../Transforms/Transformable.hpp"
+
 namespace cbn
 {
 
-	class BoundingBox : public Collider
+	class BoundingBox : public Collider, public Transformable<Translatable2D, Rotatable2D>
 	{
 	private:
 
+		glm::vec2 m_Size;
 		Extent m_LocalExtent;
 		glm::vec2 m_LocalOriginOffset;
 
-		glm::vec2 m_Size;
-		glm::vec2 m_Direction;
-
-		//TODO: proper caching
-		mutable Extent m_Extent;
+		// Caching
+		mutable bool m_ExtentOutdated, m_AllignmentOutdated;
+		mutable bool m_MeshOutdated, m_CentreOutdated;
 		mutable bool m_AxisAlligned;
+		mutable Extent m_Extent;
 		mutable QuadMesh m_Mesh;
 		mutable Point m_Centre;
 		
 		Point transform_to_local(const Point& point) const;
+
+		void on_transform() override;
 
 		void generate_mesh() const;
 
@@ -32,11 +36,13 @@ namespace cbn
 
 	public:
 
-		BoundingBox(const glm::vec2& size);
-
 		BoundingBox(const Extent& extent);
 
-		BoundingBox(const Transform& transform, const glm::vec2& size);
+		BoundingBox(const BoundingBox& other) = default;
+
+		BoundingBox(const glm::vec2& size, const glm::vec2& origin_offset = {0,0}, bool local_coords = false);
+
+		BoundingBox(const Transform& transform, const glm::vec2& size, const glm::vec2& origin_offset = {0,0}, bool local_coords = false);
 
 		bool overlaps(const Collider& collider) const override;
 

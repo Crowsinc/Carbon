@@ -28,19 +28,39 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	BoundingTriangle::BoundingTriangle(const TriangleMesh::Vertices& vertices)
-		: m_LocalOriginOffset(0,0)
+	void BoundingTriangle::on_transform()
 	{
-		reshape(vertices);
+		m_DirectionOutdated = true; 
+		m_ExtentOutdated = true;
+		m_CentreOutdated = true;
+		m_MeshOutdated = true;
 	}
-
+	
 	//-------------------------------------------------------------------------------------
 
-	BoundingTriangle::BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices)
-		: m_LocalOriginOffset(0, 0)
+	BoundingTriangle::BoundingTriangle(const TriangleMesh::Vertices& vertices, const glm::vec2& origin_offset, const bool local_coords)
+		: m_LocalOriginOffset(0, 0),
+		m_DirectionOutdated(true), 
+	    m_ExtentOutdated(true),
+		m_CentreOutdated(true),
+		m_MeshOutdated(true)
 	{
-		transform_to(transform);
 		reshape(vertices);
+		specify_origin(origin_offset, local_coords);
+	}
+	
+	//-------------------------------------------------------------------------------------
+
+	BoundingTriangle::BoundingTriangle(const Transform& transform, const TriangleMesh::Vertices& vertices, const glm::vec2& origin_offset, const bool local_coords)
+		: Transformable(transform),
+		m_DirectionOutdated(true),
+		m_LocalOriginOffset(0, 0),
+		m_ExtentOutdated(true),
+		m_CentreOutdated(true),
+		m_MeshOutdated(true)
+	{
+		reshape(vertices);
+		specify_origin(origin_offset, local_coords);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -214,8 +234,12 @@ namespace cbn
 
 	const Extent& BoundingTriangle::extent() const
 	{
-		//TODO: caching
-		m_Extent = create_extent(mesh().vertices);
+		if(m_ExtentOutdated)
+		{
+			m_Extent = create_extent(mesh().vertices);
+
+			m_ExtentOutdated = false;
+		}
 
 		return m_Extent;
 	}
@@ -237,9 +261,9 @@ namespace cbn
 		m_LocalVertices[1] = (vertices[1] - centroid) - m_LocalOriginOffset;
 		m_LocalVertices[2] = (vertices[2] - centroid) - m_LocalOriginOffset;
 
-		// TODO: caching
-		// The mesh will need updating, so will the extents etc.
-		m_Mesh = TriangleMesh::Create(as_transform(), m_LocalVertices);
+		// The mesh and the extents will need to be updated
+		m_ExtentOutdated = true;
+		m_MeshOutdated = true;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -283,13 +307,18 @@ namespace cbn
 
 	const glm::vec2& BoundingTriangle::direction() const
 	{
-		// The local direction is from the centre upwards one unit
-		// So specify the local direction as a point that is one unit 
-		// above the local centre, then transform it and find the new direction
-		// between this point and the transformed centre. Keep in mind that the 
-		// local centre offset is the opposite offset as the origin.
-		constexpr glm::vec2 unit_j{0.0f, 1.0f};
-		m_Direction = as_transform().apply(-m_LocalOriginOffset + unit_j) - centre();
+		if(m_DirectionOutdated)
+		{
+			// The local direction is from the centre upwards one unit
+			// So specify the local direction as a point that is one unit 
+			// above the local centre, then transform it and find the new direction
+			// between this point and the transformed centre. Keep in mind that the 
+			// local centre offset is the opposite offset as the origin.
+			constexpr glm::vec2 unit_j{0.0f, 1.0f};
+			m_Direction = as_transform().apply(-m_LocalOriginOffset + unit_j) - centre();
+
+			m_DirectionOutdated = false;
+		}
 
 		return m_Direction;
 	}
@@ -298,10 +327,14 @@ namespace cbn
 
 	const glm::vec2& BoundingTriangle::centre() const
 	{
-		//TODO: caching
-		// The local origin is specified as an offset from the centroid, hence
-		// the centroid can be obtained by the opposite offset of the origin.
-		m_Centre = as_transform().apply(-m_LocalOriginOffset);
+		if(m_CentreOutdated)
+		{
+			// The local origin is specified as an offset from the centroid, hence
+            // the centroid can be obtained by the opposite offset of the origin.
+			m_Centre = as_transform().apply(-m_LocalOriginOffset);
+
+			m_CentreOutdated = false;
+		}
 
 		return m_Centre;
 	}
@@ -319,8 +352,12 @@ namespace cbn
 
 	const TriangleMesh& BoundingTriangle::mesh() const
 	{
-		//TODO: caching
-		m_Mesh = TriangleMesh::Create(as_transform(), m_LocalVertices);
+		if(m_MeshOutdated)
+		{
+			m_Mesh = TriangleMesh::Create(as_transform(), m_LocalVertices);
+
+			m_MeshOutdated = false;
+		}
 
 		return m_Mesh;
 	}
@@ -344,7 +381,6 @@ namespace cbn
 		// To do this we create an extent using the triangles local vertices.
 		const auto local_extent = create_extent(m_LocalVertices);
 		const auto local_size = local_extent.max - local_extent.min;
-		BoundingBox bounding_box(local_size);
 
 		// We want to give it the same origin as the triangle so that
 		// when we apply the triangle's transforms, the box correctly
@@ -355,13 +391,9 @@ namespace cbn
 		// offset in their local centres as well in order to make the triangle's
 		// local origin offset go to the same spot when given to the box
 		const auto local_centroid = (m_LocalVertices[0] + m_LocalVertices[1] + m_LocalVertices[2]) * (1.0f / 3.0f);
-		bounding_box.specify_origin(m_LocalOriginOffset + (local_centroid - local_extent.centre()), true);
+		const auto local_origin_offset = m_LocalOriginOffset + (local_centroid - local_extent.centre());
 
-		// Once the origin is alligned, transform it to match the 
-		// non-local triangles transform.
-		bounding_box.transform_to(as_transform());
-
-		return bounding_box;
+		return {as_transform(), local_size, local_origin_offset, true};
 	}
 
 	//-------------------------------------------------------------------------------------

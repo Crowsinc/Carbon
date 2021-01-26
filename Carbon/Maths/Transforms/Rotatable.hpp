@@ -13,6 +13,10 @@ namespace cbn
 
 		float wrap_degrees(const float degrees);
 
+	protected:
+
+		virtual void on_rotate();
+
 	public:
 
 		Rotatable2D();

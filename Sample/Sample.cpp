@@ -213,7 +213,7 @@ struct SceneButton
 	Scene linked_scene;
 
 	SceneButton(const glm::vec2& pos, const glm::vec2& size, const Identifier& texture_id, const Scene scene)
-		: bounding_box({pos}, size),
+		: bounding_box(Transform{pos}, size),
 		texture_id(texture_id),
 		linked_scene(scene) {}
 };
@@ -313,9 +313,9 @@ std::vector<BoundingBox> create_screen_sprites(const Camera& camera, const uint6
 	{
 		for(float x = -half_res.x; x < half_res.x; x += sprite_size.x)
 		{
-			const glm::vec2 pos{x, y};
+			const Transform pos{x, y};
 
-			sprites.emplace_back(sprite_size).translate_to(pos);
+			sprites.emplace_back(pos,sprite_size);
 		}
 	}
 	return sprites;
@@ -557,10 +557,10 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 	const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
 
 	// Create the colliders
-	BoundingBox rect_1{{800.0f, 600.0f}, {32, 32}};
-	BoundingBox rect_2{{600.0f, 800.0f, 25}, {128, 64}};
-	BoundingCircle circle_1{{1200, 900}, 16.0f};
-	BoundingCircle circle_2{{1200, 200}, 64.0f};
+	BoundingBox rect_1{Transform{800.0f, 600.0f}, {32, 32}};
+	BoundingBox rect_2{Transform{600.0f, 800.0f, 25}, {128, 64}};
+	BoundingCircle circle_1{Transform{1200, 900}, 16.0f};
+	BoundingCircle circle_2{Transform{1200, 200}, 64.0f};
 
 	TriangleMesh::Vertices triangle_1_vertices = {
 		glm::vec2{0, 32},
@@ -577,18 +577,18 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 	// The triangles cannot be rendered by the sprite renderer directly so
 	// we use a object alligned bounding box which mimics the triangle 
 	// and render that instead.
-	static BoundingTriangle triangle_1{{200, 300}, triangle_1_vertices};
+	static BoundingTriangle triangle_1{Transform{200, 300}, triangle_1_vertices};
 	static BoundingBox triangle_1_obb = triangle_1.wrap_axis_alligned();
 
-	static BoundingTriangle triangle_2{{800, 300}, triangle_2_vertices};
+	static BoundingTriangle triangle_2{Transform{800, 300}, triangle_2_vertices};
 	static BoundingBox triangle_2_obb = triangle_2.wrap_axis_alligned();
 
 	// Using bounding boxes, create lines to act as rays, segments and rays
 	// TODO: implement a line renderer instead
-	 const BoundingBox line_bb{{300, 600, 275}, {2000,1}};
+	 const BoundingBox line_bb{Transform{300, 600, 275}, {2000,1}};
 	 const Line line{line_bb.mesh().vertices[0], line_bb.mesh().vertices[3]};
 	
-	 const BoundingBox segment_bb{{800,700, 32}, {100, 1}};
+	 const BoundingBox segment_bb{Transform{800,700, 32}, {100, 1}};
 	 const Segment segment{segment_bb.mesh().vertices[0], segment_bb.mesh().vertices[3]};
 
 	 const BoundingBox ray_bb{Transform{1850, 1200, 50}, {2000,1}};
@@ -596,7 +596,10 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 
 	// Store all colliders and their associated data in arrays to allow processing them with a loop
 	std::array<Collider*, 6> colliders = {
-		&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 // NOTE: triangle positions must stay the same
+		&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
+	};
+	std::array<Transformable<Translatable2D, Rotatable2D>*, 6> transformables = {
+	&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
 	};
 	std::array<glm::uvec4, 6> tint_colours = {
 	     white_colour, white_colour, white_colour, white_colour, white_colour, white_colour
@@ -631,6 +634,7 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 		for(auto i = 0; i < colliders.size(); i++)
 		{
 			bool any_held = std::any_of(held.begin(), held.end(), [](auto v) { return v; });
+			auto& trans = transformables[i];
 			auto& colour = tint_colours[i];
 			auto& curr = *colliders[i];
 			auto& is_held = held[i];
@@ -638,7 +642,13 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 			bool overlaps = false;
 			bool encloses = false;
 			bool enclosed = false;
-			bool moused_over = curr.contains(mouse_pos);
+
+			// Consider being held as also being moused over. Since app is not
+			// running at the same rate that the mouse is being polled, its possible
+			// for the mouse to run away from the collider causing it to no longer count
+			// as being moused over when it is being held. Thus causing its tint to
+			// flash between the held not held colours. 
+			bool moused_over = curr.contains(mouse_pos) || is_held;
 
 			// If no other collider is already held, the mouse is clicked and the 
 			// mouse is hovering over the collider. Then we want to pick it up. 
@@ -659,10 +669,10 @@ void bounds_test_scene(URes<Window>& window, bool& runflag)
 		    // and rotate it if space is held. 
 			if(is_held)
 			{
-				curr.translate_to(mouse_pos);
+				trans->translate_to(mouse_pos);
 
 				if(space_pressed)
-					curr.rotate_by(5);
+					trans->rotate_by(5);
 			}
 
 

@@ -1,6 +1,5 @@
 #include "Transform.hpp"
-
-#include <glm/gtx/projection.hpp>
+#include "Matrix.hpp"
 
 namespace cbn
 {
@@ -18,19 +17,27 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	Transform::Transform(const float x, const float y, const float rotation_degrees, const float scale_x, const float scale_y)
-	{
-		translate_to(x, y);
-		rotate_to(rotation_degrees);
-		scale_to(scale_x, scale_y);
-	}
+		: Translatable2D(x, y),
+		Rotatable2D(rotation_degrees),
+		Scalable2D(scale_x, scale_y)
+	{}
 
 	//-------------------------------------------------------------------------------------
 
 	Transform::Transform(const glm::vec2& translation, const float rotation_degrees, const glm::vec2& scale)
+		: Translatable2D(translation),
+		Rotatable2D(rotation_degrees),
+		Scalable2D(scale)
+	{}
+	
+	//-------------------------------------------------------------------------------------
+
+	void Transform::operator=(const Transform& copy)
 	{
-		translate_to(translation);
-		rotate_to(rotation_degrees);
-		scale_to(scale);
+		// Use silent operations to avoid sending unnecessary events. 
+		translate_to(copy.translation());
+		rotate_to(copy.rotation_degrees());
+		scale_to(copy.scale());
 	}
 
 	//-------------------------------------------------------------------------------------

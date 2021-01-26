@@ -243,6 +243,7 @@
     <ClInclude Include="Diagnostics\Assert.hpp" />
     <ClInclude Include="Maths\Transforms\Rotatable.hpp" />
     <ClInclude Include="Maths\Transforms\Scalable.hpp" />
+    <ClInclude Include="Maths\Transforms\Transformable.hpp" />
     <ClInclude Include="Maths\Transforms\Translatable.hpp" />
     <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
