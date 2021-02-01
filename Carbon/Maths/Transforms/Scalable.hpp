@@ -7,11 +7,10 @@ namespace cbn
 
 	class Scalable2D
 	{
+		template<typename T1, typename T2, typename T3> friend class Transformable;
 	private:
 
 		glm::vec2 m_Scale;
-
-	protected:
 
 		virtual void on_scale();
 
@@ -43,11 +42,10 @@ namespace cbn
 
 	class Scalable1D
 	{
+		template<typename T1, typename T2, typename T3> friend class Transformable;
 	private:
 
 		float m_Scale;
-
-	protected:
 
 		virtual void on_scale();
 

@@ -22,7 +22,7 @@ namespace cbn
 
 		static SRes<Image> Create(const unsigned width, const unsigned height);
 
-		static SRes<Image> Open(const std::filesystem::path& path, const bool flip_vertically = false);
+		static SRes<Image> Open(const std::filesystem::path& path);
 
 	private:
 

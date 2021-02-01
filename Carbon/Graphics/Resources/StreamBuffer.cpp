@@ -12,7 +12,7 @@ namespace cbn
 		auto stream_buffer = SRes<StreamBuffer>(new StreamBuffer(target, byte_size, synchronized));
 
 		stream_buffer->bind();
-		glBufferData(static_cast<GLenum>(target), byte_size, NULL, GL_STREAM_DRAW);
+		glBufferData(to_opengl_target(target), byte_size, NULL, GL_STREAM_DRAW);
 		stream_buffer->unbind();
 
 		return stream_buffer;
@@ -35,7 +35,7 @@ namespace cbn
 
 		bind();
 		m_Mapped = true;
-		return glMapBufferRange(static_cast<GLenum>(get_target()), 0, m_ByteSize, m_MappingFlags);
+		return glMapBufferRange(to_opengl_target(get_target()), 0, m_ByteSize, m_MappingFlags);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ namespace cbn
 
 		bind();
 		m_Mapped = true;
-		return glMapBufferRange(static_cast<GLenum>(get_target()), offset, length, m_MappingFlags);
+		return glMapBufferRange(to_opengl_target(get_target()), offset, length, m_MappingFlags);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ namespace cbn
 		
 		bind();
 		m_Mapped = false;
-		glUnmapBuffer(static_cast<GLenum>(get_target()));
+		glUnmapBuffer(to_opengl_target(get_target()));
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ namespace cbn
 		bind();
 
 		m_ByteSize = byte_size;
-		glBufferData(static_cast<GLenum>(get_target()), byte_size, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(to_opengl_target(get_target()), byte_size, NULL, GL_DYNAMIC_DRAW);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ namespace cbn
 		CBN_Assert(!is_mapped(), "Cannot reallocate buffer while its mapped");
 
 		bind();
-		glBufferSubData(static_cast<GLenum>(get_target()), offset, length, data);
+		glBufferSubData(to_opengl_target(get_target()), offset, length, data);
 	}
 	
 	//-------------------------------------------------------------------------------------
@@ -117,6 +117,8 @@ namespace cbn
 	{
 		return m_Synchronized;
 	}
+	
+	//-------------------------------------------------------------------------------------
 
 
 

@@ -23,7 +23,7 @@ namespace cbn
     TextureUVMap TextureAtlas::calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::vec2& atlas_resolution)
     {
         const glm::vec2 top_left_uv = glm::vec2{rect.x, rect.y} / atlas_resolution;
-        const glm::vec2 bot_left_uv = glm::vec2{rect.x, rect.y} / atlas_resolution;
+        const glm::vec2 bot_left_uv = glm::vec2{rect.x, rect.y + rect.height} / atlas_resolution;
         const glm::vec2 bot_right_uv = glm::vec2{rect.x + rect.width, rect.y + rect.height} / atlas_resolution;
         const glm::vec2 top_right_uv = glm::vec2{rect.x + rect.width,  rect.y} / atlas_resolution;
 
@@ -40,17 +40,6 @@ namespace cbn
         }
         else
         {
-            //TODO: swap bot and top uvs as images are flipped in openGL
-            /*
-                i.e.
-            return {
-                bot_left_uv,
-                top_left_uv,
-                top_right_uv
-                bot_right_uv,
-            };
-            and redo the rotation above^^
-            */
             return {
                 top_left_uv,
                 bot_left_uv,

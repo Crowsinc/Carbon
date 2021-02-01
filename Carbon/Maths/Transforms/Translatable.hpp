@@ -8,11 +8,10 @@ namespace cbn
 
 	class Translatable2D 
 	{
+		template<typename T1, typename T2, typename T3> friend class Transformable;
 	private:
 
 		glm::vec2 m_Translation;
-
-	protected:
 
 		virtual void on_translate();
 

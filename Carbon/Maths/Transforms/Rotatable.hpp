@@ -7,13 +7,12 @@ namespace cbn
 
 	class Rotatable2D
 	{
+		template<typename T1, typename T2, typename T3> friend class Transformable;
 	private:
 
 		float m_RotationDegrees;
 
 		float wrap_degrees(const float degrees);
-
-	protected:
 
 		virtual void on_rotate();
 

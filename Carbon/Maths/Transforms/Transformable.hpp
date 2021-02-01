@@ -45,7 +45,6 @@ namespace cbn
 
 		void initialize_cache_subscriptions();
 
-		//These must not be inherited by the class which inherits Transformable
 		void on_translate();
 
 		void on_rotate();
@@ -300,8 +299,6 @@ namespace cbn
 
 		return m_TransformCache;
 	}
-
-
 
 	//-------------------------------------------------------------------------------------
 }

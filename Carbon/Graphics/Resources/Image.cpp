@@ -46,13 +46,11 @@ namespace cbn
     
     //-------------------------------------------------------------------------------------
     
-    SRes<Image> Image::Open(const std::filesystem::path& path, const bool flip_vertically)
+    SRes<Image> Image::Open(const std::filesystem::path& path)
     {
         // Fail if the path does not lead to an existing file
         if(!std::filesystem::exists(path) && !std::filesystem::is_regular_file(path))
             return nullptr;
-
-        stbi_set_flip_vertically_on_load(flip_vertically);
 
         // Load image using stb_image
         int width, height, components;

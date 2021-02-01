@@ -22,11 +22,11 @@ namespace cbn
 		// If OpenGL 4.4 is supported, create immutable storage otherwise use the normal buffer data.
 		if(opengl_version >= Version{4,4})
 		{
-			glBufferStorage(static_cast<GLenum>(target), size, data, NULL);
+			glBufferStorage(to_opengl_target(target), size, data, NULL);
 		}
 		else
 		{
-			glBufferData(static_cast<GLenum>(target), size, data, GL_STATIC_DRAW);
+			glBufferData(to_opengl_target(target), size, data, GL_STATIC_DRAW);
 		}
 
 		static_buffer->unbind();

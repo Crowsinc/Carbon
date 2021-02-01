@@ -480,6 +480,8 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
 		const glm::vec2 mouse_pos{pos_x - (camera.resolution().x * 0.5f), (camera.resolution().y * 0.5f) - pos_y};
 
+		bool space_pressed = glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS;
+
 		// Render and move the sprites
 		uint64_t total_submitted = 0;
 		while(total_submitted != sprites.size())
@@ -491,6 +493,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 			{
 				for(auto i = 0; i < batch_size; i++)
 				{
+
 					move_sprite(sprites[total_submitted], mouse_pos);
 
 					renderer.submit(sprites[total_submitted].mesh().vertices, texture_ids[i % 2]);

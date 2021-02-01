@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "../../Data/String.hpp"
+#include "../../Utility/Enum.hpp"
 
 namespace cbn
 {
@@ -119,7 +120,7 @@ namespace cbn
 	//-------------------------------------------------------------------------------------
 
 	Shader::Shader(const Shader::Stage pipeline_stage)
-		: m_ShaderID(glCreateShader(static_cast<GLenum>(pipeline_stage))),
+		: m_ShaderID(glCreateShader(value(pipeline_stage))),
 		  m_PipelineStage(pipeline_stage) {}
 
 	//-------------------------------------------------------------------------------------

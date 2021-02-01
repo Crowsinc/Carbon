@@ -4,7 +4,9 @@ namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
-	std::unordered_map<TextureUnit, GLint> BufferTexture::s_BoundBufferTextures;
+    // Initialize bound buffer texture states with all units unbound. We do this via
+	// a zero-initialization of a raw array which is then converted to an std array.
+	std::array<GLuint, 32> BufferTexture::s_BoundBufferTextures = std::to_array<GLuint, 32>({0});
 
 	//-------------------------------------------------------------------------------------
 
@@ -50,7 +52,7 @@ namespace cbn
 		// Bind the texture and buffer
 		force_bind();
 		glBindBuffer(GL_TEXTURE_BUFFER, m_BufferID);
-		glTexBuffer(GL_TEXTURE_BUFFER, static_cast<GLenum>(data_format), m_BufferID);
+		glTexBuffer(GL_TEXTURE_BUFFER, value(data_format), m_BufferID);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -73,11 +75,11 @@ namespace cbn
 		if(is_bound())
 		{
 			// Unbind from the texture unit the texture is bound to
-			glActiveTexture(GL_TEXTURE0 + static_cast<int>(m_TextureUnit));
+			glActiveTexture(GL_TEXTURE0 + value(m_TextureUnit));
 			glBindTexture(GL_TEXTURE_BUFFER, 0);
 
 			// Reset state information
-			s_BoundBufferTextures[m_TextureUnit] = 0;
+			s_BoundBufferTextures[value(m_TextureUnit)] = 0;
 		}
 	}
 	
@@ -97,11 +99,11 @@ namespace cbn
 	void BufferTexture::force_bind(const TextureUnit texture_unit) const
 	{
 		// Update the buffer texture binding states
-		s_BoundBufferTextures[texture_unit] = m_TextureID;
+		s_BoundBufferTextures[value(texture_unit)] = m_TextureID;
 		m_TextureUnit = texture_unit;
 
 		// Bind the buffer texture to the correct unit
-		glActiveTexture(GL_TEXTURE0 + static_cast<int>(texture_unit));
+		glActiveTexture(GL_TEXTURE0 + value(texture_unit));
 		glBindTexture(GL_TEXTURE_BUFFER, m_TextureID);
 	}
 	
@@ -109,14 +111,14 @@ namespace cbn
 
 	bool BufferTexture::is_bound(const TextureUnit texture_unit) const
 	{
-		return m_TextureUnit == texture_unit && s_BoundBufferTextures[texture_unit] == m_TextureID;
+		return m_TextureUnit == texture_unit && s_BoundBufferTextures[value(texture_unit)] == m_TextureID;
 	}
 	
 	//-------------------------------------------------------------------------------------
 
 	bool BufferTexture::is_bound() const
 	{
-		return s_BoundBufferTextures[m_TextureUnit] == m_TextureID;
+		return s_BoundBufferTextures[value(m_TextureUnit)] == m_TextureID;
 	}
 
 	//-------------------------------------------------------------------------------------

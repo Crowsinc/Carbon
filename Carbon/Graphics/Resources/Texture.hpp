@@ -4,12 +4,13 @@
 #include <array>
 
 #include "../../Memory/Resource.hpp"
+#include "../../Utility/Enum.hpp"
 #include "../OpenGL/OpenGL.hpp"
 #include "Image.hpp"
 
 namespace cbn
 {
-	enum class TextureUnit : GLint
+	enum class TextureUnit : GLenum
 	{
 		UNIT_0,
 		UNIT_1,
@@ -42,8 +43,7 @@ namespace cbn
 		UNIT_28,
 		UNIT_29,
 		UNIT_30,
-		UNIT_31,
-
+		UNIT_31
 	};
 
 	enum class TextureSwizzle
@@ -97,9 +97,10 @@ namespace cbn
 
 		static GLint SupportedTextureUnits();
 
+
 	private:
 
-		static std::unordered_map<TextureUnit,GLint> s_BoundTexture2Ds;
+		static std::array<GLuint, 32> s_BoundTexture2Ds;
 
 		mutable TextureUnit m_TextureUnit;
 		TextureSettings m_Settings;

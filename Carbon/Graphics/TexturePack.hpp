@@ -25,7 +25,10 @@ namespace cbn
 	{
 	public:
 
-		static constexpr uint64_t SupportedTextureCount = 15;
+		// Note we support 1 less than the number of texture units as
+		// one unit is dedicated to the buffer texture which stores the 
+		// pack data. 
+		static constexpr uint64_t SupportedTextureCount = 31;
 
 	private:
 
@@ -49,9 +52,9 @@ namespace cbn
 		std::vector<SRes<Texture>> m_Textures;
 		std::vector<TextureUVMap> m_TextureUVs;
 		
-		std::unordered_map<Identifier, uint32_t> m_UVLookupMap;
-		std::unordered_map<Identifier, uint32_t> m_TextureLookupMap;
-		std::unordered_map<Identifier, uint32_t> m_DataIndexLookupMap;
+		IdentityMap<uint32_t> m_UVLookupMap;
+		IdentityMap<uint32_t> m_TextureLookupMap;
+		IdentityMap<uint32_t> m_DataIndexLookupMap;
 
 		DataLayout pack_data(const TextureUVMap& uvs, const uint64_t texture_index);
 

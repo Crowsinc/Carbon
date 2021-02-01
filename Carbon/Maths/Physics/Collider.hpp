@@ -19,15 +19,13 @@ namespace cbn
 
 		virtual const Extent& extent() const = 0;
 
-		// MUST NOT PUSH THE OVERLAP TEST TO ANOTHER CLASS OR WILL CAUSE INF RECURSION
-		virtual bool overlaps(const Collider& collider) const = 0;
-
 		virtual bool overlaps(const BoundingBox& box) const = 0;
+
+		virtual bool overlaps(const Collider& collider) const = 0;
 
 		virtual bool overlaps(const BoundingCircle& circle) const = 0;
 
 		virtual bool overlaps(const BoundingTriangle& triangle) const = 0;
-
 		
 		// The API here is reversed because we don't know anything about the collider.
 		// However if the API is made from a set of bounding classes then we can test
@@ -51,10 +49,6 @@ namespace cbn
 		virtual bool intersected_by(const Ray& ray) const = 0;
 
 
-		// Should this be a thing? It certainly makes the sample code much nicer
-		// Would really help usability if more bounding class functionality was abstracted
-		// Think of a quad tree of colliders. Would really help if we didnt have to do casting.
-
 		// I guess it makes sense to have things which let you change the collider position, which includes
 		// abstracting the transformable to the collider and specifying the origin. 
 		virtual void specify_origin(const glm::vec2& origin_offset, const bool local_coords = false) = 0;
@@ -65,8 +59,6 @@ namespace cbn
 
 		virtual const glm::vec2& direction() const = 0;
 
-
-		
 	};
 
 

@@ -58,8 +58,8 @@ namespace cbn
 
 	private:
 
-		std::unordered_map<Identifier, int> m_SubTextureMap;
 		const std::vector<SubTexture> m_SubTextures;
+		IdentityMap<int> m_SubTextureMap;
 		SRes<Texture> m_AtlasTexture;
 
 		static TextureUVMap calculate_uvs(const Rect<int>& rect, const bool rotated, const glm::vec2& atlas_resolution);

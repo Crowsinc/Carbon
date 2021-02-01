@@ -7,13 +7,8 @@
 namespace cbn
 {
 	
-	//TODO: what is this class for? depicting transforms? if so do we need to be able to change the transform?
-	// The transform is a way to depict a series of transformation. Perhaps we should have static constructors
-	// for doing special transforms like look_at() etc.
-
 	//-------------------------------------------------------------------------------------
 
-	// Cannot use transformable as the transformable uses this and we would have an infinite loop
 	class Transform : public Translatable2D, public Rotatable2D, public Scalable2D
 	{
 	public:

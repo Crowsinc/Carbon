@@ -17,7 +17,7 @@ namespace cbn
 		friend class ShaderProgram;
 	public:
 
-		enum class Stage
+		enum class Stage : GLenum
 		{
 			VERTEX = GL_VERTEX_SHADER,
 			FRAGMENT = GL_FRAGMENT_SHADER,

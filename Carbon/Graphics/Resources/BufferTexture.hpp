@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 #include "Texture.hpp"
 #include "../OpenGL/OpenGL.hpp"
@@ -9,7 +10,7 @@
 
 namespace cbn
 {
-	enum class BufferTextureDataFormat
+	enum class BufferTextureDataFormat : GLenum
 	{
 		VEC1_32U = GL_R32UI,
 		VEC2_32U = GL_RG32UI,
@@ -51,7 +52,7 @@ namespace cbn
 
 	private:
 
-		static std::unordered_map<TextureUnit, GLint> s_BoundBufferTextures;
+		static std::array<GLuint, 32> s_BoundBufferTextures;
 		
 		mutable TextureUnit m_TextureUnit;
 		const BufferTextureDataFormat m_Format;

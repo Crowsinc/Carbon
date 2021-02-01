@@ -5,7 +5,9 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 	
-	std::unordered_map<TextureUnit, GLint> Texture::s_BoundTexture2Ds;
+	// Zero initialize a raw array then convert it to a std array. All texture units will
+	// be unbound initially. 
+	std::array<GLuint, 32> Texture::s_BoundTexture2Ds = std::to_array<GLuint, 32>({0});
 	
 	//-------------------------------------------------------------------------------------
 
@@ -30,13 +32,10 @@ namespace cbn
 
 	SRes<Texture> Texture::Open(const std::filesystem::path& path, const TextureSettings& settings)
 	{
-		// First open the image, making sure to flip on the y-axis since OpenGL 
-		// has (0,0) on the bottom left while the image has (0,0) on the top left. 
-		SRes<Image> image = Image::Open(path, true);
+		SRes<Image> image = Image::Open(path);
 		if(!image)
 			return nullptr;
 
-		// Continue with the normal create function 
 		return Create(image, settings);
 	}
 
@@ -110,14 +109,14 @@ namespace cbn
 
 	bool Texture::is_bound(const TextureUnit texture_unit) const
 	{
-		return m_TextureUnit == texture_unit && s_BoundTexture2Ds[texture_unit] == m_TextureID;
+		return m_TextureUnit == texture_unit && s_BoundTexture2Ds[value(texture_unit)] == m_TextureID;
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	bool Texture::is_bound() const
 	{
-		return s_BoundTexture2Ds[m_TextureUnit] == m_TextureID;
+		return s_BoundTexture2Ds[value(m_TextureUnit)] == m_TextureID;
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -129,11 +128,11 @@ namespace cbn
 		if(!is_bound(texture_unit))
 		{
 			// Update the texture binding states
-			s_BoundTexture2Ds[texture_unit] = m_TextureID;
+			s_BoundTexture2Ds[value(texture_unit)] = m_TextureID;
 			m_TextureUnit = texture_unit;
 
 			// Bind the texture to the correct unit
-			glActiveTexture(GL_TEXTURE0 + static_cast<int>(texture_unit));
+			glActiveTexture(GL_TEXTURE0 +  value(texture_unit));
 			glBindTexture(GL_TEXTURE_2D, m_TextureID);
 		}
 	}
@@ -147,11 +146,11 @@ namespace cbn
 		if(is_bound())
 		{
 			// Unbind from the texture unit the texture is bound to
-			glActiveTexture(GL_TEXTURE0 + static_cast<int>(m_TextureUnit));
+			glActiveTexture(GL_TEXTURE0 + value(m_TextureUnit));
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			// Reset state information
-			s_BoundTexture2Ds[m_TextureUnit] = 0;
+			s_BoundTexture2Ds[value(m_TextureUnit)] = 0;
 		}
 	}
 
@@ -162,10 +161,10 @@ namespace cbn
 		// We need to bind the texture before we can change its parameters
 		bind();
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<GLint>(settings.horizontal_wrapping));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<GLint>(settings.vertical_wrapping));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, static_cast<GLint>(settings.minifying_filter));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, static_cast<GLint>(settings.magnifying_filter));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, value(settings.horizontal_wrapping));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, value(settings.vertical_wrapping));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, value(settings.minifying_filter));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, value(settings.magnifying_filter));
 	
 		// Update the swizzle mask
 		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, create_swizzle_mask(settings.swizzle).data());
@@ -207,19 +206,12 @@ namespace cbn
 	TextureUVMap Texture::uvs() const
 	{
 		// Texture uvs just encompass the entire texture, so we can just hardcode them
+		// Note that with texture coordinates, (0,0) is taken from the top left corner.
 
-		return {
-			{0.0f, 1.0f}, //BL
-			{0.0f, 0.0f}, //TL
-			{1.0f, 0.0f}, //TR
-			{1.0f, 1.0f}  //BR
-		};
-
-		// OLD
-		//return {{0.0f, 0.0f},
-		//	    {0.0f, 1.0f},
-		//	    {1.0f, 1.0f},
-		//	    {1.0f, 0.0f}};
+		return {{0.0f, 0.0f},  // Top left
+			    {0.0f, 1.0f},  // Bottom Left
+			    {1.0f, 1.0f},  // Bottom Right
+			    {1.0f, 0.0f}}; // Top Right
 	}
 
 	//-------------------------------------------------------------------------------------

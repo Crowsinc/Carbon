@@ -477,7 +477,7 @@ namespace cbn
 		if(m_MeshOutdated)
 		{
 			generate_mesh();
-
+		
 			m_MeshOutdated = false;
 		}
 

@@ -103,8 +103,8 @@ namespace cbn
 	void ShaderProgram::find_shader_uniform_locations(const SRes<Shader>& shader)
 	{
 		// Go through all the uniform names in the shader and get their locations
-		auto uniforms = shader->get_uniforms();
-		for(Identifier& uniform : uniforms)
+		auto& uniforms = shader->get_uniforms();
+		for(const Identifier& uniform : uniforms)
 		{
 			// Only try to the uniform location if the uniform name doesn't already exist
 			if(m_UniformLocations.count(uniform) == 0)

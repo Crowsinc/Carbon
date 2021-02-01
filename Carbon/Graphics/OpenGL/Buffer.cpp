@@ -1,11 +1,31 @@
 #include "Buffer.hpp"
 
+#include "../../Utility/Enum.hpp"
+#include "../../Diagnostics/Assert.hpp"
+
 namespace cbn
 {
 	//-------------------------------------------------------------------------------------
 
-	std::unordered_map<BufferTarget, GLint> Buffer::s_BoundBuffers;
+	// Initialize bound buffer state with all buffer types unbound. We do this via
+	// a zero-initialization of a raw array which is then converted to an std array.
+	std::array<GLuint, 3> Buffer::s_BoundBuffers = std::to_array<GLuint, 3>({0});
 
+	//-------------------------------------------------------------------------------------
+
+	GLenum Buffer::to_opengl_target(const BufferTarget& target)
+	{
+		switch(target)
+		{
+			case BufferTarget::ELEMENT_BUFFER: return GL_ELEMENT_ARRAY_BUFFER;
+			case BufferTarget::UNIFORM_BUFFER: return GL_UNIFORM_BUFFER;
+			case BufferTarget::VERTEX_BUFFER: return GL_ARRAY_BUFFER;
+		
+			default: CBN_Assert(false, "Undefined buffer target");
+		}
+		return 0;
+	}
+	
 	//-------------------------------------------------------------------------------------
 
 	Buffer::Buffer(const BufferTarget target)
@@ -39,8 +59,8 @@ namespace cbn
 	{
 		if(is_bound())
 		{
-			s_BoundBuffers[m_Target] = 0;
-			glBindBuffer(static_cast<GLenum>(m_Target), 0);
+			s_BoundBuffers[value(m_Target)] = 0;
+			glBindBuffer(to_opengl_target(m_Target), 0);
 		}
 	}
 
@@ -48,15 +68,15 @@ namespace cbn
 
 	void Buffer::force_bind()
 	{
-		s_BoundBuffers[m_Target] = m_BufferID;
-		glBindBuffer(static_cast<GLenum>(m_Target), m_BufferID);
+		s_BoundBuffers[value(m_Target)] = m_BufferID;
+		glBindBuffer(to_opengl_target(m_Target), m_BufferID);
 	}
 
 	//-------------------------------------------------------------------------------------
 
 	bool Buffer::is_bound() const
 	{
-		return s_BoundBuffers[m_Target] == m_BufferID;
+		return s_BoundBuffers[value(m_Target)] == m_BufferID;
 	}
 
 	//-------------------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 #include "TexturePack.hpp"
 
+#include "../Utility/Enum.hpp"
+
 namespace cbn
 {
 
@@ -263,13 +265,15 @@ namespace cbn
     bool TexturePack::is_bound() const
     {
         // The buffer texture is always bound to texture unit 0, then the rest of the textures are bound in the 
-        // remaining units. In the order that they are stored in the m_Textures vector. They must be bound in 
-        // this exact order, otherwise the data in the buffer texture will not match up in the shader. 
+        // remaining units in the order that they are stored in the m_Textures vector. They must be bound in 
+        // this exact order, otherwise the data in the buffer texture will not match up in the shader. Note that
+        // the buffer texture and texture 2d units do not interfere with each other. But the 0th sampler can only
+        // be bound to one unit, so the units cannot overlap as the sampler can only be bound to one type. 
 
         GLint texture_unit_offset = 1;
         return !m_Empty && m_BufferTexture->is_bound(TextureUnit::UNIT_0) && std::all_of(m_Textures.begin(), m_Textures.end(), [&](const auto& texture)
         {
-            return texture->is_bound(static_cast<TextureUnit>(static_cast<int>(TextureUnit::UNIT_0) + texture_unit_offset++));
+            return texture->is_bound(to_enum<TextureUnit>(texture_unit_offset++));
         });
     }
 
@@ -295,10 +299,8 @@ namespace cbn
         // this exact order, otherwise the data in the buffer texture will not match up in the shader. 
 
         m_BufferTexture->bind(TextureUnit::UNIT_0);
-
-        GLint texture_unit_offset = 1;
-        for(const auto& texture : m_Textures)
-            texture->bind(static_cast<TextureUnit>(static_cast<GLint>(TextureUnit::UNIT_0) + texture_unit_offset++));
+        for(GLint texture_unit_offset = 1; const auto& texture : m_Textures)
+            texture->bind(to_enum<TextureUnit>(texture_unit_offset++));
     }
 
     //-------------------------------------------------------------------------------------

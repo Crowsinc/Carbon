@@ -1,27 +1,31 @@
 #pragma once
 
-#include <unordered_map>
+#include <array>
 
 #include "OpenGL.hpp"
 
 namespace cbn
 {
 
-	enum class BufferTarget
+	enum class BufferTarget : GLenum
 	{
-		ELEMENT_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
-		UNIFORM_BUFFER = GL_UNIFORM_BUFFER,
-		VERTEX_BUFFER = GL_ARRAY_BUFFER,
+		ELEMENT_BUFFER,
+		UNIFORM_BUFFER,
+		VERTEX_BUFFER,
 	};
 
 	class Buffer
 	{
 	private:
 
-		static std::unordered_map<BufferTarget, GLint> s_BoundBuffers;
+		static std::array<GLuint, 3> s_BoundBuffers;
 
 		const BufferTarget m_Target;
 		GLuint m_BufferID;
+
+	protected:
+
+		static GLenum to_opengl_target(const BufferTarget& target);
 
 	public:
 

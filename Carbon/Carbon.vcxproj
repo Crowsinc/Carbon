@@ -246,6 +246,7 @@
     <ClInclude Include="Maths\Transforms\Transformable.hpp" />
     <ClInclude Include="Maths\Transforms\Translatable.hpp" />
     <ClInclude Include="Utility\Colour.hpp" />
+    <ClInclude Include="Utility\Enum.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
     <ClInclude Include="Carbon.hpp" />
     <ClInclude Include="Control\Timing\Stopwatch.hpp" />
