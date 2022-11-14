@@ -51,11 +51,12 @@ namespace cbn
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
+	void SpriteRenderer::push_sprite_to_buffer(const StaticMesh<4>& mesh, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data)
 	{
 		CBN_Assert(m_BatchStarted, "No batch exists for submission");
 		CBN_Assert(!is_batch_full(), "Batch is full");
 
+		const auto& vertices = mesh.vertices();
 		const auto vertex_1 = transform(vertices[0], m_ViewProjectionMatrix);
 		const auto vertex_2 = transform(vertices[1], m_ViewProjectionMatrix);
 		const auto vertex_3 = transform(vertices[2], m_ViewProjectionMatrix);
@@ -143,69 +144,69 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices)
 	{
 		push_sprite_to_buffer(vertices, 0, 0, 0, 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const glm::uvec4& vertex_data)
 	{
 		push_sprite_to_buffer(vertices, 0, 0, 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), 0, 0, 0, c_EmptyVertexData);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const glm::uvec4& vertex_data)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), 0, 0, 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, c_EmptyVertexData);
 	}
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), 0, 0, vertex_data);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, c_EmptyVertexData);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), 0, vertex_data);
 	}
 
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), c_EmptyVertexData);
 	}
 	
 	//-------------------------------------------------------------------------------------
 
-	void SpriteRenderer::submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data)
+	void SpriteRenderer::submit(const StaticMesh<4>& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data)
 	{
 		push_sprite_to_buffer(vertices, m_TexturePack.position_of(texture_1), m_TexturePack.position_of(texture_2), m_TexturePack.position_of(texture_3), m_TexturePack.position_of(texture_4), vertex_data);
 	}

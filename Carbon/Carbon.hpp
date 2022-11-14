@@ -10,9 +10,12 @@
 #include "Data/Identity/Identifier.hpp"
 
 #include "Maths/Maths.hpp"
-#include "Maths/Models/BoundingBox.hpp"
-#include "Maths/Models/BoundingCircle.hpp"
-#include "Maths/Models/BoundingTriangle.hpp"
+#include "Maths/Models/Circle.hpp"
+#include "Maths/Models/Extent.hpp"
+#include "Maths/Models/Line.hpp"
+#include "Maths/Models/Mesh.hpp"
+#include "Maths/Models/Polygon.hpp"
+#include "Maths/Models/Rectangle.hpp"
 #include "Maths/Transforms/Transformable.hpp"
 
 #include "Graphics/Window.hpp"

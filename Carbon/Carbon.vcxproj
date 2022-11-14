@@ -28,26 +28,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -141,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClCompile Include="..\Libraries\GLAD\include\glad.c" />
     <ClCompile Include="Algorithms\BinPacking.cpp" />
+    <ClCompile Include="Algorithms\SeparatingAxisTheorem.cpp" />
     <ClCompile Include="Control\Events\Subscription.cpp" />
     <ClCompile Include="Control\Timing\Ticker.cpp" />
     <ClCompile Include="Control\Timing\Time.cpp" />
@@ -184,25 +185,29 @@
     <ClCompile Include="Graphics\Resources\Texture.cpp" />
     <ClCompile Include="Graphics\TexturePack.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
-    <ClCompile Include="Maths\Models\BoundingBox.cpp" />
-    <ClCompile Include="Maths\Models\BoundingCircle.cpp" />
-    <ClCompile Include="Maths\Models\BoundingTriangle.cpp" />
+    <ClCompile Include="Maths\Linear.cpp" />
+    <ClCompile Include="Maths\Models\Circle.cpp" />
+    <ClCompile Include="Maths\Models\Extent.cpp" />
+    <ClCompile Include="Maths\Models\Line.cpp" />
+    <ClCompile Include="Maths\Models\Mesh.cpp" />
+    <ClCompile Include="Maths\Models\Polygon.cpp" />
+    <ClCompile Include="Maths\Models\Rectangle.cpp" />
     <ClCompile Include="Maths\Maths.cpp" />
     <ClCompile Include="Maths\Matrix.cpp" />
-    <ClCompile Include="Maths\Models\Common.cpp" />
-    <ClCompile Include="Maths\Transform.cpp" />
+    <ClCompile Include="Maths\Transforms\Transform.cpp" />
     <ClCompile Include="Diagnostics\Assert.cpp" />
     <ClCompile Include="Control\Timing\Stopwatch.cpp" />
     <ClCompile Include="Graphics\Resources\Image.cpp" />
-    <ClCompile Include="Maths\Transforms\Rotatable.cpp" />
-    <ClCompile Include="Maths\Transforms\Scalable.cpp" />
-    <ClCompile Include="Maths\Transforms\Translatable.cpp" />
+    <ClCompile Include="Maths\Transforms\Transformables\Rotatable.cpp" />
+    <ClCompile Include="Maths\Transforms\Transformables\Scalable.cpp" />
+    <ClCompile Include="Maths\Transforms\Transformables\Translatable.cpp" />
     <ClCompile Include="Utility\Colour.cpp" />
     <ClCompile Include="Data\String.cpp" />
     <ClCompile Include="Utility\Version.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithms\BinPacking.hpp" />
+    <ClInclude Include="Algorithms\SeparatingAxisTheorem.hpp" />
     <ClInclude Include="Control\Events\EventCallback.hpp" />
     <ClInclude Include="Control\Events\EventHandler.hpp" />
     <ClInclude Include="Control\Events\EventHost.hpp" />
@@ -231,20 +236,23 @@
     <ClInclude Include="Graphics\Resources\Texture.hpp" />
     <ClInclude Include="Graphics\TexturePack.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
-    <ClInclude Include="Maths\Models\BoundingBox.hpp" />
-    <ClInclude Include="Maths\Models\BoundingCircle.hpp" />
-    <ClInclude Include="Maths\Models\BoundingTriangle.hpp" />
+    <ClInclude Include="Maths\Linear.hpp" />
+    <ClInclude Include="Maths\Models\Circle.hpp" />
+    <ClInclude Include="Maths\Models\Extent.hpp" />
+    <ClInclude Include="Maths\Models\Line.hpp" />
+    <ClInclude Include="Maths\Models\Polygon.hpp" />
+    <ClInclude Include="Maths\Models\Rectangle.hpp" />
     <ClInclude Include="Maths\Maths.hpp" />
     <ClInclude Include="Maths\Matrix.hpp" />
-    <ClInclude Include="Maths\Models\Common.hpp" />
     <ClInclude Include="Maths\Physics\Collider.hpp" />
     <ClInclude Include="Maths\Models\Mesh.hpp" />
-    <ClInclude Include="Maths\Transform.hpp" />
+    <ClInclude Include="Maths\Shapes.hpp" />
+    <ClInclude Include="Maths\Transforms\Transform.hpp" />
     <ClInclude Include="Diagnostics\Assert.hpp" />
-    <ClInclude Include="Maths\Transforms\Rotatable.hpp" />
-    <ClInclude Include="Maths\Transforms\Scalable.hpp" />
+    <ClInclude Include="Maths\Transforms\Transformables\Rotatable.hpp" />
+    <ClInclude Include="Maths\Transforms\Transformables\Scalable.hpp" />
     <ClInclude Include="Maths\Transforms\Transformable.hpp" />
-    <ClInclude Include="Maths\Transforms\Translatable.hpp" />
+    <ClInclude Include="Maths\Transforms\Transformables\Translatable.hpp" />
     <ClInclude Include="Utility\Colour.hpp" />
     <ClInclude Include="Utility\Enum.hpp" />
     <ClInclude Include="Utility\VectorExtensions.hpp" />
@@ -256,7 +264,6 @@
     <ClInclude Include="Utility\Version.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Maths\Shapes.hpp" />
     <None Include="Utility\VectorExtensions.tpp" />
     <None Include="Memory\Resource.tpp" />
   </ItemGroup>

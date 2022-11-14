@@ -8,7 +8,6 @@ namespace cbn
 {
 
 	//TODO: make an equivalent to to_string
-
 	class String
 	{
 	private:

@@ -3,11 +3,11 @@
 #include <glm/glm.hpp>
 
 
-#include "Translatable.hpp"
-#include "Rotatable.hpp"
-#include "Scalable.hpp"
+#include "Transformables/Translatable.hpp"
+#include "Transformables/Rotatable.hpp"
+#include "Transformables/Scalable.hpp"
 
-#include "../Transform.hpp"
+#include "Transform.hpp"
 #include "../Matrix.hpp"
 #include "../Maths.hpp"
 
@@ -17,10 +17,11 @@ namespace cbn
 {
 	
 	// Empty class which represents no transform
-	struct NullTransform {};
+	struct NullTransform1 {};
+	struct NullTransform2 {};
 
-	//TODO: use concepts to enforce T1,T2, and T3 to be the correct types.
-	template<typename T1, typename T2 = NullTransform, typename T3 = NullTransform>
+	//TODO: use C++20 concepts to enforce T1,T2, and T3 to be the correct types.
+	template<typename T1, typename T2 = NullTransform1, typename T3 = NullTransform2>
 	class Transformable : public T1, public T2, public T3
 	{
 	public:
@@ -42,8 +43,6 @@ namespace cbn
 		void distribute_transforms_silent(const Transform& transform);
 
 		void distribute_transforms(const Transform& transform);
-
-		void initialize_cache_subscriptions();
 
 		void on_translate();
 

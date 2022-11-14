@@ -28,6 +28,11 @@ namespace cbn
 		BLSF_BSSF_SQR, // Best Long Side Fit + Best Short Side Fit Tiebreaker + Square Footprint
 	};
 
-	bool max_rects_optimal(const glm::uvec2& size, const bool allow_rotation, const RectanglePackingHeuristic heuristic, std::vector<Rect<int>>& rectangles);
+	bool max_rects_optimal(
+		const glm::uvec2& size,
+		const bool allow_rotation,
+		const RectanglePackingHeuristic heuristic,
+		std::vector<Rect<int>>& rectangles
+	);
 
 }

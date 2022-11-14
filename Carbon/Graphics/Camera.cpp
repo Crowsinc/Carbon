@@ -41,7 +41,7 @@ namespace cbn
 	Camera::Camera(const Transform& transform, const glm::vec2& resolution)
 		: Transformable(transform),
 		m_Resolution(resolution),
-		m_BoundingBox(transform, resolution),
+		m_BoundingBox(transform,resolution),
 		m_ViewMatrix(1.0f),
 		m_ProjectionMatrix(1.0f),
 		m_ViewProjectionMatrix(1.0f),
@@ -118,7 +118,7 @@ namespace cbn
 	
 	//-------------------------------------------------------------------------------------
 
-	const BoundingBox& Camera::bounding_box() const
+	const Rectangle& Camera::bounding_box() const
 	{
 		if(m_BoundingBoxOutdated)
 		{

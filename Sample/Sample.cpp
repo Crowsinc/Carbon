@@ -11,6 +11,7 @@
 #include <Windows.h>
 #endif
 
+
 using namespace cbn;
 
 //-------------------------------------------------------------------------------------
@@ -34,15 +35,15 @@ TexturePack load_textures(const URes<Window>& window, const std::map<Identifier,
 
 Scene main_menu_scene(URes<Window>& window, bool& runflag);
 
-std::vector<BoundingBox> create_screen_sprites(const Camera& camera, const uint64_t sprite_count);
+std::vector<cbn::Rectangle> create_screen_sprites(const Camera& camera, const uint64_t sprite_count);
 
 void static_render_scene(URes<Window>& window, bool& runflag);
 
-void move_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos);
+void move_sprite(cbn::Rectangle& sprite, const glm::vec2& mouse_pos);
 
 void dynamic_render_scene(URes<Window>& window, bool& runflag);
 
-void bounds_test_scene(URes<Window>& window, bool& runflag);
+//void bounds_test_scene(URes<Window>& window, bool& runflag);
 
 //-------------------------------------------------------------------------------------
 
@@ -100,7 +101,8 @@ int main()
 				dynamic_render_scene(window, runflag);
 				break;
 			case Scene::BOUNDS_TEST:
-				bounds_test_scene(window, runflag);
+				std::cout << "BOUNDS TEST IS DISABLED" << std::endl;
+				//bounds_test_scene(window, runflag);
 				break;
 		}
 
@@ -208,14 +210,14 @@ TexturePack load_textures(const URes<Window>& window, const std::map<Identifier,
 
 struct SceneButton
 {
-	BoundingBox bounding_box;
+	cbn::Rectangle bounding_box;
 	Identifier texture_id;
 	Scene linked_scene;
 
 	SceneButton(const glm::vec2& pos, const glm::vec2& size, const Identifier& texture_id, const Scene scene)
 		: bounding_box(Transform{pos}, size),
-		texture_id(texture_id),
-		linked_scene(scene) {}
+		  texture_id(texture_id),
+		  linked_scene(scene) {}
 };
 
 //-------------------------------------------------------------------------------------
@@ -265,10 +267,11 @@ Scene main_menu_scene(URes<Window>& window, bool& runflag)
 
 		for(const auto& button : buttons)
 		{
-			const auto& colour = button.bounding_box.contains(mouse_pos) ? select_colour : normal_colour;
-			const auto& button_verts = button.bounding_box.mesh().vertices;
+			const bool contains_mouse = contains(button.bounding_box, mouse_pos);
+			const auto colour = contains_mouse ? select_colour : normal_colour;
+			const auto& button_mesh = button.bounding_box.mesh();
 
-			renderer.submit(button_verts, button.texture_id, colour);
+			renderer.submit(button_mesh, button.texture_id, colour);
 		}
 
 		renderer.end_batch();
@@ -280,7 +283,7 @@ Scene main_menu_scene(URes<Window>& window, bool& runflag)
 			for(const auto& button : buttons)
 			{
 				// If a button was clicked, change the scene
-				if(button.bounding_box.contains(mouse_pos))
+				if(contains(button.bounding_box,mouse_pos))
 					return button.linked_scene;
 			}
 		}
@@ -291,9 +294,9 @@ Scene main_menu_scene(URes<Window>& window, bool& runflag)
 
 //-------------------------------------------------------------------------------------
 
-std::vector<BoundingBox> create_screen_sprites(const Camera& camera, const uint64_t sprite_count)
+std::vector<cbn::Rectangle> create_screen_sprites(const Camera& camera, const uint64_t sprite_count)
 {
-	std::vector<BoundingBox> sprites;
+	std::vector<cbn::Rectangle> sprites;
 	sprites.reserve(sprite_count);
 
 	// We want to fit the given sprite count perfectly in the resolution of the camera
@@ -349,10 +352,10 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 	// Create 100k static meshes which will be rendered
 	// Note that the camera is centred at (0,0)
 	const auto sprites = create_screen_sprites(camera, 100000);
-	std::vector<QuadMesh::Vertices> meshes;
+	std::vector<StaticMesh<4>> meshes;
 	meshes.reserve(sprites.size());
 	for(const auto& sprite : sprites)
-		meshes.push_back(sprite.mesh().vertices);
+		meshes.push_back(sprite.mesh());
 
 	// Remove Vsync as we want it to run as quick as possible
 	window->set_vsync(false);
@@ -361,7 +364,7 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 	float frames = 0;
 	auto subscription = timer.TimerEvent.subscribe([&]()
 	{
-		window->set_title("Carbon Sample | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames));
+		window->set_title("Carbon Sample | Textured Sprites: " + std::to_string(sprites.size()) + " | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames) + "ms");
 		frames = 0;
 	});
 	timer.start(Time::Seconds(1));
@@ -411,7 +414,7 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 
 //-------------------------------------------------------------------------------------
 
-void move_sprite(BoundingBox& sprite, const glm::vec2& mouse_pos)
+void move_sprite(cbn::Rectangle& sprite, const glm::vec2& mouse_pos)
 {
 	const float distance = glm::distance2(sprite.centre(), mouse_pos);
 
@@ -457,7 +460,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 	float frames = 0;
 	auto subscription = timer.TimerEvent.subscribe([&]()
 	{
-		window->set_title("Carbon Sample | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames));
+		window->set_title("Carbon Sample | Textured Sprites: " + std::to_string(sprites.size()) + " | FPS: " + std::to_string(frames) + ";  Frame Time: " + std::to_string(1 / frames) + "ms");
 		frames = 0;
 	});
 	timer.start(Time::Seconds(1));
@@ -496,7 +499,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 
 					move_sprite(sprites[total_submitted], mouse_pos);
 
-					renderer.submit(sprites[total_submitted].mesh().vertices, texture_ids[i % 2]);
+					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % 2]);
 					total_submitted++;
 				}
 			}
@@ -506,7 +509,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 				{
 					move_sprite(sprites[total_submitted], mouse_pos);
 
-					renderer.submit(sprites[total_submitted].mesh().vertices, texture_ids[i % 2]);
+					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % 2]);
 					total_submitted++;
 				}
 			}
@@ -521,220 +524,219 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 
 //-------------------------------------------------------------------------------------
 
-void bounds_test_scene(URes<Window>& window, bool& runflag)
-{
-	// Create the standard renderer and scene camera
-	SpriteRenderer renderer(window->get_opengl_version());
-
-	// Note that the camera is centred at (0,0). 
-	// In order to make it a bit easier to position the 
-	// colliders. We will move the camera up by half
-	// its resolution to put (0,0) on its bottom left. 
-	Camera camera(window->get_resolution());
-	camera.translate_by(camera.resolution() * 0.5f);
-
-	// Load shader & textures
-	auto tint_program = load_program("TintVertShader.glsl", "TintFragShader.glsl");
-
-	const Identifier circle_texture_id = "Circle";
-	const Identifier rectangle_texture_id = "Rectangle";
-	const Identifier triangle_1_texture_id = "Triangle1";
-	const Identifier triangle_2_texture_id = "Triangle2";
-
-	const auto texture_pack = load_textures(window, {
-		{circle_texture_id, "Circle.png"},
-		{rectangle_texture_id, "Square.png"},
-		{triangle_1_texture_id, "Triangle1.png"},
-		{triangle_2_texture_id, "Triangle2.png"}
-	});
-	renderer.set_texture_pack(texture_pack);
-
-	// Create tint colours
-	constexpr float alpha = 256 * (9.0f / 10.0f);
-	const glm::uvec4 red_colour = {Red.red, Red.green, Red.blue, alpha};
-	const glm::uvec4 blue_colour = {Blue.red, Blue.green, Blue.blue, alpha};
-	const glm::uvec4 cyan_colour = {Cyan.red, Cyan.green, Cyan.blue, alpha};
-	const glm::uvec4 white_colour = {White.red, White.green, White.blue, alpha};
-	const glm::uvec4 yellow_colour = {Yellow.red, Yellow.green, Yellow.blue, alpha};
-	const glm::uvec4 orange_colour = {Orange.red, Orange.green, Orange.blue, alpha};
-	const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
-
-	// Create the colliders
-	BoundingBox rect_1{Transform{800.0f, 600.0f}, {32, 32}};
-	BoundingBox rect_2{Transform{600.0f, 800.0f, 25}, {128, 64}};
-	BoundingCircle circle_1{Transform{1200, 900}, 16.0f};
-	BoundingCircle circle_2{Transform{1200, 200}, 64.0f};
-
-	TriangleMesh::Vertices triangle_1_vertices = {
-		glm::vec2{0, 32},
-		glm::vec2{-16, 0},
-		glm::vec2{16, 0}
-	};
-
-	TriangleMesh::Vertices triangle_2_vertices = {
-		glm::vec2{0, 108},
-		glm::vec2{237, 0},
-		glm::vec2{420, 26}
-	};
-
-	// The triangles cannot be rendered by the sprite renderer directly so
-	// we use a object alligned bounding box which mimics the triangle 
-	// and render that instead.
-	static BoundingTriangle triangle_1{Transform{200, 300}, triangle_1_vertices};
-	static BoundingBox triangle_1_obb = triangle_1.wrap_axis_alligned();
-
-	static BoundingTriangle triangle_2{Transform{800, 300}, triangle_2_vertices};
-	static BoundingBox triangle_2_obb = triangle_2.wrap_axis_alligned();
-
-	// Using bounding boxes, create lines to act as rays, segments and rays
-	// TODO: implement a line renderer instead
-	 const BoundingBox line_bb{Transform{300, 600, 275}, {2000,1}};
-	 const Line line{line_bb.mesh().vertices[0], line_bb.mesh().vertices[3]};
-	
-	 const BoundingBox segment_bb{Transform{800,700, 32}, {100, 1}};
-	 const Segment segment{segment_bb.mesh().vertices[0], segment_bb.mesh().vertices[3]};
-
-	 const BoundingBox ray_bb{Transform{1850, 1200, 50}, {2000,1}};
-	 const Ray ray{ray_bb.mesh().vertices[0], glm::normalize(ray_bb.mesh().vertices[3] - ray_bb.mesh().vertices[0])};
-
-	// Store all colliders and their associated data in arrays to allow processing them with a loop
-	std::array<Collider*, 6> colliders = {
-		&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
-	};
-	std::array<Transformable<Translatable2D, Rotatable2D>*, 6> transformables = {
-	&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
-	};
-	std::array<glm::uvec4, 6> tint_colours = {
-	     white_colour, white_colour, white_colour, white_colour, white_colour, white_colour
-	};
-	std::array<bool, 6> held = {
-		 false, false, false, false, false, false
-	};
-
-	// Run the test & render the shapes, we want to enable vsync to limit it
-	window->set_vsync(true);
-	while(runflag)
-	{
-		window->clear();
-
-		// Return back to the menu if escape is pressed
-		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		{
-			window->set_title("Carbon Sample");
-			return;
-		}
-
-		bool mouse_clicked = GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT);
-		bool space_pressed = glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS;
-
-		// Get mouse position. Note that we need to offset it as screen coordinates
-	    // have (0,0) top left, while for us its currently bottom left (as we moved the camera). 
-		double pos_x, pos_y;
-		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
-		const glm::vec2 mouse_pos{pos_x, camera.resolution().y - pos_y};
-
-		// handle the colliders
-		for(auto i = 0; i < colliders.size(); i++)
-		{
-			bool any_held = std::any_of(held.begin(), held.end(), [](auto v) { return v; });
-			auto& trans = transformables[i];
-			auto& colour = tint_colours[i];
-			auto& curr = *colliders[i];
-			auto& is_held = held[i];
-
-			bool overlaps = false;
-			bool encloses = false;
-			bool enclosed = false;
-
-			// Consider being held as also being moused over. Since app is not
-			// running at the same rate that the mouse is being polled, its possible
-			// for the mouse to run away from the collider causing it to no longer count
-			// as being moused over when it is being held. Thus causing its tint to
-			// flash between the held not held colours. 
-			bool moused_over = curr.contains(mouse_pos) || is_held;
-
-			// If no other collider is already held, the mouse is clicked and the 
-			// mouse is hovering over the collider. Then we want to pick it up. 
-			if(mouse_clicked)
-			{
-				if(!any_held && moused_over)
-				{
-					const auto world_origin_offset = mouse_pos - curr.centre();
-
-					// When we pick it up, we want to flag that were holding it and move its origin to where the mouse is. 
-					curr.specify_origin(world_origin_offset);
-					is_held = true;
-				}
-			}
-			else is_held = false;
-
-			// If collider is held, then we want to move it to where the mouse is
-		    // and rotate it if space is held. 
-			if(is_held)
-			{
-				trans->translate_to(mouse_pos);
-
-				if(space_pressed)
-					trans->rotate_by(5);
-			}
-
-
-			// Check for any overlap or enclosing between colliders
-			for(auto j = 0; j < colliders.size(); j++)
-			{
-				if(i == j) continue;
-
-				const auto& target = *colliders[j];
-
-				if(curr.overlaps(target))
-					overlaps = true;
-
-				if(curr.enclosed_by(target))
-					enclosed = true;
-
-				if(target.enclosed_by(curr))
-					encloses = true;
-			}
-
-			if(curr.intersected_by(line) || curr.intersected_by(ray) || curr.intersected_by(segment))
-				overlaps = true;
-
-			if(enclosed)
-				tint_colours[i] = yellow_colour;
-			else if(encloses)
-				tint_colours[i] = orange_colour;
-			else if(overlaps && moused_over)
-				tint_colours[i] = magenta_colour;
-			else if(overlaps)
-				tint_colours[i] = blue_colour;
-			else if(moused_over)
-				tint_colours[i] = red_colour;
-			else
-				tint_colours[i] = white_colour;
-		}
-
-		// Render the bounds
-		renderer.begin_batch(camera);
-
-		renderer.submit(rect_1.mesh().vertices, rectangle_texture_id, tint_colours[0]);
-		renderer.submit(rect_2.mesh().vertices, rectangle_texture_id, tint_colours[1]);
-
-		renderer.submit(circle_1.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[2]);
-		renderer.submit(circle_2.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[3]);
-
-		renderer.submit(triangle_1.wrap_object_alligned().mesh().vertices, triangle_1_texture_id, tint_colours[4]);
-		renderer.submit(triangle_2.wrap_object_alligned().mesh().vertices, triangle_2_texture_id, tint_colours[5]);
-
-		renderer.submit(line_bb.mesh().vertices, rectangle_texture_id, yellow_colour);
-		renderer.submit(segment_bb.mesh().vertices, rectangle_texture_id, orange_colour);
-		renderer.submit(ray_bb.mesh().vertices, rectangle_texture_id, cyan_colour);
-
-		renderer.end_batch();
-		renderer.render(tint_program);
-
-		window->update();
-	}
-	
-}
+//void bounds_test_scene(URes<Window>& window, bool& runflag)
+//{
+//	// Create the standard renderer and scene camera
+//	SpriteRenderer renderer(window->get_opengl_version());
+//
+//	// Note that the camera is centred at (0,0). 
+//	// In order to make it a bit easier to position the 
+//	// colliders. We will move the camera up by half
+//	// its resolution to put (0,0) on its bottom left. 
+//	Camera camera(window->get_resolution());
+//	camera.translate_by(camera.resolution() * 0.5f);
+//
+//	// Load shader & textures
+//	auto tint_program = load_program("TintVertShader.glsl", "TintFragShader.glsl");
+//
+//	const Identifier circle_texture_id = "Circle";
+//	const Identifier rectangle_texture_id = "Rectangle";
+//	const Identifier triangle_1_texture_id = "Triangle1";
+//	const Identifier triangle_2_texture_id = "Triangle2";
+//
+//	const auto texture_pack = load_textures(window, {
+//		{circle_texture_id, "Circle.png"},
+//		{rectangle_texture_id, "Square.png"},
+//		{triangle_1_texture_id, "Triangle1.png"},
+//		{triangle_2_texture_id, "Triangle2.png"}
+//	});
+//	renderer.set_texture_pack(texture_pack);
+//
+//	// Create tint colours
+//	constexpr float alpha = 256 * (9.0f / 10.0f);
+//	const glm::uvec4 red_colour = {Red.red, Red.green, Red.blue, alpha};
+//	const glm::uvec4 blue_colour = {Blue.red, Blue.green, Blue.blue, alpha};
+//	const glm::uvec4 cyan_colour = {Cyan.red, Cyan.green, Cyan.blue, alpha};
+//	const glm::uvec4 white_colour = {White.red, White.green, White.blue, alpha};
+//	const glm::uvec4 yellow_colour = {Yellow.red, Yellow.green, Yellow.blue, alpha};
+//	const glm::uvec4 orange_colour = {Orange.red, Orange.green, Orange.blue, alpha};
+//	const glm::uvec4 magenta_colour = {Magenta.red, Magenta.green, Magenta.blue, alpha};
+//
+//	// Create the colliders
+//	cbn::Rectangle rect_1{Transform{800.0f, 600.0f}, {32, 32}};
+//	cbn::Rectangle rect_2{Transform{600.0f, 800.0f, 25}, {128, 64}};
+//	cbn::Circle circle_1{Transform{1200, 900}, 16.0f};
+//	cbn::Circle circle_2{Transform{1200, 200}, 64.0f};
+//
+//	std::array<glm::vec2, 3> triangle_1_vertices = {
+//		glm::vec2{0, 32},
+//		glm::vec2{-16, 0},
+//		glm::vec2{16, 0}
+//	};
+//
+//	std::array<glm::vec2, 3> triangle_2_vertices = {
+//		glm::vec2{0, 108},
+//		glm::vec2{237, 0},
+//		glm::vec2{420, 26}
+//	};
+//
+//	// The triangles cannot be rendered by the sprite renderer directly so
+//	// we use a object alligned bounding box which mimics the triangle 
+//	// and render that instead.
+//	static cbn::StaticMesh triangle_1{Transform{200, 300}, triangle_1_vertices};
+//	static cbn::Rectangle triangle_1_obb = triangle_1.wrap_axis_alligned();
+//
+//	static cbn::StaticMesh triangle_2{Transform{800, 300}, triangle_2_vertices};
+//	static cbn::Rectangle triangle_2_obb = triangle_2.wrap_axis_alligned();
+//
+//	// Using bounding boxes, create lines to act as rays, segments and rays
+//	// TODO: implement a line renderer instead
+//	 const cbn::Rectangle line_bb{Transform{300, 600, 275}, {2000,1}};
+//	 const Line line{line_bb.mesh().vertices()[0], line_bb.mesh().vertices()[3]};
+//	
+//	 const cbn::Rectangle segment_bb{Transform{800,700, 32}, {100, 1}};
+//	 const Segment segment{segment_bb.mesh().vertices()[0], segment_bb.mesh().vertices()[3]};
+//
+//	 const cbn::Rectangle ray_bb{Transform{1850, 1200, 50}, {2000,1}};
+//	 const Ray ray{ray_bb.mesh().vertices()[0], glm::normalize(ray_bb.mesh().vertices()[3] - ray_bb.mesh().vertices()[0])};
+//
+//	// Store all colliders and their associated data in arrays to allow processing them with a loop
+//	std::array<Collider*, 6> colliders = {
+//		&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
+//	};
+//	std::array<Transformable<Translatable2D, Rotatable2D>*, 6> transformables = {
+//	&rect_1, &rect_2, &circle_1, &circle_2, &triangle_1, &triangle_2 
+//	};
+//	std::array<glm::uvec4, 6> tint_colours = {
+//	     white_colour, white_colour, white_colour, white_colour, white_colour, white_colour
+//	};
+//	std::array<bool, 6> held = {
+//		 false, false, false, false, false, false
+//	};
+//
+//	// Run the test & render the shapes, we want to enable vsync to limit it
+//	window->set_vsync(true);
+//	while(runflag)
+//	{
+//		window->clear();
+//
+//		// Return back to the menu if escape is pressed
+//		if(glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+//		{
+//			window->set_title("Carbon Sample");
+//			return;
+//		}
+//
+//		bool mouse_clicked = GLFW_PRESS == glfwGetMouseButton(window->TEMP_HANDLE(), GLFW_MOUSE_BUTTON_LEFT);
+//		bool space_pressed = glfwGetKey(window->TEMP_HANDLE(), GLFW_KEY_SPACE) == GLFW_PRESS;
+//
+//		// Get mouse position. Note that we need to offset it as screen coordinates
+//	    // have (0,0) top left, while for us its currently bottom left (as we moved the camera). 
+//		double pos_x, pos_y;
+//		glfwGetCursorPos(window->TEMP_HANDLE(), &pos_x, &pos_y);
+//		const glm::vec2 mouse_pos{pos_x, camera.resolution().y - pos_y};
+//
+//		// handle the colliders
+//		for(auto i = 0; i < colliders.size(); i++)
+//		{
+//			bool any_held = std::any_of(held.begin(), held.end(), [](auto v) { return v; });
+//			auto& trans = transformables[i];
+//			auto& colour = tint_colours[i];
+//			auto& curr = *colliders[i];
+//			auto& is_held = held[i];
+//
+//			bool overlaps = false;
+//			bool encloses = false;
+//			bool enclosed = false;
+//
+//			// Consider being held as also being moused over. Since app is not
+//			// running at the same rate that the mouse is being polled, its possible
+//			// for the mouse to run away from the collider causing it to no longer count
+//			// as being moused over when it is being held. Thus causing its tint to
+//			// flash between the held not held colours. 
+//			bool moused_over = curr.contains(mouse_pos) || is_held;
+//
+//			// If no other collider is already held, the mouse is clicked and the 
+//			// mouse is hovering over the collider. Then we want to pick it up. 
+//			if(mouse_clicked)
+//			{
+//				if(!any_held && moused_over)
+//				{
+//					const auto world_origin_offset = mouse_pos - curr.centre();
+//
+//					// When we pick it up, we want to flag that were holding it and move its origin to where the mouse is. 
+//					curr.specify_origin(world_origin_offset);
+//					is_held = true;
+//				}
+//			}
+//			else is_held = false;
+//
+//			// If collider is held, then we want to move it to where the mouse is
+//		    // and rotate it if space is held. 
+//			if(is_held)
+//			{
+//				trans->translate_to(mouse_pos);
+//
+//				if(space_pressed)
+//					trans->rotate_by(5);
+//			}
+//
+//
+//			// Check for any overlap or enclosing between colliders
+//			for(auto j = 0; j < colliders.size(); j++)
+//			{
+//				if(i == j) continue;
+//
+//				const auto& target = *colliders[j];
+//
+//				if(curr.overlaps(target))
+//					overlaps = true;
+//
+//				if(curr.enclosed_by(target))
+//					enclosed = true;
+//
+//				if(target.enclosed_by(curr))
+//					encloses = true;
+//			}
+//
+//			if(curr.intersected_by(line) || curr.intersected_by(ray) || curr.intersected_by(segment))
+//				overlaps = true;
+//
+//			if(enclosed)
+//				tint_colours[i] = yellow_colour;
+//			else if(encloses)
+//				tint_colours[i] = orange_colour;
+//			else if(overlaps && moused_over)
+//				tint_colours[i] = magenta_colour;
+//			else if(overlaps)
+//				tint_colours[i] = blue_colour;
+//			else if(moused_over)
+//				tint_colours[i] = red_colour;
+//			else
+//				tint_colours[i] = white_colour;
+//		}
+//
+//		// Render the bounds
+//		renderer.begin_batch(camera);
+//
+//		renderer.submit(rect_1.mesh().vertices, rectangle_texture_id, tint_colours[0]);
+//		renderer.submit(rect_2.mesh().vertices, rectangle_texture_id, tint_colours[1]);
+//
+//		renderer.submit(circle_1.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[2]);
+//		renderer.submit(circle_2.wrap_axis_alligned().mesh().vertices, circle_texture_id, tint_colours[3]);
+//
+//		renderer.submit(triangle_1.wrap_object_alligned().mesh().vertices, triangle_1_texture_id, tint_colours[4]);
+//		renderer.submit(triangle_2.wrap_object_alligned().mesh().vertices, triangle_2_texture_id, tint_colours[5]);
+//
+//		renderer.submit(line_bb.mesh().vertices, rectangle_texture_id, yellow_colour);
+//		renderer.submit(segment_bb.mesh().vertices, rectangle_texture_id, orange_colour);
+//		renderer.submit(ray_bb.mesh().vertices, rectangle_texture_id, cyan_colour);
+//
+//		renderer.end_batch();
+//		renderer.render(tint_program);
+//
+//		window->update();
+//	}
+//}
 
 //-------------------------------------------------------------------------------------

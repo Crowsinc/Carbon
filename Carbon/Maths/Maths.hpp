@@ -39,7 +39,6 @@ namespace cbn
 	glm::vec2 closest_segment_point(const glm::vec2& l1, const glm::vec2& l2, const glm::vec2& p);
 
 	bool ray_segment_intersection(const glm::vec2& origin, const glm::vec2& towards, const glm::vec2& l1, const glm::vec2& l2);
-	
 
 	// TODO: clean up
 	template<unsigned A, unsigned V1, unsigned V2>
@@ -47,6 +46,7 @@ namespace cbn
 
 }
 
+//TODO: make a version which works with set polygons and one with polygons + custom axes.
 //TODO: clean up and optimise. 
 template<unsigned A, unsigned V1, unsigned V2>
 bool cbn::sat_test(const std::array<glm::vec2, A>& unit_axes, const std::array<glm::vec2, V1>& poly_1, const std::array<glm::vec2, V2>& poly_2)

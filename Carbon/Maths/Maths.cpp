@@ -150,6 +150,9 @@ namespace cbn
 	bool ray_segment_intersection(const glm::vec2& origin, const glm::vec2& towards, const glm::vec2& l1, const glm::vec2& l2)
 	{
 		// THIS IS JUST THE SAME AS THE SEGMENT INTERSECTION TEST, BUT WITH SLIGHTLY DIFF TRUE CONDITION 
+		// TODO: make a way to calculate s & t so that we can then just use different true conditions
+		// Also this should be in the ray and segment / line models. 
+
 		const auto& p1 = origin;
 		const auto& p2 = towards;
 		const auto& q1 = l1;

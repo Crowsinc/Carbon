@@ -4,13 +4,10 @@ namespace cbn
 {
 
 	template<typename T>
-	struct Rectangle
+	struct Rect
 	{
 		T x, y, width, height;
 	};
-
-	template<typename T>
-	using Rect = Rectangle<T>;
 
 	template<typename T>
 	bool intersects(const Rect<T> a, const Rect<T> b)

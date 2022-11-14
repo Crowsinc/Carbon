@@ -4,7 +4,6 @@
 #include <variant>
 
 #include "../Data/Identity/Identifier.hpp"
-#include "../Maths/Models/BoundingBox.hpp"
 #include "OpenGL/VertexArrayObject.hpp"
 #include "Resources/ShaderProgram.hpp"
 #include "Resources/StaticBuffer.hpp"
@@ -68,7 +67,7 @@ namespace cbn
 
 		void initialize_renderer(const Version& opengl_version);
 
-		void push_sprite_to_buffer(const QuadMesh::Vertices& vertices, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
+		void push_sprite_to_buffer(const StaticMesh<4>& quad, const uint16_t& index_1, const uint16_t& index_2, const uint16_t& index_3, const uint16_t& index_4, const glm::uvec4& vertex_data);
 
 	public:
 
@@ -76,25 +75,16 @@ namespace cbn
 
 		void begin_batch(const Camera& camera);
 
-		void submit(const QuadMesh::Vertices& vertices);
-
-		void submit(const QuadMesh::Vertices& vertices, const glm::uvec4& vertex_data);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const glm::uvec4& vertex_data);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4);
-
-		void submit(const QuadMesh::Vertices& vertices, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data);
+		void submit(const StaticMesh<4>& quad);
+		void submit(const StaticMesh<4>& quad, const glm::uvec4& vertex_data);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const glm::uvec4& vertex_data);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2, const glm::uvec4& vertex_data);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const glm::uvec4& vertex_data);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4);
+		void submit(const StaticMesh<4>& quad, const Identifier& texture_1, const Identifier& texture_2, const Identifier& texture_3, const Identifier& texture_4, const glm::uvec4& vertex_data);
 
 		void end_batch();
 
