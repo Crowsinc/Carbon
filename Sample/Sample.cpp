@@ -231,11 +231,10 @@ Scene main_menu_scene(URes<Window>& window, bool& runflag)
 
 	// Create the buttons
 	const glm::vec2 button_size{256, 128};
-	std::array<SceneButton, 3> buttons
+	std::array<SceneButton, 2> buttons
 	{
-		SceneButton{{0, 256}, button_size, "BTButton", Scene::BOUNDS_TEST},
-		SceneButton{{0, 0}, button_size, "SRTButton", Scene::STATIC_RENDER},
-		SceneButton{{0,-256}, button_size, "DRTButton", Scene::DYNAMIC_RENDER}
+		SceneButton{{0, 128}, button_size, "SRTButton", Scene::STATIC_RENDER},
+		SceneButton{{0,-128}, button_size, "DRTButton", Scene::DYNAMIC_RENDER}
 	};
 
 	// Load button textures and shaders
@@ -243,7 +242,6 @@ Scene main_menu_scene(URes<Window>& window, bool& runflag)
 	static const auto texture_pack = load_textures(window, {
 		{buttons[0].texture_id, buttons[0].texture_id.alias() + ".png"},
 		{buttons[1].texture_id, buttons[1].texture_id.alias() + ".png"},
-		{buttons[2].texture_id, buttons[2].texture_id.alias() + ".png"},
 	});
 	renderer.set_texture_pack(texture_pack);
 
@@ -318,7 +316,7 @@ std::vector<cbn::Rectangle> create_screen_sprites(const Camera& camera, const ui
 		{
 			const Transform pos{x, y};
 
-			sprites.emplace_back(pos,sprite_size);
+			sprites.emplace_back(pos,3.0f*sprite_size);
 		}
 	}
 	return sprites;
@@ -340,18 +338,19 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 	auto texture_program = load_program("TextureVertShader.glsl", "TextureFragShader.glsl");
 
 	// Load textures
-	std::array<Identifier, 2> texture_ids{
-		Identifier{"Ground"}, Identifier{"Rock"}
+	std::array<Identifier, 3> texture_ids{
+		Identifier{"star1"}, Identifier{"star2"}, Identifier{"star3"}
 	};
 	const auto texture_pack = load_textures(window, {
 		{texture_ids[0], texture_ids[0].alias() + ".png"},
 		{texture_ids[1], texture_ids[1].alias() + ".png"},
+		{texture_ids[2], texture_ids[2].alias() + ".png"},
 	});
 	renderer.set_texture_pack(texture_pack);
 
 	// Create 100k static meshes which will be rendered
 	// Note that the camera is centred at (0,0)
-	const auto sprites = create_screen_sprites(camera, 100000);
+	const auto sprites = create_screen_sprites(camera, 1000000);
 	std::vector<StaticMesh<4>> meshes;
 	meshes.reserve(sprites.size());
 	for(const auto& sprite : sprites)
@@ -391,7 +390,7 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 			{
 				for(auto i = 0; i < batch_size; i++)
 				{
-					renderer.submit(meshes[total_submitted], texture_ids[i % 2]);
+					renderer.submit(meshes[total_submitted], texture_ids[i % texture_ids.size()]);
 					total_submitted++;
 				}
 			}
@@ -399,7 +398,7 @@ void static_render_scene(URes<Window>& window, bool& runflag)
 			{
 				for(auto i = 0; i < sprites_left; i++)
 				{
-					renderer.submit(meshes[total_submitted], texture_ids[i % 2]);
+					renderer.submit(meshes[total_submitted], texture_ids[i % texture_ids.size()]);
 					total_submitted++;
 				}
 			}
@@ -440,12 +439,13 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 	auto texture_program = load_program("TextureVertShader.glsl", "TextureFragShader.glsl");
 
 	// Load textures
-	std::array<Identifier, 2> texture_ids{
-		Identifier{"Ground"}, Identifier{"Rock"}
+	std::array<Identifier, 3> texture_ids{
+		Identifier{"star1"}, Identifier{"star2"}, Identifier{"star3"}
 	};
 	const auto texture_pack = load_textures(window, {
 		{texture_ids[0], texture_ids[0].alias() + ".png"},
 		{texture_ids[1], texture_ids[1].alias() + ".png"},
+		{texture_ids[2], texture_ids[2].alias() + ".png"},
 	});
 	renderer.set_texture_pack(texture_pack);
 
@@ -499,7 +499,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 
 					move_sprite(sprites[total_submitted], mouse_pos);
 
-					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % 2]);
+					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % texture_ids.size()]);
 					total_submitted++;
 				}
 			}
@@ -509,7 +509,7 @@ void dynamic_render_scene(URes<Window>& window, bool& runflag)
 				{
 					move_sprite(sprites[total_submitted], mouse_pos);
 
-					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % 2]);
+					renderer.submit(sprites[total_submitted].mesh(), texture_ids[i % texture_ids.size()]);
 					total_submitted++;
 				}
 			}
